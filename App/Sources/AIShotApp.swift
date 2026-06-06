@@ -1,24 +1,25 @@
 import SwiftUI
 
 /// AIShot is a menu-bar agent. `MenuBarExtra` is the primary surface; the
-/// dashboard ("admin") window and Settings open on demand.
+/// Dashboard ("admin") window and Settings open on demand.
 @main
 struct AIShotApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @StateObject private var model = AppModel.shared
 
     var body: some Scene {
         MenuBarExtra("AIShot", systemImage: "camera.viewfinder") {
-            MenuBarContent()
+            MenuBarContent().environmentObject(model)
         }
         .menuBarExtraStyle(.menu)
 
         Window("AIShot", id: AIShotWindow.dashboard.rawValue) {
-            DashboardView()
+            DashboardView().environmentObject(model)
         }
-        .defaultSize(width: 760, height: 500)
+        .defaultSize(width: 820, height: 560)
 
         Settings {
-            SettingsView()
+            SettingsView().environmentObject(model)
         }
     }
 }

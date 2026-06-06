@@ -17,6 +17,9 @@ options:
 packages:
   AIShotKit:
     path: .
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    from: "2.0.0"
 
 targets:
   AIShot:
@@ -27,6 +30,8 @@ targets:
     dependencies:
       - package: AIShotKit
         product: AIShotKit
+      - package: KeyboardShortcuts
+        product: KeyboardShortcuts
     settings:
       base:
         PRODUCT_NAME: AIShot
