@@ -24,6 +24,7 @@ let package = Package(
                 "AIShotAnnotation",
                 "AIShotAutomation",
                 "AIShotPersistence",
+                "AIShotService",
                 "AIShotMCP",
             ]
         )
@@ -47,12 +48,22 @@ let package = Package(
         // Settings, save locations, history, clipboard, notifications.
         .target(name: "AIShotPersistence", dependencies: ["AIShotCore", "AIShotShared"]),
 
-        // Embedded MCP server: maps MCP tool calls onto the engines above.
+        // Application service layer: orchestrates capture → save → clipboard →
+        // notify → history, and surfaces system permission status.
+        .target(
+            name: "AIShotService",
+            dependencies: [
+                "AIShotCore", "AIShotCapture", "AIShotAnnotation",
+                "AIShotAutomation", "AIShotPersistence", "AIShotShared",
+            ]
+        ),
+
+        // Embedded MCP server: maps MCP tool calls onto the service/engines.
         .target(
             name: "AIShotMCP",
             dependencies: [
                 "AIShotCore", "AIShotCapture", "AIShotAnnotation",
-                "AIShotAutomation", "AIShotPersistence", "AIShotShared",
+                "AIShotAutomation", "AIShotPersistence", "AIShotService", "AIShotShared",
             ]
         ),
 
@@ -62,6 +73,7 @@ let package = Package(
         .testTarget(name: "AIShotSharedTests", dependencies: ["AIShotShared"]),
         .testTarget(name: "AIShotAnnotationTests", dependencies: ["AIShotAnnotation"]),
         .testTarget(name: "AIShotMCPTests", dependencies: ["AIShotMCP"]),
+        .testTarget(name: "AIShotServiceTests", dependencies: ["AIShotService", "AIShotCore", "AIShotCapture", "AIShotPersistence"]),
         .testTarget(name: "AIShotPersistenceTests", dependencies: ["AIShotPersistence", "AIShotCore"]),
     ]
 )
