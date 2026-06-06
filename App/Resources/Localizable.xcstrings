@@ -104,6 +104,12 @@
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Detener grabación" } }
       }
     },
+    "Check for Updates…" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Rechercher les mises à jour…" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Buscar actualizaciones…" } }
+      }
+    },
     "Change…" : {
       "localizations" : {
         "fr" : { "stringUnit" : { "state" : "translated", "value" : "Modifier…" } },

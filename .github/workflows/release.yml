@@ -1,0 +1,27 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    name: Build release artifact (unsigned)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Test
+        run: swift test
+      - name: Build MCP server (release)
+        run: swift build -c release --product aishot-mcp-server
+      - name: Build app (unsigned)
+        run: |
+          xcodegen generate
+          xcodebuild -project AIShot.xcodeproj -scheme AIShot -configuration Release \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      # Signing + notarization + DMG + appcast require Developer ID secrets.
+      # See docs/RELEASING.md; add them as repo secrets and call scripts/*.sh here.
+      - name: Reminder
+        run: echo "Signed/notarized DMG + Sparkle appcast are produced via scripts/ with Developer ID secrets."

@@ -43,5 +43,10 @@
     <string>NSApplication</string>
     <key>NSHumanReadableCopyright</key>
     <string>© 2026 AIShot.</string>
+    <!-- Sparkle auto-update. Set SUPublicEDKey (EdDSA) before release; see docs/RELEASING.md. -->
+    <key>SUFeedURL</key>
+    <string>https://aishot.app/appcast.xml</string>
+    <key>SUEnableAutomaticChecks</key>
+    <false/>
 </dict>
 </plist>

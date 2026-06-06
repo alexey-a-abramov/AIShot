@@ -43,6 +43,7 @@ struct MenuBarContent: View {
         SettingsLink {
             Text("Settings…")
         }
+        Button("Check for Updates…") { model.checkForUpdates() }
 
         Divider()
 

@@ -23,6 +23,10 @@ packages:
   LaunchAtLogin:
     url: https://github.com/sindresorhus/LaunchAtLogin-Modern
     from: "1.0.0"
+  # Sparkle (full silent-install auto-update) is the documented production path
+  # (see docs/RELEASING.md). The app ships a built-in, dependency-free update
+  # *checker* (UpdateChecker) so it builds without Sparkle's binary artifact;
+  # add Sparkle back here to enable in-place installs.
 
 targets:
   AIShot:

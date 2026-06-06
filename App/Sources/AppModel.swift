@@ -36,6 +36,7 @@ final class AppModel: ObservableObject {
     private let recorder = ScreenRecorder()
     private let scroller = ScrollingCapture()
     private let pinController = PinnedWindowController()
+    private let updater = UpdaterController()
 
     @Published var isRecording = false
 
@@ -250,5 +251,9 @@ final class AppModel: ObservableObject {
 
     func saveSettings() {
         try? settingsStore.save(settings)
+    }
+
+    func checkForUpdates() {
+        updater.checkForUpdates()
     }
 }

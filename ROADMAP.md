@@ -8,6 +8,21 @@ Legend: ✅ done · 🟡 in progress · ⬜ planned.
 
 ---
 
+## Implementation status (live)
+
+- ✅ **Phase 0** — scaffold, CI, 7 modules, tests.
+- ✅ **Phase 1 (MVP)** — P1a capture core + outputs + hotkeys + overlay; P1b embedded MCP (capture/enumeration tools + stdio server); P1c annotation renderer + editor; P1d app switching + synthetic input + Vision locator; P1e launch-at-login + settings + permissions UI.
+- ✅ **i18n** — English/French/Spanish via String Catalog (extensible).
+- ✅ **Phase 2** — OCR text-grab, color picker, pin-to-screen (+ `ocr` MCP tool).
+- ✅ **Phase 3** — beautify, auto-redact, screen recording (+ `beautify`/`redact` MCP tools).
+- ✅ **Phase 4** — MCP resources (history), scrolling capture, Sparkle auto-update, release scripts + CI.
+- ✅ **Website** — localized Astro site (en/fr/es) under `website/`.
+- 🟡 **Phase 5** — App Intents/Shortcuts, plugin surface, extras (in progress).
+
+70+ unit/contract/snapshot tests pass via `swift test`; the app builds via `xcodebuild`. Runtime permission-gated behavior (live capture, synthetic input) and notarization require a real machine/Apple account and are gated/documented.
+
+---
+
 ## Guiding principles
 
 1. **Local-first & private.** No network egress except an optional, explicit update check. Screenshots never leave the machine.
