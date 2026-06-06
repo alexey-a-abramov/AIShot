@@ -94,6 +94,7 @@ let package = Package(
             ]
         ),
         .testTarget(name: "AIShotServiceTests", dependencies: ["AIShotService", "AIShotCore", "AIShotCapture", "AIShotPersistence"]),
+        .testTarget(name: "AIShotAutomationTests", dependencies: ["AIShotAutomation", "AIShotCore"]),
         .testTarget(name: "AIShotPersistenceTests", dependencies: ["AIShotPersistence", "AIShotCore"]),
     ]
 )

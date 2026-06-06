@@ -1,5 +1,8 @@
+import AppKit
 import CoreGraphics
 import Foundation
+import ImageIO
+import Vision
 import AIShotCore
 import AIShotShared
 
@@ -70,39 +73,114 @@ public protocol ElementLocating: Sendable {
 
 /// Accessibility + CGEvent + NSWorkspace implementation.
 ///
-/// Phase P1d implements app switching first (`NSWorkspace`, low risk), then
-/// gated synthetic input (`CGEvent.post`) behind the
-/// `mcpRequireConfirmationForInput` setting.
+/// App switching uses `NSWorkspace` (no special permission). Synthetic input
+/// uses `CGEvent.post`, which requires the Accessibility permission at runtime
+/// and a non-sandboxed build.
 public actor AutomationEngine: AppSwitching, InputAutomating {
     public init() {}
 
     // MARK: AppSwitching
+
     public func runningApps() async throws -> [AppInfo] {
-        throw AIShotError.notImplemented("AutomationEngine.runningApps (P1d)")
+        await MainActor.run {
+            NSWorkspace.shared.runningApplications.compactMap { app -> AppInfo? in
+                guard let bundle = app.bundleIdentifier else { return nil }
+                return AppInfo(
+                    id: bundle,
+                    name: app.localizedName ?? bundle,
+                    processIdentifier: app.processIdentifier,
+                    isActive: app.isActive
+                )
+            }
+        }
     }
+
     public func frontmostApp() async throws -> AppInfo? {
-        throw AIShotError.notImplemented("AutomationEngine.frontmostApp (P1d)")
+        await MainActor.run {
+            guard let app = NSWorkspace.shared.frontmostApplication,
+                  let bundle = app.bundleIdentifier else { return nil }
+            return AppInfo(
+                id: bundle,
+                name: app.localizedName ?? bundle,
+                processIdentifier: app.processIdentifier,
+                isActive: app.isActive
+            )
+        }
     }
+
     public func activate(bundleID: String) async throws {
-        throw AIShotError.notImplemented("AutomationEngine.activate (P1d)")
+        let activated = await MainActor.run { () -> Bool in
+            guard let app = NSWorkspace.shared.runningApplications
+                .first(where: { $0.bundleIdentifier == bundleID }) else { return false }
+            return app.activate(options: [.activateAllWindows])
+        }
+        if !activated { throw AIShotError.targetNotFound("app \(bundleID)") }
     }
 
     // MARK: InputAutomating
+
     public func move(to point: CGPoint) async throws {
-        throw AIShotError.notImplemented("AutomationEngine.move (P1d)")
+        CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: point, mouseButton: .left)?
+            .post(tap: .cghidEventTap)
     }
+
     public func click(at point: CGPoint, button: MouseButton) async throws {
-        throw AIShotError.notImplemented("AutomationEngine.click (P1d)")
+        let (down, up, cgButton) = Self.mapButton(button)
+        CGEvent(mouseEventSource: nil, mouseType: down, mouseCursorPosition: point, mouseButton: cgButton)?
+            .post(tap: .cghidEventTap)
+        CGEvent(mouseEventSource: nil, mouseType: up, mouseCursorPosition: point, mouseButton: cgButton)?
+            .post(tap: .cghidEventTap)
     }
+
     public func type(text: String) async throws {
-        throw AIShotError.notImplemented("AutomationEngine.type (P1d)")
+        let utf16 = Array(text.utf16)
+        guard !utf16.isEmpty else { return }
+        let down = CGEvent(keyboardEventSource: nil, virtualKey: 0, keyDown: true)
+        down?.keyboardSetUnicodeString(stringLength: utf16.count, unicodeString: utf16)
+        down?.post(tap: .cghidEventTap)
+        let up = CGEvent(keyboardEventSource: nil, virtualKey: 0, keyDown: false)
+        up?.keyboardSetUnicodeString(stringLength: utf16.count, unicodeString: utf16)
+        up?.post(tap: .cghidEventTap)
+    }
+
+    private static func mapButton(_ button: MouseButton) -> (CGEventType, CGEventType, CGMouseButton) {
+        switch button {
+        case .left: (.leftMouseDown, .leftMouseUp, .left)
+        case .right: (.rightMouseDown, .rightMouseUp, .right)
+        case .center: (.otherMouseDown, .otherMouseUp, .center)
+        }
     }
 }
 
-/// Vision-backed element locator.
+/// Vision-backed element locator: OCRs the screenshot and returns rects (in
+/// top-left pixel coordinates) for text matching the query.
 public actor VisionElementLocator: ElementLocating {
     public init() {}
+
     public func locate(_ query: LocatorQuery, inScreenshotPNG png: Data) async throws -> [LocatorMatch] {
-        throw AIShotError.notImplemented("VisionElementLocator.locate (P1d)")
+        guard let source = CGImageSourceCreateWithData(png as CFData, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+            throw AIShotError.invalidRequest("locate: undecodable image")
+        }
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        let handler = VNImageRequestHandler(cgImage: image, options: [:])
+        try handler.perform([request])
+
+        let width = CGFloat(image.width)
+        let height = CGFloat(image.height)
+        let needle = query.text?.lowercased()
+        return (request.results ?? []).compactMap { observation -> LocatorMatch? in
+            guard let candidate = observation.topCandidates(1).first else { return nil }
+            if let needle, !needle.isEmpty, !candidate.string.lowercased().contains(needle) { return nil }
+            let box = observation.boundingBox // normalized, bottom-left origin
+            let rect = CGRect(
+                x: box.minX * width,
+                y: (1 - box.maxY) * height,
+                width: box.width * width,
+                height: box.height * height
+            )
+            return LocatorMatch(rect: rect, confidence: Double(candidate.confidence), text: candidate.string)
+        }
     }
 }
