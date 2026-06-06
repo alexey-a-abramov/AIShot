@@ -195,6 +195,22 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Captures the main display, returning the saved file path (for App Intents).
+    @discardableResult
+    func captureFullScreenReturningPath() async -> String? {
+        do {
+            let outcome = try await captureService.performCapture(
+                CaptureRequest(mode: .display, displayID: CGMainDisplayID(), format: settings.defaultFormat)
+            )
+            lastCapture = outcome.image
+            await refreshRecent()
+            return outcome.result.fileURL?.path
+        } catch {
+            lastError = String(describing: error)
+            return nil
+        }
+    }
+
     private func run(_ request: CaptureRequest) async {
         do {
             let outcome = try await captureService.performCapture(request)
