@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build & Test (SPM)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift toolchain
+        run: swift --version
+      - name: Build
+        run: swift build
+      - name: Test
+        run: swift test
+
+  app-build:
+    name: App target (XcodeGen) — best effort
+    runs-on: macos-15
+    # TODO: drop continue-on-error once the app target stabilizes (Phase P1a).
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build app (unsigned)
+        run: >
+          xcodebuild build
+          -project AIShot.xcodeproj
+          -scheme AIShot
+          -destination 'platform=macOS'
+          CODE_SIGNING_ALLOWED=NO
