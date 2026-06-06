@@ -20,6 +20,9 @@ packages:
   KeyboardShortcuts:
     url: https://github.com/sindresorhus/KeyboardShortcuts
     from: "2.0.0"
+  LaunchAtLogin:
+    url: https://github.com/sindresorhus/LaunchAtLogin-Modern
+    from: "1.0.0"
 
 targets:
   AIShot:
@@ -27,11 +30,14 @@ targets:
     platform: macOS
     sources:
       - path: App/Sources
+      - path: App/Resources/Localizable.xcstrings
     dependencies:
       - package: AIShotKit
         product: AIShotKit
       - package: KeyboardShortcuts
         product: KeyboardShortcuts
+      - package: LaunchAtLogin
+        product: LaunchAtLogin
     settings:
       base:
         PRODUCT_NAME: AIShot

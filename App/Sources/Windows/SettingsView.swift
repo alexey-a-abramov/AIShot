@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import KeyboardShortcuts
+import LaunchAtLogin
 import AIShotCore
 import AIShotShared
 
@@ -45,6 +46,9 @@ private struct GeneralSettingsView: View {
                 Toggle("Copy to clipboard", isOn: $model.settings.copyToClipboard)
                 Toggle("Show notification", isOn: $model.settings.showNotification)
                 Toggle("Play sound", isOn: $model.settings.playSound)
+            }
+            Section("Startup") {
+                LaunchAtLogin.Toggle("Launch AIShot at login")
             }
         }
         .formStyle(.grouped)

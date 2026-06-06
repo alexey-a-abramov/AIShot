@@ -1,0 +1,270 @@
+{
+  "sourceLanguage" : "en",
+  "version" : "1.0",
+  "strings" : {
+    "Accessibility" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Accessibilité" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Accesibilidad" } }
+      }
+    },
+    "After capture" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Après la capture" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Después de capturar" } }
+      }
+    },
+    "Capture" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Capture" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Captura" } }
+      }
+    },
+    "Capture a screenshot, then choose “Edit Last Capture”." : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Effectuez une capture, puis choisissez « Modifier la dernière capture »." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Haz una captura y luego elige «Editar última captura»." } }
+      }
+    },
+    "Capture Full Screen" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Capturer tout l’écran" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Capturar pantalla completa" } }
+      }
+    },
+    "Capture Region" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Capturer une région" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Capturar región" } }
+      }
+    },
+    "Capture Region…" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Capturer une région…" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Capturar región…" } }
+      }
+    },
+    "Capture Window" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Capturer une fenêtre" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Capturar ventana" } }
+      }
+    },
+    "Capture Window…" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Capturer une fenêtre…" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Capturar ventana…" } }
+      }
+    },
+    "Change…" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Modifier…" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Cambiar…" } }
+      }
+    },
+    "Confirm before clicks/typing" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Confirmer avant les clics/saisies" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Confirmar antes de clics/escritura" } }
+      }
+    },
+    "Copy" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Copier" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Copiar" } }
+      }
+    },
+    "Copy to clipboard" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Copier dans le presse-papiers" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Copiar al portapapeles" } }
+      }
+    },
+    "Edit Last Capture" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Modifier la dernière capture" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Editar última captura" } }
+      }
+    },
+    "Edit Screenshot" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Modifier la capture" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Editar captura" } }
+      }
+    },
+    "Embedded MCP server" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Serveur MCP intégré" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Servidor MCP integrado" } }
+      }
+    },
+    "Enable MCP server" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Activer le serveur MCP" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Activar servidor MCP" } }
+      }
+    },
+    "Filename" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Nom du fichier" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Nombre de archivo" } }
+      }
+    },
+    "Folder" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Dossier" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Carpeta" } }
+      }
+    },
+    "Format" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Format" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Formato" } }
+      }
+    },
+    "Full Screen" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Plein écran" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Pantalla completa" } }
+      }
+    },
+    "General" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Général" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "General" } }
+      }
+    },
+    "Granted" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Accordé" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Concedido" } }
+      }
+    },
+    "Grant" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Autoriser" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Conceder" } }
+      }
+    },
+    "Launch AIShot at login" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Lancer AIShot à l’ouverture de session" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Abrir AIShot al iniciar sesión" } }
+      }
+    },
+    "Nothing to edit" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Rien à modifier" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Nada que editar" } }
+      }
+    },
+    "No captures yet" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Aucune capture" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Aún no hay capturas" } }
+      }
+    },
+    "Notifications" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Notifications" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Notificaciones" } }
+      }
+    },
+    "Open Dashboard" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Ouvrir le tableau de bord" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Abrir panel" } }
+      }
+    },
+    "Permissions" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Autorisations" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Permisos" } }
+      }
+    },
+    "Play sound" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Émettre un son" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Reproducir sonido" } }
+      }
+    },
+    "Port" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Port" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Puerto" } }
+      }
+    },
+    "Quit AIShot" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Quitter AIShot" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Salir de AIShot" } }
+      }
+    },
+    "Region" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Région" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Región" } }
+      }
+    },
+    "Request" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Demander" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Solicitar" } }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Enregistrer" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Guardar" } }
+      }
+    },
+    "Saving" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Enregistrement" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Guardado" } }
+      }
+    },
+    "Screen Recording" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Enregistrement de l’écran" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Grabación de pantalla" } }
+      }
+    },
+    "Settings…" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Réglages…" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Ajustes…" } }
+      }
+    },
+    "Shortcuts" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Raccourcis" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Atajos" } }
+      }
+    },
+    "Show notification" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Afficher une notification" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Mostrar notificación" } }
+      }
+    },
+    "Startup" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Démarrage" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Inicio" } }
+      }
+    },
+    "Text" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Texte" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Texto" } }
+      }
+    },
+    "Window" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Fenêtre" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Ventana" } }
+      }
+    }
+  }
+}

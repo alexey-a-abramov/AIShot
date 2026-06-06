@@ -1,11 +1,13 @@
+import Foundation
 import AIShotShared
 
 extension Permission {
+    /// Localized display name (resolved at runtime via the String Catalog).
     var displayName: String {
         switch self {
-        case .screenRecording: "Screen Recording"
-        case .accessibility: "Accessibility"
-        case .notifications: "Notifications"
+        case .screenRecording: String(localized: "Screen Recording")
+        case .accessibility: String(localized: "Accessibility")
+        case .notifications: String(localized: "Notifications")
         }
     }
 
