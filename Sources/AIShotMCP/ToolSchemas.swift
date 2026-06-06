@@ -44,6 +44,11 @@ enum ToolSchemas {
                 ],
                 "format": format,
             ], required: ["annotations"])
+        case .beautify, .redact:
+            return object([
+                "imagePath": prop("string", "Path to the source image (or use imageBase64)"),
+                "imageBase64": prop("string", "Base64-encoded source image bytes"),
+            ])
         case .locate:
             return object([
                 "text": prop("string", "Text to find on screen"),

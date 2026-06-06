@@ -21,6 +21,7 @@ public actor ScreenshotMCPService {
     private let locator: any ElementLocating
     private let renderer: any AnnotationRendering
     private let recognizer: TextRecognizer
+    private let redactor: AutoRedactor
     private let confirmInput: InputConfirmation
 
     public init(
@@ -29,6 +30,7 @@ public actor ScreenshotMCPService {
         locator: any ElementLocating = VisionElementLocator(),
         renderer: any AnnotationRendering = CoreImageAnnotationRenderer(),
         recognizer: TextRecognizer = TextRecognizer(),
+        redactor: AutoRedactor = AutoRedactor(),
         confirmInput: @escaping InputConfirmation = { _, _ in false }
     ) {
         self.capture = capture
@@ -36,6 +38,7 @@ public actor ScreenshotMCPService {
         self.locator = locator
         self.renderer = renderer
         self.recognizer = recognizer
+        self.redactor = redactor
         self.confirmInput = confirmInput
     }
 
@@ -61,6 +64,8 @@ public actor ScreenshotMCPService {
             case .captureWindow: return try await runCapture(windowRequest(arguments))
             case .captureDisplay: return try await runCapture(displayRequest(arguments))
             case .annotate: return try await runAnnotate(arguments)
+            case .beautify: return try await runBeautify(arguments)
+            case .redact: return try await runRedact(arguments)
             case .locate: return try await runLocate(arguments)
             case .ocr: return try await runOCR(arguments)
             case .switchApp, .click, .typeText: return try await runPrivileged(tool, arguments)
@@ -131,18 +136,35 @@ public actor ScreenshotMCPService {
     // MARK: - Annotate
 
     private func runAnnotate(_ args: [String: Value]?) async throws -> CallTool.Result {
-        let base: Data
-        if let b64 = args?["imageBase64"]?.stringValue, let data = Data(base64Encoded: b64) {
-            base = data
-        } else if let path = args?["imagePath"]?.stringValue {
-            base = try Data(contentsOf: URL(fileURLWithPath: path))
-        } else {
-            throw AIShotError.invalidRequest("annotate requires imageBase64 or imagePath")
-        }
+        let base = try Self.loadImage(args, tool: "annotate")
         let document = try AnnotationDecoding.document(from: args?["annotations"], basePNG: base)
         let rendered = try await renderer.render(document, onto: base)
-        return CallTool.Result(content: [
-            .image(data: rendered.base64EncodedString(), mimeType: ImageFormat.png.mimeType, annotations: nil, _meta: nil),
+        return Self.imageResult(rendered)
+    }
+
+    private func runBeautify(_ args: [String: Value]?) async throws -> CallTool.Result {
+        let base = try Self.loadImage(args, tool: "beautify")
+        return Self.imageResult(try Beautifier.beautify(base))
+    }
+
+    private func runRedact(_ args: [String: Value]?) async throws -> CallTool.Result {
+        let base = try Self.loadImage(args, tool: "redact")
+        return Self.imageResult(try await redactor.redact(in: base))
+    }
+
+    private static func loadImage(_ args: [String: Value]?, tool: String) throws -> Data {
+        if let b64 = args?["imageBase64"]?.stringValue, let data = Data(base64Encoded: b64) {
+            return data
+        }
+        if let path = args?["imagePath"]?.stringValue {
+            return try Data(contentsOf: URL(fileURLWithPath: path))
+        }
+        throw AIShotError.invalidRequest("\(tool) requires imageBase64 or imagePath")
+    }
+
+    private static func imageResult(_ png: Data) -> CallTool.Result {
+        CallTool.Result(content: [
+            .image(data: png.base64EncodedString(), mimeType: ImageFormat.png.mimeType, annotations: nil, _meta: nil),
         ])
     }
 

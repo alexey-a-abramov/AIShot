@@ -19,6 +19,8 @@ public enum MCPTool: String, Sendable, CaseIterable {
 
     // ── Edit ──
     case annotate = "annotate"
+    case beautify = "beautify"
+    case redact = "redact"
 
     // ── Vision ──
     case locate = "locate"
@@ -40,6 +42,8 @@ public enum MCPTool: String, Sendable, CaseIterable {
         case .captureWindow: "Capture a single window by id; returns the image."
         case .captureDisplay: "Capture a full display by id; returns the image."
         case .annotate: "Draw arrows/rectangles/text on an image and return the result."
+        case .beautify: "Frame an image on a gradient background with padding and shadow."
+        case .redact: "Auto-detect and blur sensitive text (emails, cards, IPs) in an image."
         case .locate: "Find on-screen UI by text or template; returns matching rects."
         case .ocr: "Recognize text in a display or region and return it."
         case .switchApp: "Bring an application to the foreground by bundle id."
