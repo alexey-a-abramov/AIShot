@@ -49,6 +49,33 @@ public actor ScreenshotMCPService {
         }
     }
 
+    // MARK: - Resources (capture history)
+
+    /// Recent captures, exposed as MCP resources (`aishot://history/<uuid>`).
+    public func resourceList() async -> [Resource] {
+        let entries = (try? await capture.recentHistory(limit: 50)) ?? []
+        return entries.compactMap { entry in
+            guard let url = entry.fileURL else { return nil }
+            return Resource(
+                name: url.lastPathComponent,
+                uri: "aishot://history/\(entry.id.uuidString)",
+                description: "Capture \(entry.pixelWidth)×\(entry.pixelHeight)",
+                mimeType: "image/png"
+            )
+        }
+    }
+
+    /// Reads a history resource by URI, returning the image bytes.
+    public func readResource(uri: String) async -> ReadResource.Result {
+        let id = uri.split(separator: "/").last.map(String.init)
+        let entries = (try? await capture.recentHistory(limit: 200)) ?? []
+        if let id, let entry = entries.first(where: { $0.id.uuidString == id }),
+           let url = entry.fileURL, let data = try? Data(contentsOf: url) {
+            return ReadResource.Result(contents: [.binary(data, uri: uri, mimeType: "image/png")])
+        }
+        return ReadResource.Result(contents: [.text("resource not found: \(uri)", uri: uri)])
+    }
+
     /// Dispatches a tool call to the right engine and encodes the result.
     public func call(name: String, arguments: [String: Value]?) async -> CallTool.Result {
         guard let tool = MCPTool(rawValue: name) else {

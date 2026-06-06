@@ -13,7 +13,11 @@ public actor MCPServerHost {
         self.server = Server(
             name: name,
             version: version,
-            capabilities: .init(tools: .init(listChanged: false))
+            capabilities: .init(
+                prompts: .init(listChanged: false),
+                resources: .init(subscribe: false, listChanged: false),
+                tools: .init(listChanged: false)
+            )
         )
     }
 
@@ -25,6 +29,12 @@ public actor MCPServerHost {
         }
         _ = await server.withMethodHandler(CallTool.self) { params in
             await service.call(name: params.name, arguments: params.arguments)
+        }
+        _ = await server.withMethodHandler(ListResources.self) { _ in
+            ListResources.Result(resources: await service.resourceList())
+        }
+        _ = await server.withMethodHandler(ReadResource.self) { params in
+            await service.readResource(uri: params.uri)
         }
         try await server.start(transport: transport)
     }

@@ -72,6 +72,17 @@ struct MCPServiceTests {
         #expect(result.isError == true)
     }
 
+    @Test func capturesAppearAsResources() async throws {
+        let service = makeService()
+        _ = await service.call(name: "capture_display", arguments: ["displayID": 1])
+        let resources = await service.resourceList()
+        #expect(!resources.isEmpty)
+        let uri = try #require(resources.first?.uri)
+        #expect(uri.hasPrefix("aishot://history/"))
+        let read = await service.readResource(uri: uri)
+        #expect(!read.contents.isEmpty)
+    }
+
     @Test func roundTripOverInMemoryTransport() async throws {
         let host = MCPServerHost(service: makeService())
         let (clientTransport, serverTransport) = await InMemoryTransport.createConnectedPair()
