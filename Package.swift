@@ -58,6 +58,7 @@ let package = Package(
 
         // ─── Tests ───
         .testTarget(name: "AIShotCoreTests", dependencies: ["AIShotCore"]),
+        .testTarget(name: "AIShotCaptureTests", dependencies: ["AIShotCapture", "AIShotCore"]),
         .testTarget(name: "AIShotSharedTests", dependencies: ["AIShotShared"]),
         .testTarget(name: "AIShotAnnotationTests", dependencies: ["AIShotAnnotation"]),
         .testTarget(name: "AIShotMCPTests", dependencies: ["AIShotMCP"]),

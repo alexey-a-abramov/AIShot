@@ -3,49 +3,33 @@ import Foundation
 import AIShotCore
 import AIShotShared
 
-/// Raw capture output, before persistence. Deliberately platform-light (just
-/// PNG bytes + metadata) so callers and tests don't depend on AppKit/CGImage.
+/// Raw capture output, before persistence. Carries already-encoded bytes plus
+/// metadata, so it crosses actor boundaries safely (no `CGImage`).
 public struct CapturedImage: Sendable, Equatable {
     public var pixelSize: CGSize
     public var scale: CGFloat
-    public var pngData: Data
+    public var format: ImageFormat
+    public var data: Data
 
-    public init(pixelSize: CGSize, scale: CGFloat, pngData: Data) {
+    public init(pixelSize: CGSize, scale: CGFloat, format: ImageFormat, data: Data) {
         self.pixelSize = pixelSize
         self.scale = scale
-        self.pngData = pngData
+        self.format = format
+        self.data = data
     }
 }
 
 /// Abstraction over the capture backend so the MCP service, hotkeys, and UI all
 /// share one entry point — and so tests can inject a fake.
+///
+/// Coordinate convention: for `.region`, `CaptureRequest.rect` is in
+/// **display-local, top-left** points (the overlay/app converts global AppKit
+/// coordinates before calling; see `Geometry.flipToTopLeft`).
 public protocol ScreenCapturing: Sendable {
     /// All connected displays.
     func availableDisplays() async throws -> [DisplayInfo]
-    /// On-screen windows, excluding AIShot's own overlay windows.
+    /// On-screen windows, excluding AIShot's own windows.
     func availableWindows() async throws -> [WindowInfo]
-    /// Performs a capture and returns the raw image.
+    /// Performs a capture and returns the encoded image.
     func capture(_ request: CaptureRequest) async throws -> CapturedImage
-}
-
-/// ScreenCaptureKit-backed implementation.
-///
-/// Phase P1a wires this to `SCShareableContent` (enumeration) and
-/// `SCScreenshotManager.captureImage(contentFilter:configuration:)` (still
-/// capture), excluding our overlay via `SCContentFilter`, and multiplying the
-/// configuration size by the display's `backingScaleFactor` for Retina output.
-public actor ScreenCaptureKitEngine: ScreenCapturing {
-    public init() {}
-
-    public func availableDisplays() async throws -> [DisplayInfo] {
-        throw AIShotError.notImplemented("ScreenCaptureKitEngine.availableDisplays (P1a)")
-    }
-
-    public func availableWindows() async throws -> [WindowInfo] {
-        throw AIShotError.notImplemented("ScreenCaptureKitEngine.availableWindows (P1a)")
-    }
-
-    public func capture(_ request: CaptureRequest) async throws -> CapturedImage {
-        throw AIShotError.notImplemented("ScreenCaptureKitEngine.capture (P1a)")
-    }
 }
