@@ -74,6 +74,30 @@
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Fijar última captura" } }
       }
     },
+    "Beautify Last Capture" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Embellir la dernière capture" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Embellecer última captura" } }
+      }
+    },
+    "Redact Last Capture" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Masquer les données sensibles" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Redactar última captura" } }
+      }
+    },
+    "Start Recording" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Démarrer l’enregistrement" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Iniciar grabación" } }
+      }
+    },
+    "Stop Recording" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Arrêter l’enregistrement" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Detener grabación" } }
+      }
+    },
     "Change…" : {
       "localizations" : {
         "fr" : { "stringUnit" : { "state" : "translated", "value" : "Modifier…" } },

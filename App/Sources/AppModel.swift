@@ -4,6 +4,7 @@ import CoreGraphics
 import SwiftUI
 import AIShotCore
 import AIShotCapture
+import AIShotAnnotation
 import AIShotAutomation
 import AIShotPersistence
 import AIShotService
@@ -31,7 +32,11 @@ final class AppModel: ObservableObject {
     private let permissionsChecker = SystemPermissions()
     private let overlay = SelectionOverlayController()
     private let recognizer = TextRecognizer()
+    private let redactor = AutoRedactor()
+    private let recorder = ScreenRecorder()
     private let pinController = PinnedWindowController()
+
+    @Published var isRecording = false
 
     private init() {
         let store = UserDefaultsSettingsStore()
@@ -122,6 +127,54 @@ final class AppModel: ObservableObject {
     func pinLastCapture() {
         guard let capture = lastCapture, let image = NSImage(data: capture.data) else { return }
         pinController.pin(image)
+    }
+
+    /// Frames the last capture on a gradient background and exports it.
+    func beautifyLastCapture() {
+        guard let capture = lastCapture else { return }
+        Task {
+            do {
+                let output = try Beautifier.beautify(capture.data)
+                lastCapture = CapturedImage(pixelSize: capture.pixelSize, scale: capture.scale, format: .png, data: output)
+                await export(output, copy: true, save: true)
+                lastError = "Beautified."
+            } catch { lastError = String(describing: error) }
+        }
+    }
+
+    /// Auto-redacts sensitive text in the last capture and exports it.
+    func redactLastCapture() {
+        guard let capture = lastCapture else { return }
+        Task {
+            do {
+                let output = try await redactor.redact(in: capture.data)
+                lastCapture = CapturedImage(pixelSize: capture.pixelSize, scale: capture.scale, format: .png, data: output)
+                await export(output, copy: true, save: true)
+                lastError = "Redacted."
+            } catch { lastError = String(describing: error) }
+        }
+    }
+
+    /// Starts or stops screen recording of the main display.
+    func toggleRecording() {
+        Task {
+            do {
+                if await recorder.isRecording {
+                    let url = try await recorder.stop()
+                    isRecording = false
+                    lastError = "Saved recording: \(url.lastPathComponent)"
+                } else {
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "yyyy-MM-dd 'at' HH.mm.ss"
+                    let name = "AIShot Recording \(formatter.string(from: Date())).mp4"
+                    try FileManager.default.createDirectory(at: settings.saveDirectory, withIntermediateDirectories: true)
+                    let url = settings.saveDirectory.appendingPathComponent(name)
+                    try await recorder.start(displayID: CGMainDisplayID(), to: url)
+                    isRecording = true
+                    lastError = "Recording…"
+                }
+            } catch { lastError = String(describing: error) }
+        }
     }
 
     private func run(_ request: CaptureRequest) async {

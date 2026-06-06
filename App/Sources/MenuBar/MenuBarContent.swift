@@ -21,6 +21,18 @@ struct MenuBarContent: View {
         .disabled(model.lastCapture == nil)
         Button("Pin Last Capture") { model.pinLastCapture() }
             .disabled(model.lastCapture == nil)
+        Button("Beautify Last Capture") { model.beautifyLastCapture() }
+            .disabled(model.lastCapture == nil)
+        Button("Redact Last Capture") { model.redactLastCapture() }
+            .disabled(model.lastCapture == nil)
+
+        Divider()
+
+        if model.isRecording {
+            Button("Stop Recording") { model.toggleRecording() }
+        } else {
+            Button("Start Recording") { model.toggleRecording() }
+        }
 
         Divider()
 
