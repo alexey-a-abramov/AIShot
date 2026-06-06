@@ -2,7 +2,7 @@
 
 A modern, native macOS screen-capture tool built for **both humans and local AI agents**. Capture a region, window, or display; annotate it; save / copy / get notified — and let local agents (Claude Code, Claude Desktop, …) drive the same capabilities over an **embedded MCP server**, entirely on-device.
 
-> **Status:** Phase 0 — foundation scaffold. The engine modules compile and are unit-tested; capture, MCP, editing, and automation are stubbed with a clear roadmap. See [ROADMAP.md](ROADMAP.md).
+> **Status:** Phases 0–5 implemented. Capture, outputs, hotkeys, the embedded MCP server, annotation editor, automation, OCR, color picker, pin, beautify, auto-redact, screen + scrolling recording, an update checker, App Intents, and English/French/Spanish localization are built and covered by 56 tests (`swift test`); the app builds via `xcodebuild`. Runtime permission-gated behavior and notarization need a real machine/Apple account (gated + documented). See [ROADMAP.md](ROADMAP.md).
 
 ---
 
@@ -10,7 +10,7 @@ A modern, native macOS screen-capture tool built for **both humans and local AI 
 
 Existing screenshot apps are built for people clicking a shutter. AIShot is built for the workflow where an **AI agent** also needs to *see* the screen, *act* on it, and *hand images back* — without anything leaving the machine. It pairs a best-in-class human capture/annotation UX with a first-class local MCP surface.
 
-## Highlights (target)
+## Highlights
 
 - **Capture:** region / window / full-display / all-displays via [ScreenCaptureKit](https://developer.apple.com/documentation/screencapturekit/), Retina-correct, with our own overlay excluded from the shot.
 - **Outputs:** save to a configurable folder, copy to clipboard, rich notification with quick actions (Copy / Annotate / Reveal).
