@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  AIShot ships as a Developer ID, notarized, NON-sandboxed app.
+
+  Rationale: the App Sandbox blocks the synthetic CGEvent input and cross-app
+  Accessibility control that AIShot's automation/agent features require, and
+  that path is incompatible with the Mac App Store. Hardened Runtime is enabled
+  at sign time (ENABLE_HARDENED_RUNTIME=YES) and the build must be notarized.
+
+  See docs/PERMISSIONS.md and docs/SECURITY.md.
+-->
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
+</dict>
+</plist>

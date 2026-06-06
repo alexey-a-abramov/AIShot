@@ -1,0 +1,43 @@
+# XcodeGen spec for the AIShot app target.
+#
+# The generated `AIShot.xcodeproj` is NOT committed (see .gitignore) — regenerate
+# it with:  brew install xcodegen && xcodegen generate
+#
+# The app links the local SwiftPM package (AIShotKit) which holds all testable
+# engine code. Distribution is Developer ID, notarized, non-sandboxed.
+name: AIShot
+
+options:
+  bundleIdPrefix: com.aishot
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+packages:
+  AIShotKit:
+    path: .
+
+targets:
+  AIShot:
+    type: application
+    platform: macOS
+    sources:
+      - path: App/Sources
+    dependencies:
+      - package: AIShotKit
+        product: AIShotKit
+    settings:
+      base:
+        PRODUCT_NAME: AIShot
+        PRODUCT_BUNDLE_IDENTIFIER: com.aishot.app
+        MARKETING_VERSION: "0.0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        INFOPLIST_FILE: App/Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: App/Resources/AIShot.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        MACOSX_DEPLOYMENT_TARGET: "15.0"
+        COMBINE_HIDPI_IMAGES: YES
