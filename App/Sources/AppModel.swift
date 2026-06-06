@@ -34,6 +34,7 @@ final class AppModel: ObservableObject {
     private let recognizer = TextRecognizer()
     private let redactor = AutoRedactor()
     private let recorder = ScreenRecorder()
+    private let scroller = ScrollingCapture()
     private let pinController = PinnedWindowController()
 
     @Published var isRecording = false
@@ -97,6 +98,22 @@ final class AppModel: ObservableObject {
                     pasteboard.clearContents()
                     pasteboard.setString(text, forType: .string)
                     self.lastError = text.isEmpty ? "No text found." : "Copied \(text.count) characters."
+                } catch {
+                    self.lastError = String(describing: error)
+                }
+            }
+        }
+    }
+
+    /// Region-select, then scroll-and-stitch into one tall screenshot.
+    func scrollingCapture() {
+        overlay.begin { [weak self] selection in
+            guard let self, let selection else { return }
+            Task { @MainActor in
+                do {
+                    let data = try await self.scroller.capture(displayID: selection.displayID, rect: selection.rect, frames: 8)
+                    await self.export(data, copy: true, save: true)
+                    self.lastError = "Scrolling capture saved."
                 } catch {
                     self.lastError = String(describing: error)
                 }

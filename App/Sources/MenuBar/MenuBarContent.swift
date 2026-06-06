@@ -10,6 +10,7 @@ struct MenuBarContent: View {
         Button("Capture Window…") { model.captureFrontWindow() }
         Button("Capture Full Screen") { model.captureFullScreen() }
         Button("Capture Text (OCR)") { model.captureTextOCR() }
+        Button("Scrolling Capture") { model.scrollingCapture() }
 
         Divider()
 

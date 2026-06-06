@@ -62,6 +62,12 @@
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Capturar texto (OCR)" } }
       }
     },
+    "Scrolling Capture" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Capture défilante" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Captura con desplazamiento" } }
+      }
+    },
     "Pick Color" : {
       "localizations" : {
         "fr" : { "stringUnit" : { "state" : "translated", "value" : "Sélectionner une couleur" } },

@@ -42,6 +42,15 @@ struct ImageCodecTests {
             #expect(data.count > 0, "format \(format.rawValue) produced no data")
         }
     }
+
+    @Test func stitchVerticalTrimsOverlap() throws {
+        let a = try ImageCodec.encode(makeImage(20, 30), as: .png)
+        let b = try ImageCodec.encode(makeImage(20, 30), as: .png)
+        let stitched = try ImageStitcher.stitchVertical([a, b], overlap: 10)
+        let decoded = try ImageCodec.decode(stitched)
+        #expect(decoded.width == 20)
+        #expect(decoded.height == 50) // 30 + (30 - 10)
+    }
 }
 
 /// Live capture — requires Screen Recording. Skipped unless AISHOT_INTEGRATION=1.
