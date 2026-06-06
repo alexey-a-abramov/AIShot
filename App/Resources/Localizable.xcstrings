@@ -56,6 +56,24 @@
         "es" : { "stringUnit" : { "state" : "translated", "value" : "Capturar ventana…" } }
       }
     },
+    "Capture Text (OCR)" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Capturer du texte (OCR)" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Capturar texto (OCR)" } }
+      }
+    },
+    "Pick Color" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Sélectionner une couleur" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Elegir color" } }
+      }
+    },
+    "Pin Last Capture" : {
+      "localizations" : {
+        "fr" : { "stringUnit" : { "state" : "translated", "value" : "Épingler la dernière capture" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Fijar última captura" } }
+      }
+    },
     "Change…" : {
       "localizations" : {
         "fr" : { "stringUnit" : { "state" : "translated", "value" : "Modifier…" } },

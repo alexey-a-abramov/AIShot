@@ -9,12 +9,18 @@ struct MenuBarContent: View {
         Button("Capture Region…") { model.captureRegion() }
         Button("Capture Window…") { model.captureFrontWindow() }
         Button("Capture Full Screen") { model.captureFullScreen() }
+        Button("Capture Text (OCR)") { model.captureTextOCR() }
 
+        Divider()
+
+        Button("Pick Color") { model.pickColor() }
         Button("Edit Last Capture") {
             model.prepareEditorForLastCapture()
             openWindow(id: AIShotWindow.editor.rawValue)
         }
         .disabled(model.lastCapture == nil)
+        Button("Pin Last Capture") { model.pinLastCapture() }
+            .disabled(model.lastCapture == nil)
 
         Divider()
 

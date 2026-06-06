@@ -4,6 +4,7 @@ import CoreGraphics
 import SwiftUI
 import AIShotCore
 import AIShotCapture
+import AIShotAutomation
 import AIShotPersistence
 import AIShotService
 import AIShotShared
@@ -29,6 +30,8 @@ final class AppModel: ObservableObject {
     private let settingsStore: UserDefaultsSettingsStore
     private let permissionsChecker = SystemPermissions()
     private let overlay = SelectionOverlayController()
+    private let recognizer = TextRecognizer()
+    private let pinController = PinnedWindowController()
 
     private init() {
         let store = UserDefaultsSettingsStore()
@@ -72,6 +75,53 @@ final class AppModel: ObservableObject {
             }
             await run(CaptureRequest(mode: .window, windowID: target.id, format: settings.defaultFormat))
         }
+    }
+
+    /// Region-select, capture, OCR, and copy the recognized text to the clipboard.
+    func captureTextOCR() {
+        overlay.begin { [weak self] selection in
+            guard let self, let selection else { return }
+            Task { @MainActor in
+                do {
+                    let outcome = try await self.captureService.performCapture(
+                        CaptureRequest(mode: .region, displayID: selection.displayID, rect: selection.rect, format: .png),
+                        persist: false
+                    )
+                    let text = try await self.recognizer.recognizeText(in: outcome.image.data)
+                    let pasteboard = NSPasteboard.general
+                    pasteboard.clearContents()
+                    pasteboard.setString(text, forType: .string)
+                    self.lastError = text.isEmpty ? "No text found." : "Copied \(text.count) characters."
+                } catch {
+                    self.lastError = String(describing: error)
+                }
+            }
+        }
+    }
+
+    /// System eyedropper: copies the picked pixel color as a hex string.
+    func pickColor() {
+        NSColorSampler().show { [weak self] color in
+            guard let color else { return }
+            let srgb = color.usingColorSpace(.sRGB) ?? color
+            let hex = String(
+                format: "#%02X%02X%02X",
+                Int((srgb.redComponent * 255).rounded()),
+                Int((srgb.greenComponent * 255).rounded()),
+                Int((srgb.blueComponent * 255).rounded())
+            )
+            Task { @MainActor in
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(hex, forType: .string)
+                self?.lastError = "Copied \(hex)"
+            }
+        }
+    }
+
+    /// Pins the most recent capture in a floating window.
+    func pinLastCapture() {
+        guard let capture = lastCapture, let image = NSImage(data: capture.data) else { return }
+        pinController.pin(image)
     }
 
     private func run(_ request: CaptureRequest) async {
