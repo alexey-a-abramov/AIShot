@@ -10,6 +10,12 @@ struct MenuBarContent: View {
         Button("Capture Window…") { model.captureFrontWindow() }
         Button("Capture Full Screen") { model.captureFullScreen() }
 
+        Button("Edit Last Capture") {
+            model.prepareEditorForLastCapture()
+            openWindow(id: AIShotWindow.editor.rawValue)
+        }
+        .disabled(model.lastCapture == nil)
+
         Divider()
 
         Button("Open Dashboard") {

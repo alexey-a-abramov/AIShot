@@ -19,6 +19,12 @@ final class AppModel: ObservableObject {
     @Published var permissions: [Permission: PermissionStatus] = [:]
     @Published var lastError: String?
 
+    /// The most recent capture, available for "Edit Last Capture".
+    @Published private(set) var lastCapture: CapturedImage?
+    /// Image bytes handed to the editor window when it opens.
+    @Published var editorImageData: Data?
+    @Published var editorPixelSize: CGSize = .zero
+
     let captureService: CaptureService
     private let settingsStore: UserDefaultsSettingsStore
     private let permissionsChecker = SystemPermissions()
@@ -70,10 +76,34 @@ final class AppModel: ObservableObject {
 
     private func run(_ request: CaptureRequest) async {
         do {
-            _ = try await captureService.performCapture(request)
+            let outcome = try await captureService.performCapture(request)
+            lastCapture = outcome.image
             await refreshRecent()
         } catch {
             lastError = String(describing: error)
+        }
+    }
+
+    // MARK: - Editor
+
+    /// Loads the most recent capture into the editor state; the caller opens the
+    /// editor window.
+    func prepareEditorForLastCapture() {
+        guard let capture = lastCapture else { return }
+        editorImageData = capture.data
+        editorPixelSize = capture.pixelSize
+    }
+
+    /// Saves and/or copies edited image bytes using the current settings.
+    func export(_ data: Data, copy: Bool, save: Bool) async {
+        if save {
+            let name = FileNameFormatter(template: settings.fileNameTemplate)
+                .fileName(format: .png, date: Date())
+            _ = try? CaptureSaver().save(data, fileName: name, to: settings.saveDirectory)
+            await refreshRecent()
+        }
+        if copy {
+            try? await AppKitClipboard().copyImage(data)
         }
     }
 
