@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Home from '../components/Home.astro';
+import { ui } from '../i18n/ui';
+const t = ui.en;
+---
+
+<Layout lang="en" title={t.title} description={t.description}>
+  <Home lang="en" />
+</Layout>

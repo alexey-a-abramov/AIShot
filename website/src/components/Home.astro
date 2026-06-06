@@ -1,0 +1,110 @@
+---
+import { ui, languages, defaultLang, type Lang } from '../i18n/ui';
+
+interface Props { lang: Lang; }
+const { lang } = Astro.props;
+const t = ui[lang];
+
+const github = 'https://github.com/aishot/aishot';
+const langHref = (l: Lang) => (l === defaultLang ? '/' : `/${l}/`);
+---
+
+<header class="nav">
+  <a class="brand" href={langHref(lang)}>
+    <span class="brand-mark">◉</span> AIShot
+  </a>
+  <nav class="nav-links">
+    <a href="#features">{t.nav.features}</a>
+    <a href="#agents">{t.nav.agents}</a>
+    <a href="#how">{t.nav.how}</a>
+    <a href="#privacy">{t.nav.privacy}</a>
+    <a href="#download">{t.nav.download}</a>
+    <a href={github}>{t.nav.github}</a>
+  </nav>
+  <div class="lang-switch">
+    {Object.keys(languages).map((l) => (
+      <a href={langHref(l as Lang)} class={l === lang ? 'active' : ''}>{(l as string).toUpperCase()}</a>
+    ))}
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="badge">{t.hero.badge}</p>
+    <h1>{t.hero.title}</h1>
+    <p class="subtitle">{t.hero.subtitle}</p>
+    <div class="cta">
+      <a class="btn primary" href="#download">{t.hero.ctaDownload}</a>
+      <a class="btn ghost" href={github}>{t.hero.ctaGithub}</a>
+    </div>
+  </section>
+
+  <section id="features" class="section">
+    <h2>{t.featuresTitle}</h2>
+    <div class="grid">
+      {t.features.map((f) => (
+        <article class="card">
+          <h3>{f.title}</h3>
+          <p>{f.desc}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section id="agents" class="section alt">
+    <h2>{t.agents.title}</h2>
+    <p class="lead">{t.agents.body}</p>
+    <h3 class="tools-title">{t.agents.toolsTitle}</h3>
+    <ul class="tools">
+      {t.agents.tools.map((tool) => (
+        <li><code>{tool.name}</code><span>{tool.desc}</span></li>
+      ))}
+    </ul>
+    <p class="note">{t.agents.gated}</p>
+  </section>
+
+  <section id="how" class="section">
+    <h2>{t.how.title}</h2>
+    <ol class="steps">
+      {t.how.steps.map((s, i) => (
+        <li>
+          <span class="step-num">{i + 1}</span>
+          <div><h3>{s.title}</h3><p>{s.desc}</p></div>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section id="privacy" class="section alt">
+    <h2>{t.privacy.title}</h2>
+    <p class="lead">{t.privacy.body}</p>
+    <ul class="checks">
+      {t.privacy.points.map((p) => (<li>{p}</li>))}
+    </ul>
+  </section>
+
+  <section id="download" class="section">
+    <h2>{t.download.title}</h2>
+    <div class="grid two">
+      <article class="card">
+        <h3>{t.download.requirements}</h3>
+        <ul class="checks">
+          {t.download.reqItems.map((r) => (<li>{r}</li>))}
+        </ul>
+      </article>
+      <article class="card">
+        <h3>{t.download.buildTitle}</h3>
+        <pre><code>git clone {github}
+cd aishot
+swift test
+brew install xcodegen && xcodegen generate
+open AIShot.xcodeproj</code></pre>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p class="footer-tag">{t.footer.tagline}</p>
+  <p class="footer-note">{t.footer.note}</p>
+</footer>
