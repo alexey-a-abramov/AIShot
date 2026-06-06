@@ -25,6 +25,17 @@ struct AutomationTests {
         }
     }
 
+    @Test func ocrOnBlankImageReturnsEmpty() async throws {
+        let text = try await TextRecognizer().recognizeText(in: blankPNG(40, 30))
+        #expect(text.isEmpty)
+    }
+
+    @Test func ocrRejectsUndecodableData() async {
+        await #expect(throws: (any Error).self) {
+            _ = try await TextRecognizer().recognizeText(in: Data([9, 9, 9]))
+        }
+    }
+
     private func blankPNG(_ width: Int, _ height: Int) -> Data {
         let ctx = CGContext(
             data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,

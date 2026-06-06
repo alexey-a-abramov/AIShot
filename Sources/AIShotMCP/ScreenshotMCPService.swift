@@ -20,6 +20,7 @@ public actor ScreenshotMCPService {
     private let automation: AutomationEngine
     private let locator: any ElementLocating
     private let renderer: any AnnotationRendering
+    private let recognizer: TextRecognizer
     private let confirmInput: InputConfirmation
 
     public init(
@@ -27,12 +28,14 @@ public actor ScreenshotMCPService {
         automation: AutomationEngine = AutomationEngine(),
         locator: any ElementLocating = VisionElementLocator(),
         renderer: any AnnotationRendering = CoreImageAnnotationRenderer(),
+        recognizer: TextRecognizer = TextRecognizer(),
         confirmInput: @escaping InputConfirmation = { _, _ in false }
     ) {
         self.capture = capture
         self.automation = automation
         self.locator = locator
         self.renderer = renderer
+        self.recognizer = recognizer
         self.confirmInput = confirmInput
     }
 
@@ -59,6 +62,7 @@ public actor ScreenshotMCPService {
             case .captureDisplay: return try await runCapture(displayRequest(arguments))
             case .annotate: return try await runAnnotate(arguments)
             case .locate: return try await runLocate(arguments)
+            case .ocr: return try await runOCR(arguments)
             case .switchApp, .click, .typeText: return try await runPrivileged(tool, arguments)
             }
         } catch {
@@ -152,6 +156,26 @@ public actor ScreenshotMCPService {
         let query = LocatorQuery(text: args?["text"]?.stringValue)
         let matches = try await locator.locate(query, inScreenshotPNG: shot.image.data)
         return try json(matches)
+    }
+
+    // MARK: - OCR
+
+    private func runOCR(_ args: [String: Value]?) async throws -> CallTool.Result {
+        let displayID = args?["displayID"]?.intValue.map { UInt32($0) } ?? CGMainDisplayID()
+        let request: CaptureRequest
+        if let rect = args?["rect"]?.objectValue {
+            func value(_ key: String) -> CGFloat { CGFloat(rect[key]?.doubleValue ?? Double(rect[key]?.intValue ?? 0)) }
+            request = CaptureRequest(
+                mode: .region, displayID: displayID,
+                rect: CGRect(x: value("x"), y: value("y"), width: value("width"), height: value("height")),
+                format: .png
+            )
+        } else {
+            request = CaptureRequest(mode: .display, displayID: displayID, format: .png)
+        }
+        let shot = try await capture.performCapture(request, persist: false)
+        let text = try await recognizer.recognizeText(in: shot.image.data)
+        return CallTool.Result(content: [.text(text: text, annotations: nil, _meta: nil)])
     }
 
     // MARK: - Privileged (gated)

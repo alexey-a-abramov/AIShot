@@ -49,6 +49,15 @@ enum ToolSchemas {
                 "text": prop("string", "Text to find on screen"),
                 "displayID": prop("integer", "Display to search (defaults to main)"),
             ])
+        case .ocr:
+            return object([
+                "displayID": prop("integer", "Display to read (defaults to main)"),
+                "rect": [
+                    "type": "object",
+                    "description": "Optional region in display-local, top-left points",
+                    "properties": ["x": number, "y": number, "width": number, "height": number],
+                ],
+            ])
         case .switchApp:
             return object(["bundleID": prop("string", "Bundle identifier to activate")], required: ["bundleID"])
         case .click:
