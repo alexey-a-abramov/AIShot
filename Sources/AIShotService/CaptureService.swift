@@ -54,7 +54,7 @@ public actor CaptureService {
         }
 
         if settings.copyToClipboard, let clipboard {
-            try? clipboard.copyImage(image.data)
+            try? await clipboard.copyImage(image.data)
         }
 
         let result = CaptureResult(

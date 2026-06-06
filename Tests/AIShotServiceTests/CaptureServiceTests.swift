@@ -19,11 +19,9 @@ private struct FakeSettingsStore: SettingsStore {
     func save(_ settings: AppSettings) throws {}
 }
 
-private final class SpyClipboard: ClipboardWriting, @unchecked Sendable {
-    private let lock = NSLock()
-    private var storage: [Data] = []
-    var copied: [Data] { lock.lock(); defer { lock.unlock() }; return storage }
-    func copyImage(_ data: Data) throws { lock.lock(); storage.append(data); lock.unlock() }
+private actor SpyClipboard: ClipboardWriting {
+    private(set) var copied: [Data] = []
+    func copyImage(_ data: Data) async throws { copied.append(data) }
 }
 
 private actor SpyNotifier: NotificationPresenting {
@@ -67,7 +65,8 @@ struct CaptureServiceTests {
         #expect(outcome.result.fileURL != nil)
         #expect(FileManager.default.fileExists(atPath: outcome.result.fileURL!.path))
         #expect(outcome.result.pixelSize == CGSize(width: 10, height: 8))
-        #expect(clipboard.copied.count == 1)
+        let copied = await clipboard.copied
+        #expect(copied.count == 1)
         let notified = await notifier.count
         #expect(notified == 1)
         let recent = try await history.recent(limit: 5)
@@ -92,6 +91,7 @@ struct CaptureServiceTests {
 
         let outcome = try await service.performCapture(CaptureRequest(mode: .display), persist: false)
         #expect(outcome.result.fileURL == nil)
-        #expect(clipboard.copied.count == 1)
+        let copied = await clipboard.copied
+        #expect(copied.count == 1)
     }
 }

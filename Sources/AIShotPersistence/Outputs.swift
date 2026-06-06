@@ -2,9 +2,10 @@ import Foundation
 import AIShotCore
 
 /// Writes a captured image (encoded bytes, any ImageIO format) to the system
-/// clipboard (`NSPasteboard`).
+/// clipboard (`NSPasteboard`). Async so AppKit-backed implementations can hop
+/// to the main actor.
 public protocol ClipboardWriting: Sendable {
-    func copyImage(_ data: Data) throws
+    func copyImage(_ data: Data) async throws
 }
 
 /// Presents a capture notification with a thumbnail and quick actions
