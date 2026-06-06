@@ -27,6 +27,16 @@ public struct RGBAColor: Sendable, Codable, Equatable {
     public static let yellow = RGBAColor(r: 1.0, g: 0.80, b: 0.0)
     public static let black = RGBAColor(r: 0, g: 0, b: 0)
     public static let white = RGBAColor(r: 1, g: 1, b: 1)
+
+    /// The equivalent sRGB `CGColor` for drawing.
+    public var cgColor: CGColor {
+        CGColor(srgbRed: r, green: g, blue: b, alpha: a)
+    }
+
+    /// A copy with a different alpha.
+    public func withAlpha(_ alpha: Double) -> RGBAColor {
+        RGBAColor(r: r, g: g, b: b, a: alpha)
+    }
 }
 
 /// A single annotation. `points` are interpreted per-tool:

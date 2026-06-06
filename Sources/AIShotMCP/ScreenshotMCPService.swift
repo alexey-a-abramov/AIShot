@@ -137,9 +137,8 @@ public actor ScreenshotMCPService {
         }
         let document = try AnnotationDecoding.document(from: args?["annotations"], basePNG: base)
         let rendered = try await renderer.render(document, onto: base)
-        let format = imageFormat(args)
         return CallTool.Result(content: [
-            .image(data: rendered.base64EncodedString(), mimeType: format.mimeType, annotations: nil, _meta: nil),
+            .image(data: rendered.base64EncodedString(), mimeType: ImageFormat.png.mimeType, annotations: nil, _meta: nil),
         ])
     }
 
