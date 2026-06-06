@@ -1,0 +1,54 @@
+# ─── macOS ───
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# ─── Xcode ───
+# The .xcodeproj is generated from project.yml via XcodeGen — never commit it.
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+DerivedData/
+build/
+*.moved-aside
+*.hmap
+*.dSYM
+*.dSYM.zip
+*.ipa
+*.xcresult
+
+# ─── Swift Package Manager ───
+.build/
+.swiftpm/
+Packages/
+# Package.resolved is intentionally committed (the app pins its dependencies).
+
+# ─── Runtime / local data (app output + pre-existing artifacts in this folder) ───
+data/
+logs/
+*.sqlite
+*.sqlite-journal
+*.db
+*.log
+
+# ─── Secrets / signing ───
+.env
+.env.*
+!.env.example
+*.p12
+*.cer
+*.mobileprovision
+AuthKey_*.p8
+ExportOptions.plist
+
+# ─── Editors / tooling ───
+.idea/
+.vscode/
+*.swp
+coverage/
