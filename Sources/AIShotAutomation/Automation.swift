@@ -50,12 +50,15 @@ public struct LocatorQuery: Sendable, Equatable {
 }
 
 /// A located region with a confidence score in `0...1`.
-public struct LocatorMatch: Sendable, Equatable {
+public struct LocatorMatch: Sendable, Equatable, Codable {
     public var rect: CGRect
     public var confidence: Double
-    public init(rect: CGRect, confidence: Double) {
+    /// Recognized text for the match, when located by text.
+    public var text: String?
+    public init(rect: CGRect, confidence: Double, text: String? = nil) {
         self.rect = rect
         self.confidence = confidence
+        self.text = text
     }
 }
 

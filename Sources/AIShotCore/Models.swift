@@ -40,6 +40,16 @@ public enum ImageFormat: String, Sendable, Codable, CaseIterable {
         case .tiff: "public.tiff"
         }
     }
+
+    /// MIME type, e.g. for MCP image content.
+    public var mimeType: String {
+        switch self {
+        case .png: "image/png"
+        case .jpeg: "image/jpeg"
+        case .heic: "image/heic"
+        case .tiff: "image/tiff"
+        }
+    }
 }
 
 /// A fully specified capture instruction. The same type is produced by the UI,

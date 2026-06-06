@@ -29,6 +29,10 @@ let package = Package(
             ]
         )
     ],
+    dependencies: [
+        // Official Model Context Protocol Swift SDK (pre-1.0).
+        .package(url: "https://github.com/modelcontextprotocol/swift-sdk", from: "0.12.0"),
+    ],
     targets: [
         // Cross-cutting utilities: logging, geometry, permission model.
         .target(name: "AIShotShared"),
@@ -64,6 +68,16 @@ let package = Package(
             dependencies: [
                 "AIShotCore", "AIShotCapture", "AIShotAnnotation",
                 "AIShotAutomation", "AIShotPersistence", "AIShotService", "AIShotShared",
+                .product(name: "MCP", package: "swift-sdk"),
+            ]
+        ),
+
+        // Standalone stdio MCP server binary that local agents spawn.
+        .executableTarget(
+            name: "aishot-mcp-server",
+            dependencies: [
+                "AIShotMCP", "AIShotService", "AIShotCapture", "AIShotPersistence",
+                .product(name: "MCP", package: "swift-sdk"),
             ]
         ),
 
@@ -72,7 +86,13 @@ let package = Package(
         .testTarget(name: "AIShotCaptureTests", dependencies: ["AIShotCapture", "AIShotCore"]),
         .testTarget(name: "AIShotSharedTests", dependencies: ["AIShotShared"]),
         .testTarget(name: "AIShotAnnotationTests", dependencies: ["AIShotAnnotation"]),
-        .testTarget(name: "AIShotMCPTests", dependencies: ["AIShotMCP"]),
+        .testTarget(
+            name: "AIShotMCPTests",
+            dependencies: [
+                "AIShotMCP", "AIShotService", "AIShotCapture", "AIShotCore", "AIShotPersistence",
+                .product(name: "MCP", package: "swift-sdk"),
+            ]
+        ),
         .testTarget(name: "AIShotServiceTests", dependencies: ["AIShotService", "AIShotCore", "AIShotCapture", "AIShotPersistence"]),
         .testTarget(name: "AIShotPersistenceTests", dependencies: ["AIShotPersistence", "AIShotCore"]),
     ]
