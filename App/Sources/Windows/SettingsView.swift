@@ -96,16 +96,64 @@ private struct ShortcutsSettingsView: View {
 private struct MCPSettingsView: View {
     @EnvironmentObject private var model: AppModel
 
+    private let serverPath = "/Applications/AIShot.app/Contents/Helpers/aishot-mcp-server"
+    private var addCommand: String { "claude mcp add aishot -- \(serverPath)" }
+    private var jsonConfig: String {
+        """
+        {
+          "mcpServers": {
+            "aishot": { "command": "\(serverPath)" }
+          }
+        }
+        """
+    }
+
     var body: some View {
         Form {
             Section("Embedded MCP server") {
                 Toggle("Enable MCP server", isOn: $model.settings.mcpEnabled)
-                LabeledContent("Port", value: String(model.settings.mcpPort))
                 Toggle("Confirm before clicks/typing", isOn: $model.settings.mcpRequireConfirmationForInput)
+            }
+
+            Section("How to connect an AI agent") {
+                Text("AIShot ships a local MCP server so agents (Claude Code, Claude Desktop) can capture and read your screen on-device. Register it with the Claude Code CLI:")
+                    .font(.callout).foregroundStyle(.secondary)
+                codeRow(addCommand)
+                Text("Or add it to an MCP client's JSON config:")
+                    .font(.callout).foregroundStyle(.secondary)
+                codeRow(jsonConfig)
+                Text("Capture and read tools work right away. Click and type tools are confirmation-gated when the toggle above is on. The server is local-only.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section("Server binary") {
+                LabeledContent("Bundled path") {
+                    Text(serverPath).font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled).lineLimit(1).truncationMode(.middle)
+                }
+                Text("In a dev build the binary is at .build/debug/aishot-mcp-server (run `swift build`).")
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
         .onChange(of: model.settings) { _, _ in model.saveSettings() }
+    }
+
+    private func codeRow(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(text)
+                .font(.system(.caption, design: .monospaced))
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(text, forType: .string)
+            } label: {
+                Image(systemName: "doc.on.doc")
+            }
+            .buttonStyle(.borderless)
+            .help("Copy")
+        }
     }
 }
 

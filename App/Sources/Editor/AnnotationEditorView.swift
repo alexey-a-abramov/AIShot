@@ -4,11 +4,12 @@ import SwiftUI
 import AIShotAnnotation
 
 /// Interactive annotation editor: an icon tool palette plus a drag-to-draw
-/// canvas over the captured image.
+/// canvas over the captured image. Text labels are typed inline on the canvas.
 struct AnnotationEditorView: View {
     @StateObject var editor: EditorModel
     @EnvironmentObject private var app: AppModel
     @State private var nsImage: NSImage?
+    @FocusState private var textFieldFocused: Bool
 
     /// Tool palette: (tool, SF Symbol, tooltip).
     private static let palette: [(AnnotationTool, String, String)] = [
@@ -29,7 +30,7 @@ struct AnnotationEditorView: View {
             Divider()
             canvas
         }
-        .frame(minWidth: 680, minHeight: 480)
+        .frame(minWidth: 720, minHeight: 480)
         .onAppear { nsImage = NSImage(data: editor.imageData) }
     }
 
@@ -38,8 +39,7 @@ struct AnnotationEditorView: View {
             HStack(spacing: 2) {
                 ForEach(Self.palette, id: \.0) { tool, icon, help in
                     Button { editor.tool = tool } label: {
-                        Image(systemName: icon)
-                            .frame(width: 26, height: 22)
+                        Image(systemName: icon).frame(width: 26, height: 22)
                     }
                     .buttonStyle(.borderless)
                     .background(
@@ -61,19 +61,23 @@ struct AnnotationEditorView: View {
 
             Slider(value: $editor.lineWidth, in: 1...24).frame(width: 90).help("Thickness")
 
-            if editor.tool == .text || editor.tool == .counter {
-                TextField("Label", text: $editor.textInput).frame(width: 110)
-            }
-
             Spacer()
 
-            Button { editor.undo() } label: { Image(systemName: "arrow.uturn.backward") }
-                .disabled(!editor.canUndo).help("Undo")
-            Button { editor.redo() } label: { Image(systemName: "arrow.uturn.forward") }
-                .disabled(!editor.canRedo).help("Redo")
+            Button { editor.undo() } label: { Label("Undo", systemImage: "arrow.uturn.backward") }
+                .disabled(!editor.canUndo)
+                .keyboardShortcut("z", modifiers: .command)
+                .help("Undo (⌘Z)")
+            Button { editor.redo() } label: { Label("Redo", systemImage: "arrow.uturn.forward") }
+                .disabled(!editor.canRedo)
+                .keyboardShortcut("z", modifiers: [.command, .shift])
+                .help("Redo (⇧⌘Z)")
+
+            Divider().frame(height: 20)
+
             Button("Copy") { export(copy: true, save: false) }
             Button("Save") { export(copy: false, save: true) }
                 .keyboardShortcut("s", modifiers: .command)
+                .buttonStyle(.borderedProminent)
         }
         .padding(8)
     }
@@ -89,21 +93,51 @@ struct AnnotationEditorView: View {
                         .position(x: fit.midX, y: fit.midY)
                 }
                 Canvas { context, _ in
-                    let items = editor.annotations + (editor.draft.map { [$0] } ?? [])
+                    let items = (editor.annotations + (editor.draft.map { [$0] } ?? []))
+                        .filter { $0.id != editor.editingTextID }
                     for item in items { drawPreview(item, in: &context, fit: fit) }
                 }
                 .allowsHitTesting(false)
+
+                inlineTextEditor(fit: fit)
             }
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
+                        guard editor.tool != .text else { return }
                         let point = toImageSpace(value.location, fit: fit)
                         if editor.draft == nil { editor.begin(at: point) } else { editor.extend(to: point) }
                     }
-                    .onEnded { _ in editor.commit() }
+                    .onEnded { value in
+                        if editor.tool == .text {
+                            editor.beginText(at: toImageSpace(value.location, fit: fit))
+                        } else {
+                            editor.commit()
+                        }
+                    }
             )
             .background(Color(nsColor: .windowBackgroundColor))
+            .onChange(of: editor.editingTextID) { _, id in textFieldFocused = (id != nil) }
+        }
+    }
+
+    @ViewBuilder
+    private func inlineTextEditor(fit: CGRect) -> some View {
+        if let id = editor.editingTextID,
+           let annotation = editor.annotations.first(where: { $0.id == id }) {
+            let pos = toViewSpace(annotation.points[0], fit: fit)
+            let fontPx = max(12, (annotation.fontSize ?? 18) * fit.width / max(editor.pixelSize.width, 1))
+            TextField("Type label…", text: editor.textBinding())
+                .textFieldStyle(.plain)
+                .font(.system(size: fontPx, weight: .semibold))
+                .foregroundStyle(Color(annotation.color))
+                .frame(width: 240)
+                .padding(3)
+                .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 4))
+                .focused($textFieldFocused)
+                .offset(x: pos.x, y: pos.y)
+                .onSubmit { editor.endTextEditing() }
         }
     }
 

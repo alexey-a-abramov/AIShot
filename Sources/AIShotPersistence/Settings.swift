@@ -32,7 +32,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         playSound: Bool = true,
         openEditorAfterCapture: Bool = true,
         launchAtLogin: Bool = false,
-        mcpEnabled: Bool = true,
+        mcpEnabled: Bool = false,
         mcpPort: Int = 47600,
         mcpRequireConfirmationForInput: Bool = true
     ) {

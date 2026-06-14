@@ -1,23 +1,25 @@
 import SwiftUI
+import KeyboardShortcuts
 
-/// Contents of the menu-bar dropdown, wired to `AppModel` actions.
+/// Contents of the menu-bar dropdown, wired to `AppModel` actions. Each item
+/// shows its currently-assigned global shortcut (configurable in Settings).
 struct MenuBarContent: View {
     @EnvironmentObject private var model: AppModel
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        Button("Capture Region…") { model.captureRegion() }
-        Button("Capture Window…") { model.captureFrontWindow() }
-        Button("Capture Full Screen") { model.captureFullScreen() }
-        Button("Capture Text (OCR)") { model.captureTextOCR() }
-        Button("Scrolling Capture") { model.scrollingCapture() }
+        Button { model.captureRegion() } label: { menuLabel("Capture Region…", .captureRegion) }
+        Button { model.captureFrontWindow() } label: { menuLabel("Capture Window…", .captureWindow) }
+        Button { model.captureFullScreen() } label: { menuLabel("Capture Full Screen", .captureFullScreen) }
+        Button { model.captureTextOCR() } label: { menuLabel("Capture Text (OCR)", .captureText) }
+        Button { model.scrollingCapture() } label: { menuLabel("Scrolling Capture", .scrollingCapture) }
 
         Divider()
 
-        Button("Pick Color") { model.pickColor() }
-        Button("Edit Last Capture") { model.editLastCapture() }
+        Button { model.pickColor() } label: { menuLabel("Pick Color", .pickColor) }
+        Button { model.editLastCapture() } label: { menuLabel("Edit Last Capture", .editLastCapture) }
             .disabled(model.lastCapture == nil)
-        Button("Pin Last Capture") { model.pinLastCapture() }
+        Button { model.pinLastCapture() } label: { menuLabel("Pin Last Capture", .pinLastCapture) }
             .disabled(model.lastCapture == nil)
         Button("Beautify Last Capture") { model.beautifyLastCapture() }
             .disabled(model.lastCapture == nil)
@@ -27,9 +29,9 @@ struct MenuBarContent: View {
         Divider()
 
         if model.isRecording {
-            Button("Stop Recording") { model.toggleRecording() }
+            Button { model.toggleRecording() } label: { menuLabel("Stop Recording", .toggleRecording) }
         } else {
-            Button("Start Recording") { model.toggleRecording() }
+            Button { model.toggleRecording() } label: { menuLabel("Start Recording", .toggleRecording) }
         }
 
         Divider()
@@ -48,5 +50,15 @@ struct MenuBarContent: View {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q", modifiers: .command)
+    }
+
+    /// A menu title with its assigned global shortcut appended (e.g. "⌘⌥⇧4").
+    @ViewBuilder
+    private func menuLabel(_ title: LocalizedStringKey, _ name: KeyboardShortcuts.Name) -> some View {
+        if let shortcut = KeyboardShortcuts.getShortcut(for: name) {
+            Text(title) + Text(verbatim: "   \(shortcut)").foregroundColor(.secondary)
+        } else {
+            Text(title)
+        }
     }
 }
