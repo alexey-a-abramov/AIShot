@@ -96,6 +96,22 @@
         }
       }
     },
+    "Bundled path" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ruta incluida"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chemin intégré"
+          }
+        }
+      }
+    },
     "Capture" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -582,6 +598,22 @@
         }
       }
     },
+    "How to connect an AI agent" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cómo conectar un agente de IA"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comment connecter un agent IA"
+          }
+        }
+      }
+    },
     "Label" : {
       "localizations" : {
         "es" : {
@@ -1032,6 +1064,22 @@
         }
       }
     },
+    "Server binary" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Binario del servidor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Binaire du serveur"
+          }
+        }
+      }
+    },
     "Settings…" : {
       "localizations" : {
         "es" : {
@@ -1214,6 +1262,22 @@
         }
       }
     },
+    "Type label…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe una etiqueta…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisir une étiquette…"
+          }
+        }
+      }
+    },
     "Undo" : {
       "localizations" : {
         "es" : {
@@ -1230,7 +1294,22 @@
         }
       }
     },
-    "Use the menu bar or ⌘⌥⇧4 to capture a region." : {},
+    "Use the menu bar or ⌘⌥⇧4 to capture a region." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa la barra de menús o ⌘⌥⇧4 para capturar una región."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisez la barre des menus ou ⌘⌥⇧4 pour capturer une région."
+          }
+        }
+      }
+    },
     "Window" : {
       "extractionState" : "stale",
       "localizations" : {
