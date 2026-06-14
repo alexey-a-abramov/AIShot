@@ -15,11 +15,8 @@ struct MenuBarContent: View {
         Divider()
 
         Button("Pick Color") { model.pickColor() }
-        Button("Edit Last Capture") {
-            model.prepareEditorForLastCapture()
-            openWindow(id: AIShotWindow.editor.rawValue)
-        }
-        .disabled(model.lastCapture == nil)
+        Button("Edit Last Capture") { model.editLastCapture() }
+            .disabled(model.lastCapture == nil)
         Button("Pin Last Capture") { model.pinLastCapture() }
             .disabled(model.lastCapture == nil)
         Button("Beautify Last Capture") { model.beautifyLastCapture() }

@@ -12,6 +12,8 @@ public struct AppSettings: Sendable, Codable, Equatable {
     public var copyToClipboard: Bool
     public var showNotification: Bool
     public var playSound: Bool
+    /// Open the annotation editor automatically after an interactive capture.
+    public var openEditorAfterCapture: Bool
     public var launchAtLogin: Bool
     /// Whether the embedded MCP server is running.
     public var mcpEnabled: Bool
@@ -28,6 +30,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         copyToClipboard: Bool = true,
         showNotification: Bool = true,
         playSound: Bool = true,
+        openEditorAfterCapture: Bool = true,
         launchAtLogin: Bool = false,
         mcpEnabled: Bool = true,
         mcpPort: Int = 47600,
@@ -39,14 +42,33 @@ public struct AppSettings: Sendable, Codable, Equatable {
         self.copyToClipboard = copyToClipboard
         self.showNotification = showNotification
         self.playSound = playSound
+        self.openEditorAfterCapture = openEditorAfterCapture
         self.launchAtLogin = launchAtLogin
         self.mcpEnabled = mcpEnabled
         self.mcpPort = mcpPort
         self.mcpRequireConfirmationForInput = mcpRequireConfirmationForInput
     }
 
+    /// Resilient decoding: unknown/missing keys fall back to defaults so adding
+    /// a setting never invalidates a user's stored configuration.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let fallback = AppSettings.default
+        saveDirectory = try container.decodeIfPresent(URL.self, forKey: .saveDirectory) ?? fallback.saveDirectory
+        defaultFormat = try container.decodeIfPresent(ImageFormat.self, forKey: .defaultFormat) ?? fallback.defaultFormat
+        fileNameTemplate = try container.decodeIfPresent(String.self, forKey: .fileNameTemplate) ?? fallback.fileNameTemplate
+        copyToClipboard = try container.decodeIfPresent(Bool.self, forKey: .copyToClipboard) ?? fallback.copyToClipboard
+        showNotification = try container.decodeIfPresent(Bool.self, forKey: .showNotification) ?? fallback.showNotification
+        playSound = try container.decodeIfPresent(Bool.self, forKey: .playSound) ?? fallback.playSound
+        openEditorAfterCapture = try container.decodeIfPresent(Bool.self, forKey: .openEditorAfterCapture) ?? fallback.openEditorAfterCapture
+        launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? fallback.launchAtLogin
+        mcpEnabled = try container.decodeIfPresent(Bool.self, forKey: .mcpEnabled) ?? fallback.mcpEnabled
+        mcpPort = try container.decodeIfPresent(Int.self, forKey: .mcpPort) ?? fallback.mcpPort
+        mcpRequireConfirmationForInput = try container.decodeIfPresent(Bool.self, forKey: .mcpRequireConfirmationForInput) ?? fallback.mcpRequireConfirmationForInput
+    }
+
     /// Sensible defaults: save to `~/Pictures/AIShot`, PNG, copy to clipboard,
-    /// notify, and require confirmation for risky MCP actions.
+    /// notify, open the editor after capture, and confirm risky MCP actions.
     public static var `default`: AppSettings {
         let pictures = FileManager.default
             .urls(for: .picturesDirectory, in: .userDomainMask).first

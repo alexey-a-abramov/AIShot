@@ -17,15 +17,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     private func registerHotkeys() {
-        KeyboardShortcuts.onKeyUp(for: .captureRegion) {
-            Task { @MainActor in AppModel.shared.captureRegion() }
+        func on(_ name: KeyboardShortcuts.Name, _ action: @escaping @MainActor (AppModel) -> Void) {
+            KeyboardShortcuts.onKeyUp(for: name) {
+                Task { @MainActor in action(AppModel.shared) }
+            }
         }
-        KeyboardShortcuts.onKeyUp(for: .captureWindow) {
-            Task { @MainActor in AppModel.shared.captureFrontWindow() }
-        }
-        KeyboardShortcuts.onKeyUp(for: .captureFullScreen) {
-            Task { @MainActor in AppModel.shared.captureFullScreen() }
-        }
+        on(.captureRegion) { $0.captureRegion() }
+        on(.captureWindow) { $0.captureFrontWindow() }
+        on(.captureFullScreen) { $0.captureFullScreen() }
+        on(.captureText) { $0.captureTextOCR() }
+        on(.scrollingCapture) { $0.scrollingCapture() }
+        on(.pickColor) { $0.pickColor() }
+        on(.pinLastCapture) { $0.pinLastCapture() }
+        on(.editLastCapture) { $0.editLastCapture() }
+        on(.toggleRecording) { $0.toggleRecording() }
     }
 
     private func registerNotifications() {

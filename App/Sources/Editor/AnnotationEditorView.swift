@@ -3,32 +3,25 @@ import CoreGraphics
 import SwiftUI
 import AIShotAnnotation
 
-/// Window host: builds an `EditorModel` from the app's pending editor image.
-struct AnnotationEditorHost: View {
-    @EnvironmentObject private var app: AppModel
-
-    var body: some View {
-        if let data = app.editorImageData, app.editorPixelSize.width > 0 {
-            AnnotationEditorView(editor: EditorModel(imageData: data, pixelSize: app.editorPixelSize))
-                .environmentObject(app)
-                .id(data.count)
-        } else {
-            ContentUnavailableView(
-                "Nothing to edit",
-                systemImage: "pencil.slash",
-                description: Text("Capture a screenshot, then choose “Edit Last Capture”.")
-            )
-            .frame(minWidth: 460, minHeight: 320)
-        }
-    }
-}
-
-/// Interactive annotation editor: a toolbar plus a drag-to-draw canvas over the
-/// captured image.
+/// Interactive annotation editor: an icon tool palette plus a drag-to-draw
+/// canvas over the captured image.
 struct AnnotationEditorView: View {
     @StateObject var editor: EditorModel
     @EnvironmentObject private var app: AppModel
     @State private var nsImage: NSImage?
+
+    /// Tool palette: (tool, SF Symbol, tooltip).
+    private static let palette: [(AnnotationTool, String, String)] = [
+        (.arrow, "arrow.up.right", "Arrow"),
+        (.line, "line.diagonal", "Line"),
+        (.rectangle, "rectangle", "Rectangle"),
+        (.ellipse, "circle", "Ellipse"),
+        (.text, "textformat", "Text label"),
+        (.counter, "number.circle", "Numbered step"),
+        (.highlighter, "highlighter", "Highlighter"),
+        (.blur, "drop.fill", "Blur"),
+        (.pixelate, "squareshape.split.3x3", "Pixelate"),
+    ]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -36,36 +29,48 @@ struct AnnotationEditorView: View {
             Divider()
             canvas
         }
-        .frame(minWidth: 640, minHeight: 480)
+        .frame(minWidth: 680, minHeight: 480)
         .onAppear { nsImage = NSImage(data: editor.imageData) }
     }
 
     private var toolbar: some View {
-        HStack(spacing: 12) {
-            Picker("Tool", selection: $editor.tool) {
-                ForEach(AnnotationTool.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0) }
+        HStack(spacing: 10) {
+            HStack(spacing: 2) {
+                ForEach(Self.palette, id: \.0) { tool, icon, help in
+                    Button { editor.tool = tool } label: {
+                        Image(systemName: icon)
+                            .frame(width: 26, height: 22)
+                    }
+                    .buttonStyle(.borderless)
+                    .background(
+                        editor.tool == tool ? Color.accentColor.opacity(0.28) : Color.clear,
+                        in: RoundedRectangle(cornerRadius: 6)
+                    )
+                    .help(help)
+                }
             }
-            .labelsHidden()
-            .frame(width: 140)
+
+            Divider().frame(height: 20)
 
             ColorPicker("", selection: Binding(
                 get: { Color(editor.color) },
                 set: { editor.color = RGBAColor($0) }
             ))
             .labelsHidden()
+            .help("Color")
 
-            Slider(value: $editor.lineWidth, in: 1...24).frame(width: 110)
+            Slider(value: $editor.lineWidth, in: 1...24).frame(width: 90).help("Thickness")
 
             if editor.tool == .text || editor.tool == .counter {
-                TextField("Text", text: $editor.textInput).frame(width: 120)
+                TextField("Label", text: $editor.textInput).frame(width: 110)
             }
 
             Spacer()
 
             Button { editor.undo() } label: { Image(systemName: "arrow.uturn.backward") }
-                .disabled(!editor.canUndo)
+                .disabled(!editor.canUndo).help("Undo")
             Button { editor.redo() } label: { Image(systemName: "arrow.uturn.forward") }
-                .disabled(!editor.canRedo)
+                .disabled(!editor.canRedo).help("Redo")
             Button("Copy") { export(copy: true, save: false) }
             Button("Save") { export(copy: false, save: true) }
                 .keyboardShortcut("s", modifiers: .command)
@@ -141,18 +146,32 @@ struct AnnotationEditorView: View {
     private func drawPreview(_ annotation: Annotation, in context: inout GraphicsContext, fit: CGRect) {
         guard !annotation.points.isEmpty else { return }
         let color = Color(annotation.color)
-        let width = annotation.lineWidth * fit.width / max(editor.pixelSize.width, 1)
+        let width = max(1, annotation.lineWidth * fit.width / max(editor.pixelSize.width, 1))
         func viewPoint(_ index: Int) -> CGPoint {
             toViewSpace(annotation.points[min(index, annotation.points.count - 1)], fit: fit)
         }
         let box = CGRect(origin: viewPoint(0), size: .zero).union(CGRect(origin: viewPoint(1), size: .zero))
 
         switch annotation.tool {
-        case .line, .arrow:
+        case .line:
             var path = Path()
             path.move(to: viewPoint(0))
             path.addLine(to: viewPoint(1))
             context.stroke(path, with: .color(color), lineWidth: width)
+        case .arrow:
+            let from = viewPoint(0)
+            let tip = viewPoint(1)
+            var shaft = Path()
+            shaft.move(to: from)
+            shaft.addLine(to: tip)
+            context.stroke(shaft, with: .color(color), style: StrokeStyle(lineWidth: width, lineCap: .round))
+            let head = ArrowGeometry.arrowHead(from: from, tip: tip, length: max(10, width * 3.5))
+            var triangle = Path()
+            triangle.move(to: tip)
+            triangle.addLine(to: head.left)
+            triangle.addLine(to: head.right)
+            triangle.closeSubpath()
+            context.fill(triangle, with: .color(color))
         case .rectangle:
             context.stroke(Path(box), with: .color(color), lineWidth: width)
         case .ellipse:
@@ -162,10 +181,13 @@ struct AnnotationEditorView: View {
         case .blur, .pixelate:
             context.fill(Path(box), with: .color(.gray.opacity(0.6)))
         case .text:
-            context.draw(Text(annotation.text ?? "").foregroundColor(color), at: viewPoint(0), anchor: .topLeading)
+            context.draw(
+                Text(annotation.text ?? "").font(.system(size: max(11, width * 5))).foregroundColor(color),
+                at: viewPoint(0), anchor: .topLeading
+            )
         case .counter:
             let center = viewPoint(0)
-            let radius: CGFloat = 12
+            let radius = max(10, width * 4)
             context.fill(
                 Path(ellipseIn: CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)),
                 with: .color(color)

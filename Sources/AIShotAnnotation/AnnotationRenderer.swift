@@ -108,14 +108,20 @@ public actor CoreImageAnnotationRenderer: AnnotationRendering {
             guard annotation.points.count >= 2 else { return }
             let from = annotation.points[0]
             let tip = annotation.points[1]
-            let head = ArrowGeometry.arrowHead(from: from, tip: tip, length: max(12, CGFloat(annotation.lineWidth) * 4))
+            let head = ArrowGeometry.arrowHead(from: from, tip: tip, length: max(12, CGFloat(annotation.lineWidth) * 4.5))
+            // Shaft.
             ctx.beginPath()
             ctx.move(to: from)
             ctx.addLine(to: tip)
-            ctx.move(to: head.left)
-            ctx.addLine(to: tip)
-            ctx.addLine(to: head.right)
             ctx.strokePath()
+            // Filled triangular head.
+            ctx.beginPath()
+            ctx.move(to: tip)
+            ctx.addLine(to: head.left)
+            ctx.addLine(to: head.right)
+            ctx.closePath()
+            ctx.setFillColor(color)
+            ctx.fillPath()
         case .rectangle:
             ctx.stroke(Self.rect(from: annotation.points))
         case .ellipse:

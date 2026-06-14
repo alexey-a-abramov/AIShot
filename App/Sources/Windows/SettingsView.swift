@@ -20,7 +20,7 @@ struct SettingsView: View {
             PermissionsSettingsView()
                 .tabItem { Label("Permissions", systemImage: "lock.shield") }
         }
-        .frame(width: 520, height: 380)
+        .frame(width: 540, height: 460)
     }
 }
 
@@ -43,6 +43,7 @@ private struct GeneralSettingsView: View {
                 TextField("Filename", text: $model.settings.fileNameTemplate)
             }
             Section("After capture") {
+                Toggle("Open editor after capture", isOn: $model.settings.openEditorAfterCapture)
                 Toggle("Copy to clipboard", isOn: $model.settings.copyToClipboard)
                 Toggle("Show notification", isOn: $model.settings.showNotification)
                 Toggle("Play sound", isOn: $model.settings.playSound)
@@ -70,12 +71,25 @@ private struct GeneralSettingsView: View {
 private struct ShortcutsSettingsView: View {
     var body: some View {
         Form {
-            KeyboardShortcuts.Recorder("Capture Region", name: .captureRegion)
-            KeyboardShortcuts.Recorder("Capture Window", name: .captureWindow)
-            KeyboardShortcuts.Recorder("Capture Full Screen", name: .captureFullScreen)
+            Section("Capture") {
+                KeyboardShortcuts.Recorder("Region", name: .captureRegion)
+                KeyboardShortcuts.Recorder("Window", name: .captureWindow)
+                KeyboardShortcuts.Recorder("Full Screen", name: .captureFullScreen)
+                KeyboardShortcuts.Recorder("Text (OCR)", name: .captureText)
+                KeyboardShortcuts.Recorder("Scrolling", name: .scrollingCapture)
+            }
+            Section("Tools & actions") {
+                KeyboardShortcuts.Recorder("Pick Color", name: .pickColor)
+                KeyboardShortcuts.Recorder("Pin Last Capture", name: .pinLastCapture)
+                KeyboardShortcuts.Recorder("Edit Last Capture", name: .editLastCapture)
+                KeyboardShortcuts.Recorder("Recording", name: .toggleRecording)
+            }
+            Section {
+                Text("Click a field and press keys to set a global shortcut; press ⌫ to clear it.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
-        .padding()
     }
 }
 

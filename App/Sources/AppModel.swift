@@ -23,9 +23,6 @@ final class AppModel: ObservableObject {
 
     /// The most recent capture, available for "Edit Last Capture".
     @Published private(set) var lastCapture: CapturedImage?
-    /// Image bytes handed to the editor window when it opens.
-    @Published var editorImageData: Data?
-    @Published var editorPixelSize: CGSize = .zero
 
     let captureService: CaptureService
     private let settingsStore: UserDefaultsSettingsStore
@@ -36,6 +33,7 @@ final class AppModel: ObservableObject {
     private let recorder = ScreenRecorder()
     private let scroller = ScrollingCapture()
     private let pinController = PinnedWindowController()
+    private let editorWindow = EditorWindowController()
     private let updater = UpdaterController()
 
     @Published var isRecording = false
@@ -216,6 +214,9 @@ final class AppModel: ObservableObject {
             let outcome = try await captureService.performCapture(request)
             lastCapture = outcome.image
             await refreshRecent()
+            if settings.openEditorAfterCapture {
+                openEditor(imageData: outcome.image.data, pixelSize: outcome.image.pixelSize)
+            }
         } catch {
             lastError = String(describing: error)
         }
@@ -223,12 +224,15 @@ final class AppModel: ObservableObject {
 
     // MARK: - Editor
 
-    /// Loads the most recent capture into the editor state; the caller opens the
-    /// editor window.
-    func prepareEditorForLastCapture() {
+    /// Opens the annotation editor on the given image.
+    func openEditor(imageData: Data, pixelSize: CGSize) {
+        editorWindow.present(imageData: imageData, pixelSize: pixelSize, app: self)
+    }
+
+    /// Opens the editor on the most recent capture.
+    func editLastCapture() {
         guard let capture = lastCapture else { return }
-        editorImageData = capture.data
-        editorPixelSize = capture.pixelSize
+        openEditor(imageData: capture.data, pixelSize: capture.pixelSize)
     }
 
     /// Saves and/or copies edited image bytes using the current settings.

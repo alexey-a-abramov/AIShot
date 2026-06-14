@@ -18,11 +18,6 @@ struct AIShotApp: App {
         }
         .defaultSize(width: 820, height: 560)
 
-        Window("Edit Screenshot", id: AIShotWindow.editor.rawValue) {
-            AnnotationEditorHost().environmentObject(model)
-        }
-        .defaultSize(width: 900, height: 640)
-
         Settings {
             SettingsView().environmentObject(model)
         }
@@ -32,5 +27,4 @@ struct AIShotApp: App {
 /// Identifiers for openable windows.
 enum AIShotWindow: String {
     case dashboard
-    case editor
 }
