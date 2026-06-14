@@ -47,6 +47,22 @@
         }
       }
     },
+    "Arrow" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flèche"
+          }
+        }
+      }
+    },
     "Beautify Last Capture" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -64,6 +80,22 @@
         }
       }
     },
+    "Blur" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desenfoque"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flou"
+          }
+        }
+      }
+    },
     "Capture" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -77,22 +109,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Capture"
-          }
-        }
-      }
-    },
-    "Capture a screenshot, then choose “Edit Last Capture”." : {
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Haz una captura y luego elige «Editar última captura»."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Effectuez une capture, puis choisissez « Modifier la dernière capture »."
           }
         }
       }
@@ -199,6 +215,22 @@
         }
       }
     },
+    "Capture a screenshot, then choose “Edit Last Capture”." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz una captura y luego elige «Editar última captura»."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effectuez une capture, puis choisissez « Modifier la dernière capture »."
+          }
+        }
+      }
+    },
     "Change…" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -229,6 +261,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechercher les mises à jour…"
+          }
+        }
+      }
+    },
+    "Click a field and press keys to set a global shortcut; press ⌫ to clear it." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic en un campo y pulsa teclas para definir un atajo global; pulsa ⌫ para borrarlo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez sur un champ et appuyez sur des touches pour définir un raccourci global ; appuyez sur ⌫ pour l’effacer."
+          }
+        }
+      }
+    },
+    "Color" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couleur"
           }
         }
       }
@@ -284,6 +348,22 @@
         }
       }
     },
+    "Drag to select an area  ·  Esc to cancel" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrastra para seleccionar un área  ·  Esc para cancelar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faites glisser pour sélectionner une zone  ·  Échap pour annuler"
+          }
+        }
+      }
+    },
     "Edit Last Capture" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -314,6 +394,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Modifier la capture"
+          }
+        }
+      }
+    },
+    "Ellipse" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elipse"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ellipse"
           }
         }
       }
@@ -470,6 +566,38 @@
         }
       }
     },
+    "Highlighter" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resaltador"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surligneur"
+          }
+        }
+      }
+    },
+    "Label" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étiquette"
+          }
+        }
+      }
+    },
     "Launch AIShot at login" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -483,6 +611,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lancer AIShot à l’ouverture de session"
+          }
+        }
+      }
+    },
+    "Line" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Línea"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ligne"
           }
         }
       }
@@ -538,6 +682,22 @@
         }
       }
     },
+    "Numbered step" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paso numerado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étape numérotée"
+          }
+        }
+      }
+    },
     "Open Dashboard" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -551,6 +711,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir le tableau de bord"
+          }
+        }
+      }
+    },
+    "Open editor after capture" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir el editor tras capturar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir l’éditeur après la capture"
           }
         }
       }
@@ -606,6 +782,22 @@
         }
       }
     },
+    "Pixelate" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixelar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixelliser"
+          }
+        }
+      }
+    },
     "Play sound" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -657,6 +849,38 @@
         }
       }
     },
+    "Recording" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grabación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrement"
+          }
+        }
+      }
+    },
+    "Rectangle" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rectángulo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rectangle"
+          }
+        }
+      }
+    },
     "Redact Last Capture" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -670,6 +894,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Masquer les données sensibles"
+          }
+        }
+      }
+    },
+    "Redo" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rehacer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rétablir"
           }
         }
       }
@@ -755,6 +995,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enregistrement de l’écran"
+          }
+        }
+      }
+    },
+    "Scrolling" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desplazamiento"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Défilante"
           }
         }
       }
@@ -894,9 +1150,87 @@
         }
       }
     },
-    "Use the menu bar or ⌘⌥⇧4 to capture a region." : {
-
+    "Text (OCR)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto (OCR)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte (OCR)"
+          }
+        }
+      }
     },
+    "Text label" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiqueta de texto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étiquette de texte"
+          }
+        }
+      }
+    },
+    "Thickness" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grosor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Épaisseur"
+          }
+        }
+      }
+    },
+    "Tools & actions" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herramientas y acciones"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outils et actions"
+          }
+        }
+      }
+    },
+    "Undo" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deshacer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "Use the menu bar or ⌘⌥⇧4 to capture a region." : {},
     "Window" : {
       "extractionState" : "stale",
       "localizations" : {
