@@ -47,6 +47,22 @@
         }
       }
     },
+    "After granting in System Settings, switch back to AIShot — status refreshes automatically." : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tras conceder el permiso en Ajustes del Sistema, vuelve a AIShot: el estado se actualiza automáticamente."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Après l’autorisation dans Réglages Système, revenez à AIShot — l’état se rafraîchit automatiquement."
+          }
+        }
+      }
+    },
     "Arrow" : {
       "localizations" : {
         "es" : {
@@ -614,6 +630,22 @@
         }
       }
     },
+    "Include cursor" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Incluir el cursor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inclure le curseur"
+          }
+        }
+      }
+    },
     "Label" : {
       "localizations" : {
         "es" : {
@@ -877,6 +909,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quitter AIShot"
+          }
+        }
+      }
+    },
+    "Re-check" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volver a comprobar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revérifier"
           }
         }
       }
