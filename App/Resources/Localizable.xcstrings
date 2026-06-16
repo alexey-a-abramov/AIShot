@@ -380,6 +380,22 @@
         }
       }
     },
+    "Default action" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acción predeterminada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Action par défaut"
+          }
+        }
+      }
+    },
     "Drag to select an area  ·  Esc to cancel" : {
       "localizations" : {
         "es" : {
@@ -779,18 +795,18 @@
         }
       }
     },
-    "Open editor after capture" : {
+    "Open editor" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Abrir el editor tras capturar"
+            "value" : "Abrir el editor"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ouvrir l’éditeur après la capture"
+            "value" : "Ouvrir l’éditeur"
           }
         }
       }
@@ -1041,6 +1057,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enregistrer"
+          }
+        }
+      }
+    },
+    "Save only" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solo guardar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer seulement"
           }
         }
       }
