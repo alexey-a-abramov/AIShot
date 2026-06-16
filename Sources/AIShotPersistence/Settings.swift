@@ -1,6 +1,16 @@
 import Foundation
 import AIShotCore
 
+/// What AIShot does automatically after an interactive capture.
+public enum PostCaptureAction: String, Sendable, Codable, CaseIterable {
+    /// Save and copy the image to the clipboard.
+    case copyToClipboard
+    /// Save and open the annotation editor.
+    case openEditor
+    /// Save only.
+    case saveOnly
+}
+
 /// User-configurable settings, surfaced in the Settings window and honored by
 /// the capture pipeline and MCP server.
 public struct AppSettings: Sendable, Codable, Equatable {
@@ -11,11 +21,10 @@ public struct AppSettings: Sendable, Codable, Equatable {
     public var fileNameTemplate: String
     /// Render the mouse cursor into captures by default.
     public var includeCursor: Bool
-    public var copyToClipboard: Bool
+    /// The default action after an interactive capture.
+    public var postCaptureAction: PostCaptureAction
     public var showNotification: Bool
     public var playSound: Bool
-    /// Open the annotation editor automatically after an interactive capture.
-    public var openEditorAfterCapture: Bool
     public var launchAtLogin: Bool
     /// Whether the embedded MCP server is running.
     public var mcpEnabled: Bool
@@ -30,10 +39,9 @@ public struct AppSettings: Sendable, Codable, Equatable {
         defaultFormat: ImageFormat = .png,
         fileNameTemplate: String = "AIShot {date} at {time}",
         includeCursor: Bool = false,
-        copyToClipboard: Bool = true,
+        postCaptureAction: PostCaptureAction = .copyToClipboard,
         showNotification: Bool = true,
         playSound: Bool = true,
-        openEditorAfterCapture: Bool = true,
         launchAtLogin: Bool = false,
         mcpEnabled: Bool = false,
         mcpPort: Int = 47600,
@@ -43,10 +51,9 @@ public struct AppSettings: Sendable, Codable, Equatable {
         self.defaultFormat = defaultFormat
         self.fileNameTemplate = fileNameTemplate
         self.includeCursor = includeCursor
-        self.copyToClipboard = copyToClipboard
+        self.postCaptureAction = postCaptureAction
         self.showNotification = showNotification
         self.playSound = playSound
-        self.openEditorAfterCapture = openEditorAfterCapture
         self.launchAtLogin = launchAtLogin
         self.mcpEnabled = mcpEnabled
         self.mcpPort = mcpPort
@@ -62,18 +69,17 @@ public struct AppSettings: Sendable, Codable, Equatable {
         defaultFormat = try container.decodeIfPresent(ImageFormat.self, forKey: .defaultFormat) ?? fallback.defaultFormat
         fileNameTemplate = try container.decodeIfPresent(String.self, forKey: .fileNameTemplate) ?? fallback.fileNameTemplate
         includeCursor = try container.decodeIfPresent(Bool.self, forKey: .includeCursor) ?? fallback.includeCursor
-        copyToClipboard = try container.decodeIfPresent(Bool.self, forKey: .copyToClipboard) ?? fallback.copyToClipboard
+        postCaptureAction = try container.decodeIfPresent(PostCaptureAction.self, forKey: .postCaptureAction) ?? fallback.postCaptureAction
         showNotification = try container.decodeIfPresent(Bool.self, forKey: .showNotification) ?? fallback.showNotification
         playSound = try container.decodeIfPresent(Bool.self, forKey: .playSound) ?? fallback.playSound
-        openEditorAfterCapture = try container.decodeIfPresent(Bool.self, forKey: .openEditorAfterCapture) ?? fallback.openEditorAfterCapture
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? fallback.launchAtLogin
         mcpEnabled = try container.decodeIfPresent(Bool.self, forKey: .mcpEnabled) ?? fallback.mcpEnabled
         mcpPort = try container.decodeIfPresent(Int.self, forKey: .mcpPort) ?? fallback.mcpPort
         mcpRequireConfirmationForInput = try container.decodeIfPresent(Bool.self, forKey: .mcpRequireConfirmationForInput) ?? fallback.mcpRequireConfirmationForInput
     }
 
-    /// Sensible defaults: save to `~/Pictures/AIShot`, PNG, copy to clipboard,
-    /// notify, open the editor after capture, and confirm risky MCP actions.
+    /// Sensible defaults: save to `~/Pictures/AIShot`, PNG, copy to clipboard
+    /// after capture, notify, and confirm risky MCP actions.
     public static var `default`: AppSettings {
         let pictures = FileManager.default
             .urls(for: .picturesDirectory, in: .userDomainMask).first

@@ -3,6 +3,7 @@ import SwiftUI
 import KeyboardShortcuts
 import LaunchAtLogin
 import AIShotCore
+import AIShotPersistence
 import AIShotShared
 
 /// Preferences bound to `AppSettings`, persisted on change.
@@ -46,8 +47,11 @@ private struct GeneralSettingsView: View {
                 Toggle("Include cursor", isOn: $model.settings.includeCursor)
             }
             Section("After capture") {
-                Toggle("Open editor after capture", isOn: $model.settings.openEditorAfterCapture)
-                Toggle("Copy to clipboard", isOn: $model.settings.copyToClipboard)
+                Picker("Default action", selection: $model.settings.postCaptureAction) {
+                    Text("Copy to clipboard").tag(PostCaptureAction.copyToClipboard)
+                    Text("Open editor").tag(PostCaptureAction.openEditor)
+                    Text("Save only").tag(PostCaptureAction.saveOnly)
+                }
             }
             Section("Notifications") {
                 Toggle("Show notification", isOn: $model.settings.showNotification)

@@ -28,7 +28,7 @@ private func makeService() -> ScreenshotMCPService {
     var settings = AppSettings.default
     settings.saveDirectory = FileManager.default.temporaryDirectory
         .appendingPathComponent("aishot-mcp-\(UUID().uuidString)", isDirectory: true)
-    settings.copyToClipboard = false
+    settings.postCaptureAction = .saveOnly
     settings.showNotification = false
     let capture = CaptureService(
         engine: FakeCapturing(),

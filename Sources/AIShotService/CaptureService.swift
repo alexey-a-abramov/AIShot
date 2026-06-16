@@ -53,7 +53,7 @@ public actor CaptureService {
             fileURL = try saver.save(image.data, fileName: name, to: settings.saveDirectory)
         }
 
-        if settings.copyToClipboard, let clipboard {
+        if settings.postCaptureAction == .copyToClipboard, let clipboard {
             try? await clipboard.copyImage(image.data)
         }
 

@@ -47,7 +47,7 @@ struct CaptureServiceTests {
 
         var settings = AppSettings.default
         settings.saveDirectory = dir
-        settings.copyToClipboard = true
+        settings.postCaptureAction = .copyToClipboard
         settings.showNotification = true
 
         let clipboard = SpyClipboard()
@@ -78,7 +78,7 @@ struct CaptureServiceTests {
     @Test func persistFalseSkipsFileButStillCopies() async throws {
         var settings = AppSettings.default
         settings.saveDirectory = tempDir()
-        settings.copyToClipboard = true
+        settings.postCaptureAction = .copyToClipboard
         settings.showNotification = false
 
         let clipboard = SpyClipboard()

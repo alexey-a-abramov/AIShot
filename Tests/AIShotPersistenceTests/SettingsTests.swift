@@ -8,7 +8,7 @@ struct SettingsTests {
         let settings = AppSettings.default
         #expect(settings.defaultFormat == .png)
         #expect(!settings.fileNameTemplate.isEmpty)
-        #expect(settings.copyToClipboard)
+        #expect(settings.postCaptureAction == .copyToClipboard)
         // Risky MCP actions must be confirmation-gated out of the box.
         #expect(settings.mcpRequireConfirmationForInput)
         #expect(settings.saveDirectory.lastPathComponent == "AIShot")

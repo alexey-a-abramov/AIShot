@@ -63,7 +63,7 @@ struct UserDefaultsSettingsStoreTests {
         #expect(try store.load() == AppSettings.default)
 
         var modified = AppSettings.default
-        modified.copyToClipboard = false
+        modified.postCaptureAction = .saveOnly
         modified.mcpPort = 50000
         try store.save(modified)
         #expect(try store.load() == modified)

@@ -36,6 +36,14 @@ final class AppModel: ObservableObject {
     private let editorWindow = EditorWindowController()
     private let updater = UpdaterController()
 
+    private lazy var settingsWindow = HostingWindowController(
+        title: "Settings", size: NSSize(width: 560, height: 480)
+    ) { [unowned self] in AnyView(SettingsView().environmentObject(self)) }
+
+    private lazy var dashboardWindow = HostingWindowController(
+        title: "AIShot", size: NSSize(width: 860, height: 580)
+    ) { [unowned self] in AnyView(DashboardView().environmentObject(self)) }
+
     @Published var isRecording = false
 
     private init() {
@@ -231,7 +239,7 @@ final class AppModel: ObservableObject {
             let outcome = try await captureService.performCapture(request)
             lastCapture = outcome.image
             await refreshRecent()
-            if settings.openEditorAfterCapture {
+            if settings.postCaptureAction == .openEditor {
                 openEditor(imageData: outcome.image.data, pixelSize: outcome.image.pixelSize)
             }
         } catch {
@@ -251,6 +259,9 @@ final class AppModel: ObservableObject {
         guard let capture = lastCapture else { return }
         openEditor(imageData: capture.data, pixelSize: capture.pixelSize)
     }
+
+    func openSettings() { settingsWindow.show() }
+    func openDashboard() { dashboardWindow.show() }
 
     /// Saves and/or copies edited image bytes using the current settings.
     func export(_ data: Data, copy: Bool, save: Bool) async {
