@@ -20,6 +20,10 @@ macOS prompts for each permission **once**. After a decision, you cannot re-trig
 
 TCC ties grants to the app's signing identity. An **unstable or ad-hoc signature causes repeated re-prompts** and lost grants. Use a stable Developer ID identity for all builds you test permissions with.
 
+### Developer builds (unsigned)
+
+A locally-built, unsigned/ad-hoc app gets a *new* identity on every rebuild, so a freshly reinstalled copy is treated as a different app and the Accessibility / Screen-Recording grant you gave the previous copy no longer applies — the Permissions pane then correctly shows "not granted". To make grants persist across rebuilds during development, sign every build with the **same** self-signed certificate via [`scripts/dev-sign.sh`](../scripts/dev-sign.sh) (create a "AIShot Dev" Code Signing certificate once in Keychain Access, then grant the permissions a single time). The in-app "Re-check" button and the on-activation refresh report the *true* status; they can't restore a grant that macOS has invalidated.
+
 ## Sandbox vs. Developer ID — the core decision
 
 The automation/agent features (synthetic `CGEvent` input + cross-app `AXUIElement` control) are **effectively incompatible with the App Sandbox**, and that path is incompatible with the Mac App Store:
