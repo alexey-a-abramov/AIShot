@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import KeyboardShortcuts
 
@@ -37,11 +38,10 @@ struct MenuBarContent: View {
         Divider()
 
         Button("Open Dashboard") {
+            NSApp.activate(ignoringOtherApps: true)
             openWindow(id: AIShotWindow.dashboard.rawValue)
         }
-        SettingsLink {
-            Text("Settings…")
-        }
+        Button("Settings…") { openSettingsWindow() }
         Button("Check for Updates…") { model.checkForUpdates() }
 
         Divider()
@@ -50,6 +50,15 @@ struct MenuBarContent: View {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q", modifiers: .command)
+    }
+
+    /// Activates the app (an accessory/menu-bar app isn't frontmost) and opens
+    /// the Settings window, so it appears immediately rather than behind.
+    private func openSettingsWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        // macOS 14+ action for the SwiftUI `Settings` scene (was
+        // `showPreferencesWindow:` pre-14). Deployment target is macOS 15.
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 
     /// A menu title with its assigned global shortcut appended (e.g. "⌘⌥⇧4").

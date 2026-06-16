@@ -37,14 +37,19 @@ private struct GeneralSettingsView: View {
                         Button("Change…", action: chooseFolder)
                     }
                 }
+                TextField("Filename", text: $model.settings.fileNameTemplate)
+            }
+            Section("Capture") {
                 Picker("Format", selection: $model.settings.defaultFormat) {
                     ForEach(ImageFormat.allCases, id: \.self) { Text($0.rawValue.uppercased()).tag($0) }
                 }
-                TextField("Filename", text: $model.settings.fileNameTemplate)
+                Toggle("Include cursor", isOn: $model.settings.includeCursor)
             }
             Section("After capture") {
                 Toggle("Open editor after capture", isOn: $model.settings.openEditorAfterCapture)
                 Toggle("Copy to clipboard", isOn: $model.settings.copyToClipboard)
+            }
+            Section("Notifications") {
                 Toggle("Show notification", isOn: $model.settings.showNotification)
                 Toggle("Play sound", isOn: $model.settings.playSound)
             }
@@ -168,11 +173,16 @@ private struct PermissionsSettingsView: View {
                     Spacer()
                     let status = model.permissions[permission] ?? .notDetermined
                     if status == .granted {
-                        Text("Granted").foregroundStyle(.green)
+                        Label("Granted", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
                     } else {
                         Button("Request") { model.request(permission) }
                     }
                 }
+            }
+            Section {
+                Button("Re-check") { Task { await model.refreshPermissions() } }
+                Text("After granting in System Settings, switch back to AIShot — status refreshes automatically.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

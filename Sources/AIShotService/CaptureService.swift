@@ -65,7 +65,7 @@ public actor CaptureService {
         )
 
         if settings.showNotification, let notifier {
-            await notifier.present(result)
+            await notifier.present(result, sound: settings.playSound)
         }
 
         try? await history.record(HistoryEntry(

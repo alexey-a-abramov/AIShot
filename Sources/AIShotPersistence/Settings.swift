@@ -9,6 +9,8 @@ public struct AppSettings: Sendable, Codable, Equatable {
     public var defaultFormat: ImageFormat
     /// Filename template. Tokens: `{date}`, `{time}`, `{app}`, `{seq}`.
     public var fileNameTemplate: String
+    /// Render the mouse cursor into captures by default.
+    public var includeCursor: Bool
     public var copyToClipboard: Bool
     public var showNotification: Bool
     public var playSound: Bool
@@ -27,6 +29,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         saveDirectory: URL,
         defaultFormat: ImageFormat = .png,
         fileNameTemplate: String = "AIShot {date} at {time}",
+        includeCursor: Bool = false,
         copyToClipboard: Bool = true,
         showNotification: Bool = true,
         playSound: Bool = true,
@@ -39,6 +42,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         self.saveDirectory = saveDirectory
         self.defaultFormat = defaultFormat
         self.fileNameTemplate = fileNameTemplate
+        self.includeCursor = includeCursor
         self.copyToClipboard = copyToClipboard
         self.showNotification = showNotification
         self.playSound = playSound
@@ -57,6 +61,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         saveDirectory = try container.decodeIfPresent(URL.self, forKey: .saveDirectory) ?? fallback.saveDirectory
         defaultFormat = try container.decodeIfPresent(ImageFormat.self, forKey: .defaultFormat) ?? fallback.defaultFormat
         fileNameTemplate = try container.decodeIfPresent(String.self, forKey: .fileNameTemplate) ?? fallback.fileNameTemplate
+        includeCursor = try container.decodeIfPresent(Bool.self, forKey: .includeCursor) ?? fallback.includeCursor
         copyToClipboard = try container.decodeIfPresent(Bool.self, forKey: .copyToClipboard) ?? fallback.copyToClipboard
         showNotification = try container.decodeIfPresent(Bool.self, forKey: .showNotification) ?? fallback.showNotification
         playSound = try container.decodeIfPresent(Bool.self, forKey: .playSound) ?? fallback.playSound

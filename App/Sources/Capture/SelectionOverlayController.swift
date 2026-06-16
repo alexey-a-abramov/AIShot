@@ -24,7 +24,7 @@ final class SelectionOverlayController {
             let view = SelectionView(screen: screen) { [weak self] result in
                 self?.finish(result)
             }
-            let window = NSWindow(
+            let window = OverlayWindow(
                 contentRect: screen.frame,
                 styleMask: .borderless,
                 backing: .buffered,
@@ -38,6 +38,7 @@ final class SelectionOverlayController {
             window.contentView = view
             window.setFrame(screen.frame, display: true)
             window.makeKeyAndOrderFront(nil)
+            window.makeFirstResponder(view)
             windows.append(window)
         }
         NSApp.activate(ignoringOtherApps: true)
@@ -54,6 +55,13 @@ final class SelectionOverlayController {
         cancel()
         completion?(result)
     }
+}
+
+/// A borderless window that can still become key, so the selection view
+/// receives keyboard events (Esc to cancel).
+private final class OverlayWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
 }
 
 /// The per-screen tracking view that draws the dimmed overlay, crosshair, and

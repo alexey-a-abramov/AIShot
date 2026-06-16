@@ -49,6 +49,13 @@ final class AppModel: ObservableObject {
             clipboard: AppKitClipboard(),
             notifier: UserNotificationPresenter()
         )
+        // Re-check permissions whenever the app becomes active (e.g. after the
+        // user grants a permission in System Settings and switches back).
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in await self?.refreshPermissions() }
+        }
     }
 
     // MARK: - Capture actions
@@ -61,6 +68,7 @@ final class AppModel: ObservableObject {
                     mode: .region,
                     displayID: selection.displayID,
                     rect: selection.rect,
+                    includeCursor: self.settings.includeCursor,
                     format: self.settings.defaultFormat
                 ))
             }
@@ -68,7 +76,12 @@ final class AppModel: ObservableObject {
     }
 
     func captureFullScreen() {
-        Task { await run(CaptureRequest(mode: .display, displayID: CGMainDisplayID(), format: settings.defaultFormat)) }
+        Task {
+            await run(CaptureRequest(
+                mode: .display, displayID: CGMainDisplayID(),
+                includeCursor: settings.includeCursor, format: settings.defaultFormat
+            ))
+        }
     }
 
     func captureFrontWindow() {
@@ -78,7 +91,10 @@ final class AppModel: ObservableObject {
                 lastError = "No window available to capture."
                 return
             }
-            await run(CaptureRequest(mode: .window, windowID: target.id, format: settings.defaultFormat))
+            await run(CaptureRequest(
+                mode: .window, windowID: target.id,
+                includeCursor: settings.includeCursor, format: settings.defaultFormat
+            ))
         }
     }
 
@@ -198,7 +214,8 @@ final class AppModel: ObservableObject {
     func captureFullScreenReturningPath() async -> String? {
         do {
             let outcome = try await captureService.performCapture(
-                CaptureRequest(mode: .display, displayID: CGMainDisplayID(), format: settings.defaultFormat)
+                CaptureRequest(mode: .display, displayID: CGMainDisplayID(),
+                               includeCursor: settings.includeCursor, format: settings.defaultFormat)
             )
             lastCapture = outcome.image
             await refreshRecent()

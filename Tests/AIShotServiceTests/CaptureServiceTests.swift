@@ -26,7 +26,8 @@ private actor SpyClipboard: ClipboardWriting {
 
 private actor SpyNotifier: NotificationPresenting {
     private(set) var count = 0
-    func present(_ result: CaptureResult) async { count += 1 }
+    private(set) var lastSound: Bool?
+    func present(_ result: CaptureResult, sound: Bool) async { count += 1; lastSound = sound }
 }
 
 struct CaptureServiceTests {

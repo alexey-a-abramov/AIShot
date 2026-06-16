@@ -11,7 +11,7 @@ public protocol ClipboardWriting: Sendable {
 /// Presents a capture notification with a thumbnail and quick actions
 /// (Copy / Annotate / Reveal). Backed by `UserNotifications`.
 public protocol NotificationPresenting: Sendable {
-    func present(_ result: CaptureResult) async
+    func present(_ result: CaptureResult, sound: Bool) async
 }
 
 /// One entry in the capture history shown in the dashboard.

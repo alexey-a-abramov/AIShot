@@ -9,7 +9,7 @@ struct UserNotificationPresenter: NotificationPresenting {
     static let copyActionIdentifier = "copy"
     static let revealActionIdentifier = "reveal"
 
-    func present(_ result: CaptureResult) async {
+    func present(_ result: CaptureResult, sound: Bool) async {
         let center = UNUserNotificationCenter.current()
         let granted = (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
         guard granted else { return }
@@ -18,6 +18,7 @@ struct UserNotificationPresenter: NotificationPresenting {
         content.title = "Screenshot captured"
         content.body = result.fileURL?.lastPathComponent ?? "Copied to clipboard"
         content.categoryIdentifier = Self.categoryIdentifier
+        if sound { content.sound = .default }
         if let url = result.fileURL {
             content.userInfo = ["fileURL": url.path]
             if let attachment = try? UNNotificationAttachment(identifier: result.id.uuidString, url: url) {
