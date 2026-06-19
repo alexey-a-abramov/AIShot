@@ -79,6 +79,22 @@
         }
       }
     },
+    "Beautify" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Embellecer"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Embellir"
+          }
+        }
+      }
+    },
     "Beautify Last Capture" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -108,6 +124,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flou"
+          }
+        }
+      }
+    },
+    "Blur auto-detected emails / cards / IPs" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Difuminar correos / tarjetas / IP detectados"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flouter les e-mails / cartes / IP détectés"
+          }
+        }
+      }
+    },
+    "Blur — obscure an area" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desenfoque — ocultar un área"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flou — masquer une zone"
           }
         }
       }
@@ -263,6 +311,22 @@
         }
       }
     },
+    "Capture sound" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonido de captura"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son de capture"
+          }
+        }
+      }
+    },
     "Change…" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -346,6 +410,22 @@
         }
       }
     },
+    "Copied to clipboard" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiado al portapapeles"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié dans le presse-papiers"
+          }
+        }
+      }
+    },
     "Copy" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -392,6 +472,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Action par défaut"
+          }
+        }
+      }
+    },
+    "Delete selected (⌫)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar selección (⌫)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer la sélection (⌫)"
           }
         }
       }
@@ -543,6 +639,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Format"
+          }
+        }
+      }
+    },
+    "Frame on a gradient background" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enmarcar sobre un fondo degradado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encadrer sur un fond dégradé"
           }
         }
       }
@@ -728,6 +840,38 @@
         }
       }
     },
+    "No text found" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se encontró texto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun texte trouvé"
+          }
+        }
+      }
+    },
+    "None" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguno"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun"
+          }
+        }
+      }
+    },
     "Nothing to edit" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -811,6 +955,22 @@
         }
       }
     },
+    "Opening editor…" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abriendo el editor…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouverture de l’éditeur…"
+          }
+        }
+      }
+    },
     "Permissions" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -874,6 +1034,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pixelliser"
+          }
+        }
+      }
+    },
+    "Pixelate — obscure an area" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixelar — ocultar un área"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pixelliser — masquer une zone"
           }
         }
       }
@@ -977,6 +1153,22 @@
         }
       }
     },
+    "Redact" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redactar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer"
+          }
+        }
+      }
+    },
     "Redact Last Capture" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1006,6 +1198,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rétablir"
+          }
+        }
+      }
+    },
+    "Redo (⇧⌘Z)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rehacer (⇧⌘Z)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rétablir (⇧⌘Z)"
           }
         }
       }
@@ -1077,6 +1285,22 @@
         }
       }
     },
+    "Saved" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistré"
+          }
+        }
+      }
+    },
     "Saving" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1144,6 +1368,38 @@
         }
       }
     },
+    "Select" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner"
+          }
+        }
+      }
+    },
+    "Select / Move" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seleccionar / Mover"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner / Déplacer"
+          }
+        }
+      }
+    },
     "Server binary" : {
       "localizations" : {
         "es" : {
@@ -1206,6 +1462,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Afficher une notification"
+          }
+        }
+      }
+    },
+    "Size / thickness" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamaño / grosor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taille / épaisseur"
           }
         }
       }
@@ -1294,6 +1566,22 @@
         }
       }
     },
+    "Text copied" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texto copiado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte copié"
+          }
+        }
+      }
+    },
     "Text label" : {
       "localizations" : {
         "es" : {
@@ -1370,6 +1658,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler"
+          }
+        }
+      }
+    },
+    "Undo (⌘Z)" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deshacer (⌘Z)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler (⌘Z)"
           }
         }
       }
