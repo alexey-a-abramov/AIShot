@@ -28,6 +28,8 @@ struct SettingsView: View {
 private struct GeneralSettingsView: View {
     @EnvironmentObject private var model: AppModel
 
+    private static let soundNames = ["Pop", "Tink", "Glass", "Funk", "Submarine", "Ping", "Bottle", "Frog", "Sosumi"]
+
     var body: some View {
         Form {
             Section("Saving") {
@@ -55,7 +57,10 @@ private struct GeneralSettingsView: View {
             }
             Section("Notifications") {
                 Toggle("Show notification", isOn: $model.settings.showNotification)
-                Toggle("Play sound", isOn: $model.settings.playSound)
+                Picker("Capture sound", selection: $model.settings.captureSoundName) {
+                    Text("None").tag("None")
+                    ForEach(Self.soundNames, id: \.self) { Text($0).tag($0) }
+                }
             }
             Section("Startup") {
                 LaunchAtLogin.Toggle("Launch AIShot at login")

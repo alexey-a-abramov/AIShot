@@ -4,7 +4,6 @@ import CoreGraphics
 import SwiftUI
 import AIShotCore
 import AIShotCapture
-import AIShotAnnotation
 import AIShotAutomation
 import AIShotPersistence
 import AIShotService
@@ -29,10 +28,10 @@ final class AppModel: ObservableObject {
     private let permissionsChecker = SystemPermissions()
     private let overlay = SelectionOverlayController()
     private let recognizer = TextRecognizer()
-    private let redactor = AutoRedactor()
     private let recorder = ScreenRecorder()
     private let scroller = ScrollingCapture()
     private let pinController = PinnedWindowController()
+    private let hud = CaptureHUDController()
     private let editorWindow = EditorWindowController()
     private let updater = UpdaterController()
 
@@ -121,6 +120,11 @@ final class AppModel: ObservableObject {
                     pasteboard.clearContents()
                     pasteboard.setString(text, forType: .string)
                     self.lastError = text.isEmpty ? "No text found." : "Copied \(text.count) characters."
+                    self.playCaptureSound()
+                    self.hud.show(
+                        message: text.isEmpty ? String(localized: "No text found") : String(localized: "Text copied"),
+                        thumbnail: nil
+                    )
                 } catch {
                     self.lastError = String(describing: error)
                 }
@@ -137,6 +141,8 @@ final class AppModel: ObservableObject {
                     let data = try await self.scroller.capture(displayID: selection.displayID, rect: selection.rect, frames: 8)
                     await self.export(data, copy: true, save: true)
                     self.lastError = "Scrolling capture saved."
+                    self.playCaptureSound()
+                    self.hud.show(message: String(localized: "Saved"), thumbnail: NSImage(data: data))
                 } catch {
                     self.lastError = String(describing: error)
                 }
@@ -167,32 +173,6 @@ final class AppModel: ObservableObject {
     func pinLastCapture() {
         guard let capture = lastCapture, let image = NSImage(data: capture.data) else { return }
         pinController.pin(image)
-    }
-
-    /// Frames the last capture on a gradient background and exports it.
-    func beautifyLastCapture() {
-        guard let capture = lastCapture else { return }
-        Task {
-            do {
-                let output = try Beautifier.beautify(capture.data)
-                lastCapture = CapturedImage(pixelSize: capture.pixelSize, scale: capture.scale, format: .png, data: output)
-                await export(output, copy: true, save: true)
-                lastError = "Beautified."
-            } catch { lastError = String(describing: error) }
-        }
-    }
-
-    /// Auto-redacts sensitive text in the last capture and exports it.
-    func redactLastCapture() {
-        guard let capture = lastCapture else { return }
-        Task {
-            do {
-                let output = try await redactor.redact(in: capture.data)
-                lastCapture = CapturedImage(pixelSize: capture.pixelSize, scale: capture.scale, format: .png, data: output)
-                await export(output, copy: true, save: true)
-                lastError = "Redacted."
-            } catch { lastError = String(describing: error) }
-        }
     }
 
     /// Starts or stops screen recording of the main display.
@@ -239,12 +219,32 @@ final class AppModel: ObservableObject {
             let outcome = try await captureService.performCapture(request)
             lastCapture = outcome.image
             await refreshRecent()
+            feedback(for: outcome)
             if settings.postCaptureAction == .openEditor {
                 openEditor(imageData: outcome.image.data, pixelSize: outcome.image.pixelSize)
             }
         } catch {
             lastError = String(describing: error)
         }
+    }
+
+    /// Plays the capture sound and shows the fade-in HUD for a finished capture.
+    private func feedback(for outcome: CaptureOutcome) {
+        playCaptureSound()
+        let message: String
+        switch settings.postCaptureAction {
+        case .copyToClipboard: message = String(localized: "Copied to clipboard")
+        case .openEditor: message = String(localized: "Opening editor…")
+        case .saveOnly: message = String(localized: "Saved")
+        }
+        hud.show(message: message, thumbnail: NSImage(data: outcome.image.data))
+    }
+
+    /// Plays the configured system sound (unless set to "None").
+    private func playCaptureSound() {
+        let name = settings.captureSoundName
+        guard !name.isEmpty, name != "None", let sound = NSSound(named: NSSound.Name(name)) else { return }
+        sound.play()
     }
 
     // MARK: - Editor

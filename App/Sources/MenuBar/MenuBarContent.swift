@@ -21,10 +21,6 @@ struct MenuBarContent: View {
             .disabled(model.lastCapture == nil)
         Button { model.pinLastCapture() } label: { menuLabel("Pin Last Capture", .pinLastCapture) }
             .disabled(model.lastCapture == nil)
-        Button("Beautify Last Capture") { model.beautifyLastCapture() }
-            .disabled(model.lastCapture == nil)
-        Button("Redact Last Capture") { model.redactLastCapture() }
-            .disabled(model.lastCapture == nil)
 
         Divider()
 

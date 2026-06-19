@@ -18,7 +18,7 @@ final class EditorWindowController {
         let window = self.window ?? makeWindow()
         window.contentViewController = hosting
         window.title = "Edit Screenshot"
-        window.setContentSize(NSSize(width: 980, height: 680))
+        window.setContentSize(NSSize(width: 1080, height: 720))
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -27,7 +27,7 @@ final class EditorWindowController {
 
     private func makeWindow() -> NSWindow {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 980, height: 680),
+            contentRect: NSRect(x: 0, y: 0, width: 1080, height: 720),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false

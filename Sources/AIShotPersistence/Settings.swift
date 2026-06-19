@@ -24,7 +24,8 @@ public struct AppSettings: Sendable, Codable, Equatable {
     /// The default action after an interactive capture.
     public var postCaptureAction: PostCaptureAction
     public var showNotification: Bool
-    public var playSound: Bool
+    /// System sound played on capture, e.g. "Pop"/"Tink"; "None" disables it.
+    public var captureSoundName: String
     public var launchAtLogin: Bool
     /// Whether the embedded MCP server is running.
     public var mcpEnabled: Bool
@@ -41,7 +42,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         includeCursor: Bool = false,
         postCaptureAction: PostCaptureAction = .copyToClipboard,
         showNotification: Bool = true,
-        playSound: Bool = true,
+        captureSoundName: String = "Pop",
         launchAtLogin: Bool = false,
         mcpEnabled: Bool = false,
         mcpPort: Int = 47600,
@@ -53,7 +54,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         self.includeCursor = includeCursor
         self.postCaptureAction = postCaptureAction
         self.showNotification = showNotification
-        self.playSound = playSound
+        self.captureSoundName = captureSoundName
         self.launchAtLogin = launchAtLogin
         self.mcpEnabled = mcpEnabled
         self.mcpPort = mcpPort
@@ -71,7 +72,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         includeCursor = try container.decodeIfPresent(Bool.self, forKey: .includeCursor) ?? fallback.includeCursor
         postCaptureAction = try container.decodeIfPresent(PostCaptureAction.self, forKey: .postCaptureAction) ?? fallback.postCaptureAction
         showNotification = try container.decodeIfPresent(Bool.self, forKey: .showNotification) ?? fallback.showNotification
-        playSound = try container.decodeIfPresent(Bool.self, forKey: .playSound) ?? fallback.playSound
+        captureSoundName = try container.decodeIfPresent(String.self, forKey: .captureSoundName) ?? fallback.captureSoundName
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? fallback.launchAtLogin
         mcpEnabled = try container.decodeIfPresent(Bool.self, forKey: .mcpEnabled) ?? fallback.mcpEnabled
         mcpPort = try container.decodeIfPresent(Int.self, forKey: .mcpPort) ?? fallback.mcpPort
