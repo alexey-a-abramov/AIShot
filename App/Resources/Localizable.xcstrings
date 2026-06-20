@@ -659,6 +659,22 @@
         }
       }
     },
+    "Freeze screen before selecting" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Congelar la pantalla antes de seleccionar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Figer l’écran avant la sélection"
+          }
+        }
+      }
+    },
     "Full Screen" : {
       "extractionState" : "stale",
       "localizations" : {
