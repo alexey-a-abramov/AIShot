@@ -43,8 +43,21 @@ public actor CaptureService {
     /// and returns both the result metadata and the encoded image.
     @discardableResult
     public func performCapture(_ request: CaptureRequest, persist: Bool = true) async throws -> CaptureOutcome {
-        let settings = (try? settingsStore.load()) ?? .default
         let image = try await engine.capture(request)
+        return try await deliver(image, mode: request.mode, persist: persist)
+    }
+
+    /// Captures without applying any outputs (for the freeze-frame flow, which
+    /// snapshots the screen first and delivers a cropped result later).
+    public func rawCapture(_ request: CaptureRequest) async throws -> CapturedImage {
+        try await engine.capture(request)
+    }
+
+    /// Applies the configured outputs (save / clipboard / notify / history) to an
+    /// already-captured image.
+    @discardableResult
+    public func deliver(_ image: CapturedImage, mode: CaptureMode, persist: Bool = true) async throws -> CaptureOutcome {
+        let settings = (try? settingsStore.load()) ?? .default
 
         var fileURL: URL?
         if persist {
@@ -61,7 +74,7 @@ public actor CaptureService {
             fileURL: fileURL,
             pixelSize: image.pixelSize,
             scale: image.scale,
-            mode: request.mode
+            mode: mode
         )
 
         if settings.showNotification, let notifier {
@@ -71,7 +84,7 @@ public actor CaptureService {
         try? await history.record(HistoryEntry(
             fileURL: fileURL,
             createdAt: result.createdAt,
-            mode: request.mode,
+            mode: mode,
             pixelWidth: Int(image.pixelSize.width),
             pixelHeight: Int(image.pixelSize.height)
         ))

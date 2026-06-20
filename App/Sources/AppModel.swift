@@ -68,18 +68,79 @@ final class AppModel: ObservableObject {
     // MARK: - Capture actions
 
     func captureRegion() {
-        overlay.begin { [weak self] selection in
-            guard let self, let selection else { return }
-            Task { @MainActor in
-                await self.run(CaptureRequest(
-                    mode: .region,
-                    displayID: selection.displayID,
-                    rect: selection.rect,
-                    includeCursor: self.settings.includeCursor,
-                    format: self.settings.defaultFormat
-                ))
+        if settings.freezeBeforeRegionSelect {
+            Task { await beginFrozenRegionCapture() }
+        } else {
+            overlay.begin { [weak self] selection in
+                guard let self, let selection else { return }
+                Task { @MainActor in
+                    await self.run(CaptureRequest(
+                        mode: .region,
+                        displayID: selection.displayID,
+                        rect: selection.rect,
+                        includeCursor: self.settings.includeCursor,
+                        format: self.settings.defaultFormat
+                    ))
+                }
             }
         }
+    }
+
+    /// Freeze-frame region capture: snapshot every display into memory, let the
+    /// user select against the frozen image, then crop & deliver (or discard on
+    /// cancel — nothing is captured if the user cancels).
+    private func beginFrozenRegionCapture() async {
+        do {
+            let displays = try await captureService.displays()
+            var images: [CGDirectDisplayID: NSImage] = [:]
+            var captures: [CGDirectDisplayID: CapturedImage] = [:]
+            for display in displays {
+                let snapshot = try await captureService.rawCapture(CaptureRequest(
+                    mode: .display, displayID: display.id,
+                    includeCursor: settings.includeCursor, format: .png
+                ))
+                captures[display.id] = snapshot
+                if let nsImage = NSImage(data: snapshot.data) { images[display.id] = nsImage }
+            }
+            overlay.begin(frozen: images) { [weak self] selection in
+                guard let self, let selection, let frozen = captures[selection.displayID] else { return }
+                Task { @MainActor in await self.deliverFrozenRegion(frozen, selection: selection) }
+            }
+        } catch {
+            lastError = String(describing: error)
+        }
+    }
+
+    private func deliverFrozenRegion(_ frozen: CapturedImage, selection: RegionSelection) async {
+        guard let cropped = Self.crop(frozen, toPointRect: selection.rect, format: settings.defaultFormat) else {
+            lastError = "Could not crop the selected region."
+            return
+        }
+        do {
+            let outcome = try await captureService.deliver(cropped, mode: .region)
+            await handleOutcome(outcome)
+        } catch {
+            lastError = String(describing: error)
+        }
+    }
+
+    /// Crops a full-display snapshot to a display-local, top-left point rect.
+    private static func crop(_ image: CapturedImage, toPointRect rect: CGRect, format: ImageFormat) -> CapturedImage? {
+        guard let cgImage = try? ImageCodec.decode(image.data) else { return nil }
+        let scale = image.scale
+        let pixelRect = CGRect(
+            x: (rect.minX * scale).rounded(),
+            y: (rect.minY * scale).rounded(),
+            width: (rect.width * scale).rounded(),
+            height: (rect.height * scale).rounded()
+        )
+        let clamped = pixelRect.intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
+        guard !clamped.isEmpty, let cropped = cgImage.cropping(to: clamped),
+              let data = try? ImageCodec.encode(cropped, as: format) else { return nil }
+        return CapturedImage(
+            pixelSize: CGSize(width: cropped.width, height: cropped.height),
+            scale: scale, format: format, data: data
+        )
     }
 
     func captureFullScreen() {
@@ -217,14 +278,19 @@ final class AppModel: ObservableObject {
     private func run(_ request: CaptureRequest) async {
         do {
             let outcome = try await captureService.performCapture(request)
-            lastCapture = outcome.image
-            await refreshRecent()
-            feedback(for: outcome)
-            if settings.postCaptureAction == .openEditor {
-                openEditor(imageData: outcome.image.data, pixelSize: outcome.image.pixelSize)
-            }
+            await handleOutcome(outcome)
         } catch {
             lastError = String(describing: error)
+        }
+    }
+
+    /// Shared post-capture handling: remember, refresh, feedback, open editor.
+    private func handleOutcome(_ outcome: CaptureOutcome) async {
+        lastCapture = outcome.image
+        await refreshRecent()
+        feedback(for: outcome)
+        if settings.postCaptureAction == .openEditor {
+            openEditor(imageData: outcome.image.data, pixelSize: outcome.image.pixelSize)
         }
     }
 

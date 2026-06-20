@@ -47,6 +47,7 @@ private struct GeneralSettingsView: View {
                     ForEach(ImageFormat.allCases, id: \.self) { Text($0.rawValue.uppercased()).tag($0) }
                 }
                 Toggle("Include cursor", isOn: $model.settings.includeCursor)
+                Toggle("Freeze screen before selecting", isOn: $model.settings.freezeBeforeRegionSelect)
             }
             Section("After capture") {
                 Picker("Default action", selection: $model.settings.postCaptureAction) {

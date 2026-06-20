@@ -21,6 +21,9 @@ public struct AppSettings: Sendable, Codable, Equatable {
     public var fileNameTemplate: String
     /// Render the mouse cursor into captures by default.
     public var includeCursor: Bool
+    /// Freeze the screen (snapshot first) before the region selection, so the
+    /// content can't change while selecting. Disable for live selection.
+    public var freezeBeforeRegionSelect: Bool
     /// The default action after an interactive capture.
     public var postCaptureAction: PostCaptureAction
     public var showNotification: Bool
@@ -40,6 +43,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         defaultFormat: ImageFormat = .png,
         fileNameTemplate: String = "AIShot {date} at {time}",
         includeCursor: Bool = false,
+        freezeBeforeRegionSelect: Bool = true,
         postCaptureAction: PostCaptureAction = .copyToClipboard,
         showNotification: Bool = true,
         captureSoundName: String = "Pop",
@@ -52,6 +56,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         self.defaultFormat = defaultFormat
         self.fileNameTemplate = fileNameTemplate
         self.includeCursor = includeCursor
+        self.freezeBeforeRegionSelect = freezeBeforeRegionSelect
         self.postCaptureAction = postCaptureAction
         self.showNotification = showNotification
         self.captureSoundName = captureSoundName
@@ -70,6 +75,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         defaultFormat = try container.decodeIfPresent(ImageFormat.self, forKey: .defaultFormat) ?? fallback.defaultFormat
         fileNameTemplate = try container.decodeIfPresent(String.self, forKey: .fileNameTemplate) ?? fallback.fileNameTemplate
         includeCursor = try container.decodeIfPresent(Bool.self, forKey: .includeCursor) ?? fallback.includeCursor
+        freezeBeforeRegionSelect = try container.decodeIfPresent(Bool.self, forKey: .freezeBeforeRegionSelect) ?? fallback.freezeBeforeRegionSelect
         postCaptureAction = try container.decodeIfPresent(PostCaptureAction.self, forKey: .postCaptureAction) ?? fallback.postCaptureAction
         showNotification = try container.decodeIfPresent(Bool.self, forKey: .showNotification) ?? fallback.showNotification
         captureSoundName = try container.decodeIfPresent(String.self, forKey: .captureSoundName) ?? fallback.captureSoundName

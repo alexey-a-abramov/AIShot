@@ -16,12 +16,18 @@ final class SelectionOverlayController {
     private var windows: [NSWindow] = []
     private var completion: ((RegionSelection?) -> Void)?
 
-    func begin(_ completion: @escaping (RegionSelection?) -> Void) {
+    /// - Parameter frozen: optional per-display snapshot images. When provided,
+    ///   each overlay shows the frozen screenshot as its background (freeze-frame
+    ///   mode) instead of the live screen.
+    func begin(
+        frozen: [CGDirectDisplayID: NSImage]? = nil,
+        _ completion: @escaping (RegionSelection?) -> Void
+    ) {
         cancel()
         self.completion = completion
 
         for screen in NSScreen.screens {
-            let view = SelectionView(screen: screen) { [weak self] result in
+            let view = SelectionView(screen: screen, background: frozen?[Self.displayID(of: screen)]) { [weak self] result in
                 self?.finish(result)
             }
             let window = OverlayWindow(
@@ -55,6 +61,10 @@ final class SelectionOverlayController {
         cancel()
         completion?(result)
     }
+
+    static func displayID(of screen: NSScreen) -> CGDirectDisplayID {
+        (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? CGMainDisplayID()
+    }
 }
 
 /// A borderless window that can still become key, so the selection view
@@ -68,13 +78,15 @@ private final class OverlayWindow: NSWindow {
 /// selection rectangle with a live dimension badge.
 private final class SelectionView: NSView {
     private let screen: NSScreen
+    private let background: NSImage?
     private let onFinish: (RegionSelection?) -> Void
     private var startPoint: NSPoint?
     private var currentRect: NSRect = .zero
     private var mouseLocation: NSPoint?
 
-    init(screen: NSScreen, onFinish: @escaping (RegionSelection?) -> Void) {
+    init(screen: NSScreen, background: NSImage?, onFinish: @escaping (RegionSelection?) -> Void) {
         self.screen = screen
+        self.background = background
         self.onFinish = onFinish
         super.init(frame: NSRect(origin: .zero, size: screen.frame.size))
     }
@@ -149,6 +161,10 @@ private final class SelectionView: NSView {
     // MARK: - Drawing
 
     override func draw(_ dirtyRect: NSRect) {
+        // Freeze-frame mode: paint the captured snapshot so the screen appears
+        // frozen while selecting; the dim/selection draw on top.
+        background?.draw(in: bounds, from: .zero, operation: .copy, fraction: 1.0)
+
         NSColor.black.withAlphaComponent(0.35).setFill()
         let dragging = currentRect.width >= 1 && currentRect.height >= 1
 
