@@ -37,6 +37,13 @@ public struct AppSettings: Sendable, Codable, Equatable {
     /// Safety gate: require an explicit user confirmation before MCP-driven
     /// synthetic input (clicks/typing) or app switching. Defaults to `true`.
     public var mcpRequireConfirmationForInput: Bool
+    /// Show the note + project-tag prompt after an interactive capture.
+    public var captureMetadataEnabled: Bool
+    /// Auto-apply `lastTag` to new captures without prompting (handy for a run
+    /// of related screenshots). Toggled from the post-capture prompt.
+    public var applyLastTag: Bool
+    /// The most recently used project tag, offered as the default next time.
+    public var lastTag: String?
 
     public init(
         saveDirectory: URL,
@@ -50,7 +57,10 @@ public struct AppSettings: Sendable, Codable, Equatable {
         launchAtLogin: Bool = false,
         mcpEnabled: Bool = false,
         mcpPort: Int = 47600,
-        mcpRequireConfirmationForInput: Bool = true
+        mcpRequireConfirmationForInput: Bool = true,
+        captureMetadataEnabled: Bool = true,
+        applyLastTag: Bool = false,
+        lastTag: String? = nil
     ) {
         self.saveDirectory = saveDirectory
         self.defaultFormat = defaultFormat
@@ -64,6 +74,9 @@ public struct AppSettings: Sendable, Codable, Equatable {
         self.mcpEnabled = mcpEnabled
         self.mcpPort = mcpPort
         self.mcpRequireConfirmationForInput = mcpRequireConfirmationForInput
+        self.captureMetadataEnabled = captureMetadataEnabled
+        self.applyLastTag = applyLastTag
+        self.lastTag = lastTag
     }
 
     /// Resilient decoding: unknown/missing keys fall back to defaults so adding
@@ -83,6 +96,9 @@ public struct AppSettings: Sendable, Codable, Equatable {
         mcpEnabled = try container.decodeIfPresent(Bool.self, forKey: .mcpEnabled) ?? fallback.mcpEnabled
         mcpPort = try container.decodeIfPresent(Int.self, forKey: .mcpPort) ?? fallback.mcpPort
         mcpRequireConfirmationForInput = try container.decodeIfPresent(Bool.self, forKey: .mcpRequireConfirmationForInput) ?? fallback.mcpRequireConfirmationForInput
+        captureMetadataEnabled = try container.decodeIfPresent(Bool.self, forKey: .captureMetadataEnabled) ?? fallback.captureMetadataEnabled
+        applyLastTag = try container.decodeIfPresent(Bool.self, forKey: .applyLastTag) ?? fallback.applyLastTag
+        lastTag = try container.decodeIfPresent(String.self, forKey: .lastTag) ?? fallback.lastTag
     }
 
     /// Sensible defaults: save to `~/Pictures/AIShot`, PNG, copy to clipboard

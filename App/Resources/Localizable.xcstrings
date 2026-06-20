@@ -81,6 +81,23 @@
         }
       }
     },
+    "Add a note & tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir nota y etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter une note et une étiquette"
+          }
+        }
+      }
+    },
     "After capture" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -114,6 +131,57 @@
         }
       }
     },
+    "All captures" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las capturas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les captures"
+          }
+        }
+      }
+    },
+    "An agent launches the bundled stdio bridge, which forwards JSON-RPC requests to AIShot. Every agent shares one capture authority, so your permission grants are reused." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un agente inicia el puente stdio incluido, que reenvía las solicitudes JSON-RPC a AIShot. Todos los agentes comparten una única autoridad de captura, por lo que se reutilizan tus permisos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un agent lance le pont stdio intégré, qui transmet les requêtes JSON-RPC à AIShot. Tous les agents partagent une même autorité de capture, vos autorisations sont donc réutilisées."
+          }
+        }
+      }
+    },
+    "Apply this tag to the next captures" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicar esta etiqueta a las próximas capturas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appliquer cette étiquette aux prochaines captures"
+          }
+        }
+      }
+    },
     "Arrow" : {
       "localizations" : {
         "es" : {
@@ -126,6 +194,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flèche"
+          }
+        }
+      }
+    },
+    "Ask for a note and tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pedir nota y etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demander une note et une étiquette"
+          }
+        }
+      }
+    },
+    "Attach a note and project tag to each capture." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adjunta una nota y una etiqueta de proyecto a cada captura."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Associez une note et une étiquette de projet à chaque capture."
           }
         }
       }
@@ -143,6 +245,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Auteur"
+          }
+        }
+      }
+    },
+    "Automatically apply the last tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicar automáticamente la última etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appliquer automatiquement la dernière étiquette"
           }
         }
       }
@@ -244,6 +363,23 @@
         }
       }
     },
+    "Cancel" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler"
+          }
+        }
+      }
+    },
     "Capture" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -257,6 +393,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Capture"
+          }
+        }
+      }
+    },
+    "Capture & read tools — region/window/display capture, display and window enumeration, and OCR — run immediately." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las herramientas de captura y lectura —captura de región/ventana/pantalla, enumeración de pantallas y ventanas, y OCR— se ejecutan de inmediato."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les outils de capture et de lecture — capture de zone/fenêtre/écran, énumération des écrans et fenêtres, et OCR — s’exécutent immédiatement."
           }
         }
       }
@@ -429,6 +582,23 @@
         }
       }
     },
+    "Clear last tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar la última etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer la dernière étiquette"
+          }
+        }
+      }
+    },
     "Click a field and press keys to set a global shortcut; press ⌫ to clear it." : {
       "localizations" : {
         "es" : {
@@ -441,6 +611,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cliquez sur un champ et appuyez sur des touches pour définir un raccourci global ; appuyez sur ⌫ pour l’effacer."
+          }
+        }
+      }
+    },
+    "Click to reveal in Finder · right-click to edit note & tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz clic para mostrar en el Finder · clic derecho para editar la nota y la etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez pour afficher dans le Finder · clic droit pour modifier la note et l’étiquette"
+          }
+        }
+      }
+    },
+    "Click, type, and app-switch tools synthesize input. They're confirmation-gated whenever the toggle above is on." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las herramientas de clic, escritura y cambio de app simulan entradas. Requieren confirmación cuando la opción de arriba está activada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les outils de clic, de saisie et de changement d’app simulent des entrées. Ils nécessitent une confirmation lorsque l’option ci-dessus est activée."
           }
         }
       }
@@ -610,6 +814,40 @@
         }
       }
     },
+    "Edit note & tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar nota y etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier la note et l’étiquette"
+          }
+        }
+      }
+    },
+    "Edit note & tag…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editar nota y etiqueta…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier la note et l’étiquette…"
+          }
+        }
+      }
+    },
     "Ellipse" : {
       "localizations" : {
         "es" : {
@@ -656,6 +894,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activer le serveur MCP"
+          }
+        }
+      }
+    },
+    "Enable the server with the toggle above, then restart your agent so it picks up the new tools." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa el servidor con la opción de arriba y luego reinicia tu agente para que detecte las nuevas herramientas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activez le serveur avec l’option ci-dessus, puis redémarrez votre agent pour qu’il détecte les nouveaux outils."
           }
         }
       }
@@ -843,6 +1098,23 @@
         }
       }
     },
+    "How it works" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cómo funciona"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comment ça marche"
+          }
+        }
+      }
+    },
     "How to connect an AI agent" : {
       "localizations" : {
         "es" : {
@@ -887,6 +1159,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Étiquette"
+          }
+        }
+      }
+    },
+    "Last tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Última etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière étiquette"
           }
         }
       }
@@ -941,6 +1230,40 @@
         }
       }
     },
+    "MCP (Model Context Protocol) is the open standard agents use to call tools. AIShot ships a local MCP server so assistants like Claude Code and Claude Desktop can see and act on your screen — entirely on your Mac." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MCP (Model Context Protocol) es el estándar abierto que los agentes usan para llamar a herramientas. AIShot incluye un servidor MCP local para que asistentes como Claude Code y Claude Desktop puedan ver tu pantalla y actuar sobre ella, todo en tu Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MCP (Model Context Protocol) est le standard ouvert que les agents utilisent pour appeler des outils. AIShot fournit un serveur MCP local pour que des assistants comme Claude Code et Claude Desktop puissent voir votre écran et agir dessus — entièrement sur votre Mac."
+          }
+        }
+      }
+    },
+    "No captures with this tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay capturas con esta etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune capture avec cette étiquette"
+          }
+        }
+      }
+    },
     "No captures yet" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -986,6 +1309,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucun"
+          }
+        }
+      }
+    },
+    "Note" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nota"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note"
+          }
+        }
+      }
+    },
+    "Notes & Tags" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notas y etiquetas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes et étiquettes"
+          }
+        }
+      }
+    },
+    "Notes and tags are saved beside your screenshots in aishot-metadata.json. Browse captures by tag in the Dashboard." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las notas y etiquetas se guardan junto a tus capturas en aishot-metadata.json. Explora las capturas por etiqueta en el panel."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les notes et étiquettes sont enregistrées à côté de vos captures dans aishot-metadata.json. Parcourez les captures par étiquette dans le tableau de bord."
           }
         }
       }
@@ -1206,6 +1580,23 @@
         }
       }
     },
+    "Project tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiqueta de proyecto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étiquette de projet"
+          }
+        }
+      }
+    },
     "Quit AIShot" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1353,6 +1744,23 @@
         }
       }
     },
+    "Register the server with the Claude Code CLI:" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Registra el servidor con la CLI de Claude Code:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrez le serveur avec la CLI Claude Code :"
+          }
+        }
+      }
+    },
     "Request" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1366,6 +1774,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Demander"
+          }
+        }
+      }
+    },
+    "Reveal in Finder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar en el Finder"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher dans le Finder"
           }
         }
       }
@@ -1600,6 +2025,23 @@
         }
       }
     },
+    "Skip" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omitir"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer"
+          }
+        }
+      }
+    },
     "Sound and banner shown after each capture." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1702,6 +2144,74 @@
         }
       }
     },
+    "Tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étiquette"
+          }
+        }
+      }
+    },
+    "Tag a capture to navigate by project here." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiqueta una captura para navegar por proyecto aquí."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étiquetez une capture pour naviguer par projet ici."
+          }
+        }
+      }
+    },
+    "Tag this capture" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiquetar esta captura"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étiqueter cette capture"
+          }
+        }
+      }
+    },
+    "Tags" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiquetas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étiquettes"
+          }
+        }
+      }
+    },
     "Text" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1767,6 +2277,23 @@
         }
       }
     },
+    "The server is loopback-only — images and recognized text never leave the device." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El servidor es solo de bucle local: las imágenes y el texto reconocido nunca salen del dispositivo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le serveur est limité à la boucle locale — les images et le texte reconnu ne quittent jamais l’appareil."
+          }
+        }
+      }
+    },
     "Thickness" : {
       "localizations" : {
         "es" : {
@@ -1811,6 +2338,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Saisir une étiquette…"
+          }
+        }
+      }
+    },
+    "Type or pick a tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escribe o elige una etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisir ou choisir une étiquette"
           }
         }
       }
@@ -1910,6 +2454,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ce qui est capturé et ce qui se passe ensuite."
+          }
+        }
+      }
+    },
+    "What is this screenshot about?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿De qué trata esta captura?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De quoi parle cette capture ?"
           }
         }
       }

@@ -9,7 +9,7 @@ import AIShotShared
 /// The pages shown in the Settings sidebar. Each is a focused page rather than a
 /// dense tab, so the content pane on the right stays spacious.
 private enum SettingsSection: String, CaseIterable, Identifiable {
-    case general, capture, notifications, shortcuts, mcp, permissions, about
+    case general, capture, tags, notifications, shortcuts, mcp, permissions, about
 
     var id: String { rawValue }
 
@@ -17,6 +17,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         switch self {
         case .general: "General"
         case .capture: "Capture"
+        case .tags: "Notes & Tags"
         case .notifications: "Notifications"
         case .shortcuts: "Shortcuts"
         case .mcp: "AI Agents"
@@ -29,6 +30,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         switch self {
         case .general: "gearshape"
         case .capture: "camera.viewfinder"
+        case .tags: "tag"
         case .notifications: "bell.badge"
         case .shortcuts: "command"
         case .mcp: "antenna.radiowaves.left.and.right"
@@ -41,6 +43,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         switch self {
         case .general: "Where screenshots are saved and how AIShot starts."
         case .capture: "What gets captured and what happens afterward."
+        case .tags: "Attach a note and project tag to each capture."
         case .notifications: "Sound and banner shown after each capture."
         case .shortcuts: "Global hotkeys for every capture action."
         case .mcp: "Let on-device AI agents capture and read your screen."
@@ -84,6 +87,7 @@ struct SettingsView: View {
             switch section {
             case .general: GeneralPage()
             case .capture: CapturePage()
+            case .tags: NotesTagsPage()
             case .notifications: NotificationsPage()
             case .shortcuts: ShortcutsPage()
             case .mcp: MCPPage()
@@ -190,6 +194,33 @@ private struct CapturePage: View {
     }
 }
 
+private struct NotesTagsPage: View {
+    @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        Form {
+            Section("After capture") {
+                Toggle("Ask for a note and tag", isOn: $model.settings.captureMetadataEnabled)
+                Toggle("Automatically apply the last tag", isOn: $model.settings.applyLastTag)
+            }
+            if let last = model.settings.lastTag, !last.isEmpty {
+                Section("Last tag") {
+                    LabeledContent("Tag") { Text(verbatim: last).foregroundStyle(.secondary) }
+                    Button("Clear last tag") {
+                        model.settings.lastTag = nil
+                        model.settings.applyLastTag = false
+                    }
+                }
+            }
+            Section {
+                Text("Notes and tags are saved beside your screenshots in aishot-metadata.json. Browse captures by tag in the Dashboard.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
 private struct NotificationsPage: View {
     @EnvironmentObject private var model: AppModel
 
@@ -256,14 +287,27 @@ private struct MCPPage: View {
                 Toggle("Confirm before clicks/typing", isOn: $model.settings.mcpRequireConfirmationForInput)
             }
 
+            Section("How it works") {
+                Text("MCP (Model Context Protocol) is the open standard agents use to call tools. AIShot ships a local MCP server so assistants like Claude Code and Claude Desktop can see and act on your screen — entirely on your Mac.")
+                    .font(.callout).foregroundStyle(.secondary)
+                howItWorksRow("arrow.triangle.branch",
+                              "An agent launches the bundled stdio bridge, which forwards JSON-RPC requests to AIShot. Every agent shares one capture authority, so your permission grants are reused.")
+                howItWorksRow("camera.viewfinder",
+                              "Capture & read tools — region/window/display capture, display and window enumeration, and OCR — run immediately.")
+                howItWorksRow("cursorarrow.rays",
+                              "Click, type, and app-switch tools synthesize input. They're confirmation-gated whenever the toggle above is on.")
+                howItWorksRow("lock.shield",
+                              "The server is loopback-only — images and recognized text never leave the device.")
+            }
+
             Section("How to connect an AI agent") {
-                Text("AIShot ships a local MCP server so agents (Claude Code, Claude Desktop) can capture and read your screen on-device. Register it with the Claude Code CLI:")
+                Text("Register the server with the Claude Code CLI:")
                     .font(.callout).foregroundStyle(.secondary)
                 codeRow(addCommand)
                 Text("Or add it to an MCP client's JSON config:")
                     .font(.callout).foregroundStyle(.secondary)
                 codeRow(jsonConfig)
-                Text("Capture and read tools work right away. Click and type tools are confirmation-gated when the toggle above is on. The server is local-only.")
+                Text("Enable the server with the toggle above, then restart your agent so it picks up the new tools.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
@@ -277,6 +321,18 @@ private struct MCPPage: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private func howItWorksRow(_ systemImage: String, _ text: LocalizedStringKey) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Image(systemName: systemImage)
+                .foregroundStyle(.tint)
+                .frame(width: 18)
+            Text(text)
+                .font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 
     private func codeRow(_ text: String) -> some View {

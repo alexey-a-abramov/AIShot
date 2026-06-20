@@ -23,6 +23,11 @@ final class AppModel: ObservableObject {
     /// The most recent capture, available for "Edit Last Capture".
     @Published private(set) var lastCapture: CapturedImage?
 
+    /// Note/tag metadata for recent captures, keyed by standardized file URL.
+    @Published private(set) var captureMeta: [URL: CaptureMetadata] = [:]
+    /// All known project tags across the recent captures and save folder.
+    @Published private(set) var knownTags: [String] = []
+
     let captureService: CaptureService
     private let settingsStore: UserDefaultsSettingsStore
     private let permissionsChecker = SystemPermissions()
@@ -34,6 +39,8 @@ final class AppModel: ObservableObject {
     private let hud = CaptureHUDController()
     private let editorWindow = EditorWindowController()
     private let updater = UpdaterController()
+    let metadataStore = CaptureMetadataStore()
+    private let tagPrompt = CaptureTagPromptController()
 
     private lazy var settingsWindow = HostingWindowController(
         title: "Settings",
@@ -287,7 +294,8 @@ final class AppModel: ObservableObject {
         }
     }
 
-    /// Shared post-capture handling: remember, refresh, feedback, open editor.
+    /// Shared post-capture handling: remember, refresh, feedback, open editor,
+    /// then attach a note/tag (silently or via the prompt).
     private func handleOutcome(_ outcome: CaptureOutcome) async {
         lastCapture = outcome.image
         await refreshRecent()
@@ -295,6 +303,72 @@ final class AppModel: ObservableObject {
         if settings.postCaptureAction == .openEditor {
             openEditor(imageData: outcome.image.data, pixelSize: outcome.image.pixelSize)
         }
+        await promptOrApplyMetadata(for: outcome)
+    }
+
+    // MARK: - Notes & tags
+
+    /// After a saved capture, either silently apply the last tag (when
+    /// "apply last tag" is on) or present the note/tag prompt.
+    private func promptOrApplyMetadata(for outcome: CaptureOutcome) async {
+        guard settings.captureMetadataEnabled, let fileURL = outcome.result.fileURL else { return }
+        let directory = fileURL.deletingLastPathComponent()
+        let fileName = fileURL.lastPathComponent
+
+        // Silently reuse the last tag (no interruption), even when the editor opens.
+        if settings.applyLastTag, let tag = settings.lastTag, !tag.isEmpty {
+            try? await metadataStore.upsert(directory: directory, fileName: fileName, note: "", tag: tag)
+            await refreshMetadata(for: recent)
+            return
+        }
+
+        // The editor is the richer surface; don't stack a prompt on top of it.
+        guard settings.postCaptureAction != .openEditor else { return }
+
+        let known = await metadataStore.tags(for: directory)
+        let thumbnail = NSImage(data: outcome.image.data)
+        tagPrompt.present(
+            fileName: fileName,
+            thumbnail: thumbnail,
+            suggestedTag: settings.lastTag,
+            knownTags: known,
+            applyToNext: settings.applyLastTag
+        ) { [weak self] result in
+            guard let self, let result else { return }
+            Task { @MainActor in
+                await self.applyPromptResult(result, directory: directory, fileName: fileName)
+            }
+        }
+    }
+
+    private func applyPromptResult(
+        _ result: CaptureTagPromptController.Result, directory: URL, fileName: String
+    ) async {
+        let tag = result.tag?.trimmingCharacters(in: .whitespacesAndNewlines)
+        try? await metadataStore.upsert(directory: directory, fileName: fileName, note: result.note, tag: tag)
+        if let tag, !tag.isEmpty { settings.lastTag = tag }
+        // "Apply to next" only makes sense if there's actually a tag to reuse.
+        settings.applyLastTag = result.applyToNext && (settings.lastTag?.isEmpty == false)
+        saveSettings()
+        await refreshMetadata(for: recent)
+    }
+
+    /// Metadata for a history entry, if any.
+    func metadata(for entry: HistoryEntry) -> CaptureMetadata? {
+        guard let url = entry.fileURL?.standardizedFileURL else { return nil }
+        return captureMeta[url]
+    }
+
+    /// Updates note/tag for a capture from the dashboard editor.
+    func updateMetadata(for entry: HistoryEntry, note: String, tag: String?) async {
+        guard let fileURL = entry.fileURL else { return }
+        let directory = fileURL.deletingLastPathComponent()
+        let cleanTag = tag?.trimmingCharacters(in: .whitespacesAndNewlines)
+        try? await metadataStore.upsert(
+            directory: directory, fileName: fileURL.lastPathComponent, note: note, tag: cleanTag
+        )
+        if let cleanTag, !cleanTag.isEmpty { settings.lastTag = cleanTag; saveSettings() }
+        await refreshMetadata(for: recent)
     }
 
     /// Plays the capture sound and shows the fade-in HUD for a finished capture.
@@ -348,7 +422,30 @@ final class AppModel: ObservableObject {
     // MARK: - State
 
     func refreshRecent() async {
-        recent = (try? await captureService.recentHistory(limit: 30)) ?? []
+        let entries = (try? await captureService.recentHistory(limit: 30)) ?? []
+        recent = entries
+        await refreshMetadata(for: entries)
+    }
+
+    /// Loads note/tag metadata for the directories referenced by `entries` (plus
+    /// the current save folder) so the dashboard can show and filter by tag.
+    private func refreshMetadata(for entries: [HistoryEntry]) async {
+        var directories = Set(entries.compactMap {
+            $0.fileURL?.deletingLastPathComponent().standardizedFileURL
+        })
+        directories.insert(settings.saveDirectory.standardizedFileURL)
+
+        var byURL: [URL: CaptureMetadata] = [:]
+        var tags = Set<String>()
+        for directory in directories {
+            let index = await metadataStore.index(for: directory)
+            for (name, meta) in index.items {
+                byURL[directory.appendingPathComponent(name).standardizedFileURL] = meta
+                if let tag = meta.tag, !tag.isEmpty { tags.insert(tag) }
+            }
+        }
+        captureMeta = byURL
+        knownTags = tags.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
     func refreshPermissions() async {
