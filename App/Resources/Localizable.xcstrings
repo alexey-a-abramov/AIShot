@@ -13,6 +13,23 @@
         }
       }
     },
+    "AI Agents" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agentes de IA"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agents IA"
+          }
+        }
+      }
+    },
     "Accessibility" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -709,6 +726,23 @@
         }
       }
     },
+    "Global hotkeys for every capture action." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atajos globales para cada acción de captura."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raccourcis globaux pour chaque action de capture."
+          }
+        }
+      }
+    },
     "Grant" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -819,6 +853,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lancer AIShot à l’ouverture de session"
+          }
+        }
+      }
+    },
+    "Let on-device AI agents capture and read your screen." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permite que los agentes de IA locales capturen y lean tu pantalla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permettez aux agents IA locaux de capturer et de lire votre écran."
           }
         }
       }
@@ -1498,6 +1549,23 @@
         }
       }
     },
+    "Sound and banner shown after each capture." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonido y aviso que se muestran tras cada captura."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son et bannière affichés après chaque capture."
+          }
+        }
+      }
+    },
     "Start Recording" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1545,6 +1613,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Arrêter l’enregistrement"
+          }
+        }
+      }
+    },
+    "System access AIShot needs to capture your screen." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acceso del sistema que AIShot necesita para capturar tu pantalla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès système dont AIShot a besoin pour capturer votre écran."
           }
         }
       }
@@ -1706,6 +1791,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Utilisez la barre des menus ou ⌘⌥⇧4 pour capturer une région."
+          }
+        }
+      }
+    },
+    "What gets captured and what happens afterward." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qué se captura y qué ocurre después."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui est capturé et ce qui se passe ensuite."
+          }
+        }
+      }
+    },
+    "Where screenshots are saved and how AIShot starts." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dónde se guardan las capturas y cómo se inicia AIShot."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Où les captures sont enregistrées et comment AIShot démarre."
           }
         }
       }

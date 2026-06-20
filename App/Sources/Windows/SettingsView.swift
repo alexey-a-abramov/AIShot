@@ -6,29 +6,127 @@ import AIShotCore
 import AIShotPersistence
 import AIShotShared
 
-/// Preferences bound to `AppSettings`, persisted on change.
-struct SettingsView: View {
-    @EnvironmentObject private var model: AppModel
+/// The pages shown in the Settings sidebar. Each is a focused page rather than a
+/// dense tab, so the content pane on the right stays spacious.
+private enum SettingsSection: String, CaseIterable, Identifiable {
+    case general, capture, notifications, shortcuts, mcp, permissions
 
-    var body: some View {
-        TabView {
-            GeneralSettingsView()
-                .tabItem { Label("General", systemImage: "gearshape") }
-            ShortcutsSettingsView()
-                .tabItem { Label("Shortcuts", systemImage: "command") }
-            MCPSettingsView()
-                .tabItem { Label("MCP", systemImage: "antenna.radiowaves.left.and.right") }
-            PermissionsSettingsView()
-                .tabItem { Label("Permissions", systemImage: "lock.shield") }
+    var id: String { rawValue }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .general: "General"
+        case .capture: "Capture"
+        case .notifications: "Notifications"
+        case .shortcuts: "Shortcuts"
+        case .mcp: "AI Agents"
+        case .permissions: "Permissions"
         }
-        .frame(width: 540, height: 460)
+    }
+
+    var icon: String {
+        switch self {
+        case .general: "gearshape"
+        case .capture: "camera.viewfinder"
+        case .notifications: "bell.badge"
+        case .shortcuts: "command"
+        case .mcp: "antenna.radiowaves.left.and.right"
+        case .permissions: "lock.shield"
+        }
+    }
+
+    var subtitle: LocalizedStringKey {
+        switch self {
+        case .general: "Where screenshots are saved and how AIShot starts."
+        case .capture: "What gets captured and what happens afterward."
+        case .notifications: "Sound and banner shown after each capture."
+        case .shortcuts: "Global hotkeys for every capture action."
+        case .mcp: "Let on-device AI agents capture and read your screen."
+        case .permissions: "System access AIShot needs to capture your screen."
+        }
     }
 }
 
-private struct GeneralSettingsView: View {
+/// Preferences bound to `AppSettings`, persisted on change. A sidebar lists the
+/// sections on the left; the selected page fills the wide pane on the right.
+struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
+    @State private var selection: SettingsSection? = .general
 
-    private static let soundNames = ["Pop", "Tink", "Glass", "Funk", "Submarine", "Ping", "Bottle", "Frog", "Sosumi"]
+    var body: some View {
+        // Pin the sidebar visible: this window has no toolbar (it's a hosted
+        // accessory window), so there'd be no toggle to bring it back if it
+        // collapsed. Navigation must always stay on the left.
+        NavigationSplitView(columnVisibility: .constant(.all), sidebar: {
+            List(selection: $selection) {
+                ForEach(SettingsSection.allCases) { section in
+                    Label(section.title, systemImage: section.icon)
+                        .tag(section)
+                }
+            }
+            .navigationSplitViewColumnWidth(min: 200, ideal: 216, max: 240)
+        }, detail: {
+            page(for: selection ?? .general)
+                .navigationSplitViewColumnWidth(min: 480, ideal: 580)
+        })
+        .navigationSplitViewStyle(.balanced)
+        .frame(minWidth: 740, idealWidth: 860, minHeight: 520, idealHeight: 580)
+        // Persist whenever any page mutates the shared settings.
+        .onChange(of: model.settings) { _, _ in model.saveSettings() }
+    }
+
+    @ViewBuilder
+    private func page(for section: SettingsSection) -> some View {
+        SettingsPage(section: section) {
+            switch section {
+            case .general: GeneralPage()
+            case .capture: CapturePage()
+            case .notifications: NotificationsPage()
+            case .shortcuts: ShortcutsPage()
+            case .mcp: MCPPage()
+            case .permissions: PermissionsPage()
+            }
+        }
+    }
+}
+
+/// A spacious page chrome: a large header (icon, title, subtitle) above the
+/// scrollable content of the page.
+private struct SettingsPage<Content: View>: View {
+    let section: SettingsSection
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .center, spacing: 14) {
+                Image(systemName: section.icon)
+                    .font(.system(size: 22, weight: .regular))
+                    .foregroundStyle(.tint)
+                    .frame(width: 34, height: 34)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(section.title)
+                        .font(.title2.weight(.semibold))
+                    Text(section.subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 22)
+            .padding(.bottom, 14)
+
+            content
+                .frame(maxHeight: .infinity)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+// MARK: - Pages
+
+private struct GeneralPage: View {
+    @EnvironmentObject private var model: AppModel
 
     var body: some View {
         Form {
@@ -42,6 +140,30 @@ private struct GeneralSettingsView: View {
                 }
                 TextField("Filename", text: $model.settings.fileNameTemplate)
             }
+            Section("Startup") {
+                LaunchAtLogin.Toggle("Launch AIShot at login")
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    private func chooseFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let url = panel.url {
+            // Persisted by the root `.onChange(of: model.settings)`.
+            model.settings.saveDirectory = url
+        }
+    }
+}
+
+private struct CapturePage: View {
+    @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        Form {
             Section("Capture") {
                 Picker("Format", selection: $model.settings.defaultFormat) {
                     ForEach(ImageFormat.allCases, id: \.self) { Text($0.rawValue.uppercased()).tag($0) }
@@ -56,6 +178,18 @@ private struct GeneralSettingsView: View {
                     Text("Save only").tag(PostCaptureAction.saveOnly)
                 }
             }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+private struct NotificationsPage: View {
+    @EnvironmentObject private var model: AppModel
+
+    private static let soundNames = ["Pop", "Tink", "Glass", "Funk", "Submarine", "Ping", "Bottle", "Frog", "Sosumi"]
+
+    var body: some View {
+        Form {
             Section("Notifications") {
                 Toggle("Show notification", isOn: $model.settings.showNotification)
                 Picker("Capture sound", selection: $model.settings.captureSoundName) {
@@ -63,27 +197,12 @@ private struct GeneralSettingsView: View {
                     ForEach(Self.soundNames, id: \.self) { Text($0).tag($0) }
                 }
             }
-            Section("Startup") {
-                LaunchAtLogin.Toggle("Launch AIShot at login")
-            }
         }
         .formStyle(.grouped)
-        .onChange(of: model.settings) { _, _ in model.saveSettings() }
-    }
-
-    private func chooseFolder() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.allowsMultipleSelection = false
-        if panel.runModal() == .OK, let url = panel.url {
-            model.settings.saveDirectory = url
-            model.saveSettings()
-        }
     }
 }
 
-private struct ShortcutsSettingsView: View {
+private struct ShortcutsPage: View {
     var body: some View {
         Form {
             Section("Capture") {
@@ -108,7 +227,7 @@ private struct ShortcutsSettingsView: View {
     }
 }
 
-private struct MCPSettingsView: View {
+private struct MCPPage: View {
     @EnvironmentObject private var model: AppModel
 
     private let serverPath = "/Applications/AIShot.app/Contents/Helpers/aishot-mcp-server"
@@ -151,7 +270,6 @@ private struct MCPSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .onChange(of: model.settings) { _, _ in model.saveSettings() }
     }
 
     private func codeRow(_ text: String) -> some View {
@@ -172,7 +290,7 @@ private struct MCPSettingsView: View {
     }
 }
 
-private struct PermissionsSettingsView: View {
+private struct PermissionsPage: View {
     @EnvironmentObject private var model: AppModel
 
     var body: some View {
@@ -196,7 +314,6 @@ private struct PermissionsSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .padding()
         .task { await model.refreshPermissions() }
     }
 }

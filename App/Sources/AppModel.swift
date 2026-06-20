@@ -36,7 +36,7 @@ final class AppModel: ObservableObject {
     private let updater = UpdaterController()
 
     private lazy var settingsWindow = HostingWindowController(
-        title: "Settings", size: NSSize(width: 560, height: 480)
+        title: "Settings", size: NSSize(width: 860, height: 580)
     ) { [unowned self] in AnyView(SettingsView().environmentObject(self)) }
 
     private lazy var dashboardWindow = HostingWindowController(
