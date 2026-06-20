@@ -30,6 +30,40 @@
         }
       }
     },
+    "AIShot captures regions, windows, and screens, lets you annotate them, and exposes the same tools to on-device AI agents over an embedded MCP server — all without anything leaving your Mac." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIShot captura regiones, ventanas y pantallas, te permite anotarlas y ofrece las mismas herramientas a los agentes de IA locales mediante un servidor MCP integrado, sin que nada salga de tu Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AIShot capture des zones, des fenêtres et des écrans, vous permet de les annoter et expose les mêmes outils aux agents IA locaux via un serveur MCP intégré — le tout sans que rien ne quitte votre Mac."
+          }
+        }
+      }
+    },
+    "About" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acerca de"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À propos"
+          }
+        }
+      }
+    },
     "Accessibility" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -92,6 +126,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Flèche"
+          }
+        }
+      }
+    },
+    "Author" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auteur"
           }
         }
       }
@@ -1566,6 +1617,23 @@
         }
       }
     },
+    "Source code" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código fuente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code source"
+          }
+        }
+      }
+    },
     "Start Recording" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1791,6 +1859,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Utilisez la barre des menus ou ⌘⌥⇧4 pour capturer une région."
+          }
+        }
+      }
+    },
+    "Version" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version"
+          }
+        }
+      }
+    },
+    "Version, source code, and credits." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión, código fuente y créditos."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version, code source et crédits."
           }
         }
       }

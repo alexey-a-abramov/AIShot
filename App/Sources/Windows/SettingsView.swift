@@ -9,7 +9,7 @@ import AIShotShared
 /// The pages shown in the Settings sidebar. Each is a focused page rather than a
 /// dense tab, so the content pane on the right stays spacious.
 private enum SettingsSection: String, CaseIterable, Identifiable {
-    case general, capture, notifications, shortcuts, mcp, permissions
+    case general, capture, notifications, shortcuts, mcp, permissions, about
 
     var id: String { rawValue }
 
@@ -21,6 +21,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         case .shortcuts: "Shortcuts"
         case .mcp: "AI Agents"
         case .permissions: "Permissions"
+        case .about: "About"
         }
     }
 
@@ -32,6 +33,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         case .shortcuts: "command"
         case .mcp: "antenna.radiowaves.left.and.right"
         case .permissions: "lock.shield"
+        case .about: "info.circle"
         }
     }
 
@@ -43,6 +45,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         case .shortcuts: "Global hotkeys for every capture action."
         case .mcp: "Let on-device AI agents capture and read your screen."
         case .permissions: "System access AIShot needs to capture your screen."
+        case .about: "Version, source code, and credits."
         }
     }
 }
@@ -85,6 +88,7 @@ struct SettingsView: View {
             case .shortcuts: ShortcutsPage()
             case .mcp: MCPPage()
             case .permissions: PermissionsPage()
+            case .about: AboutPage()
             }
         }
     }
@@ -318,5 +322,77 @@ private struct PermissionsPage: View {
         }
         .formStyle(.grouped)
         .task { await model.refreshPermissions() }
+    }
+}
+
+private struct AboutPage: View {
+    private let githubURL = URL(string: "https://github.com/aishot/aishot")!
+    private let author = "Alexey Abramov"
+
+    private var marketingVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
+    }
+    private var buildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                VStack(spacing: 10) {
+                    // Branded mark. AIShot has no bundled app icon yet, so a
+                    // styled glyph reads better here than the generic macOS
+                    // placeholder. Swap to `Image(nsImage: NSApp.applicationIconImage)`
+                    // once a real AppIcon ships.
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                )
+                            )
+                        Image(systemName: "camera.viewfinder")
+                            .font(.system(size: 38, weight: .medium))
+                            .foregroundStyle(.white)
+                    }
+                    .frame(width: 72, height: 72)
+                    .shadow(color: .black.opacity(0.18), radius: 5, y: 2)
+                    Text(verbatim: "AIShot")
+                        .font(.title2.weight(.semibold))
+                    Text("AIShot captures regions, windows, and screens, lets you annotate them, and exposes the same tools to on-device AI agents over an embedded MCP server — all without anything leaving your Mac.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+            }
+
+            Section {
+                LabeledContent("Version") {
+                    Text(verbatim: "\(marketingVersion) (\(buildNumber))")
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+                LabeledContent("Author") {
+                    Text(verbatim: author).foregroundStyle(.secondary)
+                }
+                LabeledContent("Source code") {
+                    Link(destination: githubURL) {
+                        Text(verbatim: "github.com/aishot/aishot")
+                    }
+                }
+            }
+
+            Section {
+                Text(verbatim: "© 2026 \(author) · Built with Swift, SwiftUI & ScreenCaptureKit")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+        }
+        .formStyle(.grouped)
     }
 }
