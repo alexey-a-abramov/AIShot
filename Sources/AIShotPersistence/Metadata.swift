@@ -1,7 +1,7 @@
 import Foundation
 
 /// A human note plus an optional project tag attached to a saved capture.
-/// Stored alongside the images (not baked into the pixels).
+/// Stored alongside (or apart from) the images — not baked into the pixels.
 public struct CaptureMetadata: Codable, Sendable, Equatable {
     public var note: String
     /// The project/name tag, or `nil` when untagged.
@@ -21,11 +21,10 @@ public struct CaptureMetadata: Codable, Sendable, Equatable {
     }
 }
 
-/// The on-disk index written to `aishot-metadata.json` in a capture directory:
-/// maps each capture's file name to its `CaptureMetadata`.
+/// The on-disk index: maps a capture's key (its file name, or its absolute path
+/// for a shared database) to its `CaptureMetadata`.
 public struct CaptureMetadataIndex: Codable, Sendable, Equatable {
     public var version: Int
-    /// Keyed by file name (e.g. `"AIShot 2026-06-20 at 12.00.00.png"`).
     public var items: [String: CaptureMetadata]
 
     public init(version: Int = 1, items: [String: CaptureMetadata] = [:]) {
@@ -40,14 +39,16 @@ public struct CaptureMetadataIndex: Codable, Sendable, Equatable {
     }
 }
 
-/// Reads and writes per-directory `aishot-metadata.json` files. Serialized
-/// through an actor; each directory's index is cached and invalidated on write.
-///
-/// The metadata lives in the same folder as the images so it's human-readable
-/// and travels with a backup of the screenshots folder.
+/// Reads and writes a capture-metadata index JSON file at an arbitrary location.
+/// The *where* (a hidden dotfile beside the images, a visible file, or a shared
+/// database in a custom folder) is decided by the caller — this store just
+/// operates on a given index URL and entry key. Serialized through an actor;
+/// each index file is cached and invalidated on write.
 public actor CaptureMetadataStore {
-    /// The sidecar index file name placed in each capture directory.
-    public static let fileName = "aishot-metadata.json"
+    /// Default visible index file name.
+    public static let visibleFileName = "aishot-metadata.json"
+    /// Default hidden (dot-prefixed) index file name.
+    public static let hiddenFileName = ".aishot-metadata.json"
 
     private var cache: [URL: CaptureMetadataIndex] = [:]
 
@@ -55,38 +56,40 @@ public actor CaptureMetadataStore {
 
     // MARK: - Reads
 
-    /// The full index for a directory (empty if none exists yet).
-    public func index(for directory: URL) -> CaptureMetadataIndex {
-        let dir = directory.standardizedFileURL
-        if let cached = cache[dir] { return cached }
-        let index: CaptureMetadataIndex
-        if let data = try? Data(contentsOf: fileURL(for: dir)),
-           let decoded = try? Self.decoder.decode(CaptureMetadataIndex.self, from: data) {
-            index = decoded
-        } else {
-            index = CaptureMetadataIndex()
-        }
-        cache[dir] = index
+    /// The full index stored at `url` (empty if the file doesn't exist yet).
+    public func index(at url: URL) -> CaptureMetadataIndex {
+        let key = url.standardizedFileURL
+        if let cached = cache[key] { return cached }
+        let index = loadIndex(at: key)
+        cache[key] = index
         return index
     }
 
-    public func metadata(directory: URL, fileName: String) -> CaptureMetadata? {
-        index(for: directory).items[fileName]
+    /// Reads an index straight from disk, bypassing the cache.
+    private func loadIndex(at url: URL) -> CaptureMetadataIndex {
+        guard let data = try? Data(contentsOf: url),
+              let decoded = try? Self.decoder.decode(CaptureMetadataIndex.self, from: data)
+        else { return CaptureMetadataIndex() }
+        return decoded
     }
 
-    public func tags(for directory: URL) -> [String] {
-        index(for: directory).tags
+    public func metadata(at url: URL, key: String) -> CaptureMetadata? {
+        index(at: url).items[key]
+    }
+
+    public func tags(at url: URL) -> [String] {
+        index(at: url).tags
     }
 
     // MARK: - Writes
 
-    /// Inserts or replaces the metadata for `fileName`. An empty note + empty
-    /// tag removes the entry instead of storing a blank one. Returns the stored
+    /// Inserts or replaces the metadata for `key`. An empty note + empty tag
+    /// removes the entry instead of storing a blank one. Returns the stored
     /// metadata (or `nil` if it was a removal).
     @discardableResult
-    public func upsert(directory: URL, fileName: String, note: String, tag: String?) throws -> CaptureMetadata? {
-        let dir = directory.standardizedFileURL
-        var index = index(for: dir)
+    public func upsert(at url: URL, key: String, note: String, tag: String?) throws -> CaptureMetadata? {
+        let standardized = url.standardizedFileURL
+        var index = index(at: standardized)
 
         let cleanTag = tag?.trimmingCharacters(in: .whitespacesAndNewlines)
         let meta = CaptureMetadata(
@@ -95,25 +98,62 @@ public actor CaptureMetadataStore {
         )
 
         if meta.isEmpty {
-            index.items[fileName] = nil
+            index.items[key] = nil
         } else {
-            index.items[fileName] = meta
+            index.items[key] = meta
         }
-        try persist(index, to: dir)
+        try persist(index, to: standardized)
         return meta.isEmpty ? nil : meta
+    }
+
+    /// Moves an index file from `oldURL` to `newURL` (used when the user changes
+    /// the database location). No-op if the source is missing or identical.
+    /// If a target already exists, the two indexes are **merged** (newer entry
+    /// wins per key) so no notes are lost.
+    public func move(from oldURL: URL, to newURL: URL) {
+        let old = oldURL.standardizedFileURL
+        let new = newURL.standardizedFileURL
+        guard old != new, FileManager.default.fileExists(atPath: old.path) else { return }
+        try? FileManager.default.createDirectory(
+            at: new.deletingLastPathComponent(), withIntermediateDirectories: true
+        )
+        if FileManager.default.fileExists(atPath: new.path) {
+            let source = loadIndex(at: old)
+            var target = loadIndex(at: new)
+            for (key, meta) in source.items {
+                if let existing = target.items[key], existing.updatedAt >= meta.updatedAt { continue }
+                target.items[key] = meta
+            }
+            try? persist(target, to: new)
+            try? FileManager.default.removeItem(at: old)
+        } else {
+            try? FileManager.default.moveItem(at: old, to: new)
+            applyHiddenFlag(new)
+        }
+        cache[old] = nil
+        cache[new] = nil
     }
 
     // MARK: - Internals
 
-    private func fileURL(for directory: URL) -> URL {
-        directory.appendingPathComponent(Self.fileName)
+    private func persist(_ index: CaptureMetadataIndex, to url: URL) throws {
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(), withIntermediateDirectories: true
+        )
+        let data = try Self.encoder.encode(index)
+        try data.write(to: url, options: .atomic)
+        applyHiddenFlag(url)
+        cache[url] = index
     }
 
-    private func persist(_ index: CaptureMetadataIndex, to directory: URL) throws {
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let data = try Self.encoder.encode(index)
-        try data.write(to: fileURL(for: directory), options: .atomic)
-        cache[directory] = index
+    /// Set the macOS hidden flag for dot-prefixed index files (belt-and-braces
+    /// on top of the leading-dot convention).
+    private func applyHiddenFlag(_ url: URL) {
+        guard url.lastPathComponent.hasPrefix(".") else { return }
+        var values = URLResourceValues()
+        values.isHidden = true
+        var mutable = url
+        try? mutable.setResourceValues(values)
     }
 
     private static let encoder: JSONEncoder = {

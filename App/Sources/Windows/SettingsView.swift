@@ -197,12 +197,40 @@ private struct CapturePage: View {
 private struct NotesTagsPage: View {
     @EnvironmentObject private var model: AppModel
 
+    private var locationBinding: Binding<MetadataLocation> {
+        Binding(
+            get: { model.settings.metadataLocation },
+            set: { newValue in Task { await model.setMetadataLocation(newValue) } }
+        )
+    }
+
     var body: some View {
         Form {
             Section("After capture") {
                 Toggle("Ask for a note and tag", isOn: $model.settings.captureMetadataEnabled)
                 Toggle("Automatically apply the last tag", isOn: $model.settings.applyLastTag)
             }
+
+            Section("Database") {
+                Picker("Location", selection: locationBinding) {
+                    Text("Hidden, beside screenshots").tag(MetadataLocation.hidden)
+                    Text("Visible, beside screenshots").tag(MetadataLocation.visible)
+                    Text("Custom folder").tag(MetadataLocation.custom)
+                }
+                if model.settings.metadataLocation == .custom {
+                    LabeledContent("Folder") {
+                        HStack {
+                            Text(model.metadataDatabaseDirectory.path)
+                                .truncationMode(.middle).lineLimit(1).foregroundStyle(.secondary)
+                            Button("Change…", action: chooseFolder)
+                        }
+                    }
+                }
+                LabeledContent("File") {
+                    Text(verbatim: model.metadataDatabaseFileName).foregroundStyle(.secondary)
+                }
+            }
+
             if let last = model.settings.lastTag, !last.isEmpty {
                 Section("Last tag") {
                     LabeledContent("Tag") { Text(verbatim: last).foregroundStyle(.secondary) }
@@ -212,12 +240,23 @@ private struct NotesTagsPage: View {
                     }
                 }
             }
+
             Section {
-                Text("Notes and tags are saved beside your screenshots in aishot-metadata.json. Browse captures by tag in the Dashboard.")
+                Text("Notes and tags are kept in a small JSON database. By default it's a hidden file beside your screenshots; you can make it visible or move it to a custom folder. Browse captures by tag in the Dashboard.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
+    }
+
+    private func chooseFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let url = panel.url {
+            Task { await model.setMetadataCustomDirectory(url) }
+        }
     }
 }
 

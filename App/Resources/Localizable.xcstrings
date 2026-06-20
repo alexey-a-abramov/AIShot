@@ -732,6 +732,40 @@
         }
       }
     },
+    "Custom folder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carpeta personalizada"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dossier personnalisé"
+          }
+        }
+      }
+    },
+    "Database" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base de datos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Base de données"
+          }
+        }
+      }
+    },
     "Default action" : {
       "localizations" : {
         "es" : {
@@ -915,6 +949,23 @@
         }
       }
     },
+    "File" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archivo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier"
+          }
+        }
+      }
+    },
     "Filename" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1082,6 +1133,23 @@
         }
       }
     },
+    "Hidden, beside screenshots" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oculto, junto a las capturas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masqué, à côté des captures"
+          }
+        }
+      }
+    },
     "Highlighter" : {
       "localizations" : {
         "es" : {
@@ -1230,6 +1298,23 @@
         }
       }
     },
+    "Location" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubicación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emplacement"
+          }
+        }
+      }
+    },
     "MCP (Model Context Protocol) is the open standard agents use to call tools. AIShot ships a local MCP server so assistants like Claude Code and Claude Desktop can see and act on your screen — entirely on your Mac." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1347,19 +1432,19 @@
         }
       }
     },
-    "Notes and tags are saved beside your screenshots in aishot-metadata.json. Browse captures by tag in the Dashboard." : {
+    "Notes and tags are kept in a small JSON database. By default it's a hidden file beside your screenshots; you can make it visible or move it to a custom folder. Browse captures by tag in the Dashboard." : {
       "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Las notas y etiquetas se guardan junto a tus capturas en aishot-metadata.json. Explora las capturas por etiqueta en el panel."
+            "value" : "Las notas y etiquetas se guardan en una pequeña base de datos JSON. De forma predeterminada es un archivo oculto junto a tus capturas; puedes hacerlo visible o moverlo a una carpeta personalizada. Explora las capturas por etiqueta en el panel."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les notes et étiquettes sont enregistrées à côté de vos captures dans aishot-metadata.json. Parcourez les captures par étiquette dans le tableau de bord."
+            "value" : "Les notes et étiquettes sont conservées dans une petite base de données JSON. Par défaut, c’est un fichier masqué à côté de vos captures ; vous pouvez le rendre visible ou le déplacer dans un dossier personnalisé. Parcourez les captures par étiquette dans le tableau de bord."
           }
         }
       }
@@ -2437,6 +2522,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Version, code source et crédits."
+          }
+        }
+      }
+    },
+    "Visible, beside screenshots" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visible, junto a las capturas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Visible, à côté des captures"
           }
         }
       }

@@ -11,6 +11,16 @@ public enum PostCaptureAction: String, Sendable, Codable, CaseIterable {
     case saveOnly
 }
 
+/// Where the notes/tags database lives.
+public enum MetadataLocation: String, Sendable, Codable, CaseIterable {
+    /// A hidden `.aishot-metadata.json` dotfile beside each capture (default).
+    case hidden
+    /// A visible `aishot-metadata.json` beside each capture.
+    case visible
+    /// A single shared database in a user-chosen folder (`metadataCustomDirectory`).
+    case custom
+}
+
 /// User-configurable settings, surfaced in the Settings window and honored by
 /// the capture pipeline and MCP server.
 public struct AppSettings: Sendable, Codable, Equatable {
@@ -44,6 +54,11 @@ public struct AppSettings: Sendable, Codable, Equatable {
     public var applyLastTag: Bool
     /// The most recently used project tag, offered as the default next time.
     public var lastTag: String?
+    /// Where the notes/tags database is stored.
+    public var metadataLocation: MetadataLocation
+    /// Folder for the shared database when `metadataLocation == .custom`
+    /// (`nil` falls back to the app-support folder).
+    public var metadataCustomDirectory: URL?
 
     public init(
         saveDirectory: URL,
@@ -60,7 +75,9 @@ public struct AppSettings: Sendable, Codable, Equatable {
         mcpRequireConfirmationForInput: Bool = true,
         captureMetadataEnabled: Bool = true,
         applyLastTag: Bool = false,
-        lastTag: String? = nil
+        lastTag: String? = nil,
+        metadataLocation: MetadataLocation = .hidden,
+        metadataCustomDirectory: URL? = nil
     ) {
         self.saveDirectory = saveDirectory
         self.defaultFormat = defaultFormat
@@ -77,6 +94,8 @@ public struct AppSettings: Sendable, Codable, Equatable {
         self.captureMetadataEnabled = captureMetadataEnabled
         self.applyLastTag = applyLastTag
         self.lastTag = lastTag
+        self.metadataLocation = metadataLocation
+        self.metadataCustomDirectory = metadataCustomDirectory
     }
 
     /// Resilient decoding: unknown/missing keys fall back to defaults so adding
@@ -99,6 +118,8 @@ public struct AppSettings: Sendable, Codable, Equatable {
         captureMetadataEnabled = try container.decodeIfPresent(Bool.self, forKey: .captureMetadataEnabled) ?? fallback.captureMetadataEnabled
         applyLastTag = try container.decodeIfPresent(Bool.self, forKey: .applyLastTag) ?? fallback.applyLastTag
         lastTag = try container.decodeIfPresent(String.self, forKey: .lastTag) ?? fallback.lastTag
+        metadataLocation = try container.decodeIfPresent(MetadataLocation.self, forKey: .metadataLocation) ?? fallback.metadataLocation
+        metadataCustomDirectory = try container.decodeIfPresent(URL.self, forKey: .metadataCustomDirectory) ?? fallback.metadataCustomDirectory
     }
 
     /// Sensible defaults: save to `~/Pictures/AIShot`, PNG, copy to clipboard

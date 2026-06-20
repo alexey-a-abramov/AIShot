@@ -73,6 +73,8 @@ final class AppModel: ObservableObject {
         ) { [weak self] _ in
             Task { @MainActor in await self?.refreshPermissions() }
         }
+        // Carry forward any pre-existing visible index now that hidden is default.
+        Task { @MainActor [weak self] in await self?.migrateLegacyMetadataIfNeeded() }
     }
 
     // MARK: - Capture actions
@@ -312,12 +314,11 @@ final class AppModel: ObservableObject {
     /// "apply last tag" is on) or present the note/tag prompt.
     private func promptOrApplyMetadata(for outcome: CaptureOutcome) async {
         guard settings.captureMetadataEnabled, let fileURL = outcome.result.fileURL else { return }
-        let directory = fileURL.deletingLastPathComponent()
-        let fileName = fileURL.lastPathComponent
+        let loc = metadataLocator(for: fileURL)
 
         // Silently reuse the last tag (no interruption), even when the editor opens.
         if settings.applyLastTag, let tag = settings.lastTag, !tag.isEmpty {
-            try? await metadataStore.upsert(directory: directory, fileName: fileName, note: "", tag: tag)
+            try? await metadataStore.upsert(at: loc.indexURL, key: loc.key, note: "", tag: tag)
             await refreshMetadata(for: recent)
             return
         }
@@ -325,10 +326,10 @@ final class AppModel: ObservableObject {
         // The editor is the richer surface; don't stack a prompt on top of it.
         guard settings.postCaptureAction != .openEditor else { return }
 
-        let known = await metadataStore.tags(for: directory)
+        let known = await metadataStore.tags(at: loc.indexURL)
         let thumbnail = NSImage(data: outcome.image.data)
         tagPrompt.present(
-            fileName: fileName,
+            fileName: fileURL.lastPathComponent,
             thumbnail: thumbnail,
             suggestedTag: settings.lastTag,
             knownTags: known,
@@ -336,16 +337,15 @@ final class AppModel: ObservableObject {
         ) { [weak self] result in
             guard let self, let result else { return }
             Task { @MainActor in
-                await self.applyPromptResult(result, directory: directory, fileName: fileName)
+                await self.applyPromptResult(result, fileURL: fileURL)
             }
         }
     }
 
-    private func applyPromptResult(
-        _ result: CaptureTagPromptController.Result, directory: URL, fileName: String
-    ) async {
+    private func applyPromptResult(_ result: CaptureTagPromptController.Result, fileURL: URL) async {
+        let loc = metadataLocator(for: fileURL)
         let tag = result.tag?.trimmingCharacters(in: .whitespacesAndNewlines)
-        try? await metadataStore.upsert(directory: directory, fileName: fileName, note: result.note, tag: tag)
+        try? await metadataStore.upsert(at: loc.indexURL, key: loc.key, note: result.note, tag: tag)
         if let tag, !tag.isEmpty { settings.lastTag = tag }
         // "Apply to next" only makes sense if there's actually a tag to reuse.
         settings.applyLastTag = result.applyToNext && (settings.lastTag?.isEmpty == false)
@@ -362,12 +362,101 @@ final class AppModel: ObservableObject {
     /// Updates note/tag for a capture from the dashboard editor.
     func updateMetadata(for entry: HistoryEntry, note: String, tag: String?) async {
         guard let fileURL = entry.fileURL else { return }
-        let directory = fileURL.deletingLastPathComponent()
+        let loc = metadataLocator(for: fileURL)
         let cleanTag = tag?.trimmingCharacters(in: .whitespacesAndNewlines)
-        try? await metadataStore.upsert(
-            directory: directory, fileName: fileURL.lastPathComponent, note: note, tag: cleanTag
-        )
+        try? await metadataStore.upsert(at: loc.indexURL, key: loc.key, note: note, tag: cleanTag)
         if let cleanTag, !cleanTag.isEmpty { settings.lastTag = cleanTag; saveSettings() }
+        await refreshMetadata(for: recent)
+    }
+
+    // MARK: Metadata location
+
+    /// Resolves the index file + entry key for a capture, honoring the chosen
+    /// `metadataLocation` (hidden/visible beside the image, or a shared database).
+    private func metadataLocator(for fileURL: URL) -> (indexURL: URL, key: String) {
+        switch settings.metadataLocation {
+        case .hidden:
+            return (fileURL.deletingLastPathComponent()
+                        .appendingPathComponent(CaptureMetadataStore.hiddenFileName),
+                    fileURL.lastPathComponent)
+        case .visible:
+            return (fileURL.deletingLastPathComponent()
+                        .appendingPathComponent(CaptureMetadataStore.visibleFileName),
+                    fileURL.lastPathComponent)
+        case .custom:
+            let dir = settings.metadataCustomDirectory ?? AppPaths.supportDirectory
+            return (dir.appendingPathComponent(CaptureMetadataStore.hiddenFileName),
+                    fileURL.standardizedFileURL.path)
+        }
+    }
+
+    /// The index file backing the current save folder, used to populate the
+    /// dashboard's tag list even before its captures appear in recent history.
+    private func primaryMetadataIndexURL() -> URL {
+        switch settings.metadataLocation {
+        case .hidden:
+            return settings.saveDirectory.appendingPathComponent(CaptureMetadataStore.hiddenFileName)
+        case .visible:
+            return settings.saveDirectory.appendingPathComponent(CaptureMetadataStore.visibleFileName)
+        case .custom:
+            let dir = settings.metadataCustomDirectory ?? AppPaths.supportDirectory
+            return dir.appendingPathComponent(CaptureMetadataStore.hiddenFileName)
+        }
+    }
+
+    /// Resolved folder of the active metadata database (for display in settings).
+    var metadataDatabaseDirectory: URL {
+        switch settings.metadataLocation {
+        case .hidden, .visible: return settings.saveDirectory
+        case .custom: return settings.metadataCustomDirectory ?? AppPaths.supportDirectory
+        }
+    }
+
+    /// File name of the active metadata database (for display in settings).
+    var metadataDatabaseFileName: String {
+        settings.metadataLocation == .visible
+            ? CaptureMetadataStore.visibleFileName
+            : CaptureMetadataStore.hiddenFileName
+    }
+
+    /// Changes the database location, migrating the file when it's a safe rename
+    /// (the two per-directory modes share the same keys; custom uses different
+    /// keys, so we don't move across that boundary).
+    func setMetadataLocation(_ newLocation: MetadataLocation) async {
+        let oldLocation = settings.metadataLocation
+        guard oldLocation != newLocation else { return }
+        let oldURL = primaryMetadataIndexURL()
+        settings.metadataLocation = newLocation
+        let newURL = primaryMetadataIndexURL()
+        let perDirectory: (MetadataLocation) -> Bool = { $0 == .hidden || $0 == .visible }
+        if perDirectory(oldLocation), perDirectory(newLocation), oldURL != newURL {
+            await metadataStore.move(from: oldURL, to: newURL)
+        }
+        saveSettings()
+        await refreshMetadata(for: recent)
+    }
+
+    /// Points the shared database at a new folder, moving the existing file.
+    func setMetadataCustomDirectory(_ url: URL) async {
+        let oldURL = primaryMetadataIndexURL()
+        settings.metadataCustomDirectory = url
+        let newURL = primaryMetadataIndexURL()
+        if settings.metadataLocation == .custom, oldURL != newURL {
+            await metadataStore.move(from: oldURL, to: newURL)
+        }
+        saveSettings()
+        await refreshMetadata(for: recent)
+    }
+
+    /// One-time: if the default switched to hidden but a legacy visible index
+    /// exists in the save folder, rename it so existing notes carry over.
+    private func migrateLegacyMetadataIfNeeded() async {
+        guard settings.metadataLocation == .hidden else { return }
+        let visible = settings.saveDirectory.appendingPathComponent(CaptureMetadataStore.visibleFileName)
+        let hidden = settings.saveDirectory.appendingPathComponent(CaptureMetadataStore.hiddenFileName)
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: visible.path), !fm.fileExists(atPath: hidden.path) else { return }
+        await metadataStore.move(from: visible, to: hidden)
         await refreshMetadata(for: recent)
     }
 
@@ -427,20 +516,27 @@ final class AppModel: ObservableObject {
         await refreshMetadata(for: entries)
     }
 
-    /// Loads note/tag metadata for the directories referenced by `entries` (plus
-    /// the current save folder) so the dashboard can show and filter by tag.
+    /// Loads note/tag metadata for the captures in `entries` (plus the active
+    /// index) so the dashboard can show and filter by tag. Works across all
+    /// location modes, since each entry resolves its own index file + key.
     private func refreshMetadata(for entries: [HistoryEntry]) async {
-        var directories = Set(entries.compactMap {
-            $0.fileURL?.deletingLastPathComponent().standardizedFileURL
-        })
-        directories.insert(settings.saveDirectory.standardizedFileURL)
+        var indexes: [URL: [String: URL]] = [:]
+        for entry in entries {
+            guard let fileURL = entry.fileURL else { continue }
+            let loc = metadataLocator(for: fileURL)
+            indexes[loc.indexURL, default: [:]][loc.key] = fileURL.standardizedFileURL
+        }
+        // Always load the active index so its tags populate the sidebar even
+        // before any of its captures appear in recent history.
+        let activeIndex = primaryMetadataIndexURL()
+        if indexes[activeIndex] == nil { indexes[activeIndex] = [:] }
 
         var byURL: [URL: CaptureMetadata] = [:]
         var tags = Set<String>()
-        for directory in directories {
-            let index = await metadataStore.index(for: directory)
-            for (name, meta) in index.items {
-                byURL[directory.appendingPathComponent(name).standardizedFileURL] = meta
+        for (indexURL, keyToFile) in indexes {
+            let index = await metadataStore.index(at: indexURL)
+            for (key, meta) in index.items {
+                if let fileURL = keyToFile[key] { byURL[fileURL] = meta }
                 if let tag = meta.tag, !tag.isEmpty { tags.insert(tag) }
             }
         }
