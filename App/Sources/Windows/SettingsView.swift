@@ -70,7 +70,7 @@ struct SettingsView: View {
                 .navigationSplitViewColumnWidth(min: 480, ideal: 580)
         })
         .navigationSplitViewStyle(.balanced)
-        .frame(minWidth: 740, idealWidth: 860, minHeight: 520, idealHeight: 580)
+        .frame(minWidth: 720, idealWidth: 860, minHeight: 520, idealHeight: 580)
         // Persist whenever any page mutates the shared settings.
         .onChange(of: model.settings) { _, _ in model.saveSettings() }
     }
@@ -112,14 +112,17 @@ private struct SettingsPage<Content: View>: View {
                 }
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
             .padding(.top, 22)
-            .padding(.bottom, 14)
+            .padding(.bottom, 12)
 
             content
-                .frame(maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        // Cap the content column to a comfortable reading width and center it,
+        // so widening the window stays tidy instead of stretching controls
+        // across the whole pane.
+        .frame(maxWidth: 720, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }
 
