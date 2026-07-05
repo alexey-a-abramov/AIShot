@@ -146,6 +146,7 @@ private struct GeneralPage: View {
                     HStack {
                         Text(model.settings.saveDirectory.path)
                             .truncationMode(.middle).lineLimit(1).foregroundStyle(.secondary)
+                        Button("Open Folder", action: openFolder)
                         Button("Change…", action: chooseFolder)
                     }
                 }
@@ -166,6 +167,11 @@ private struct GeneralPage: View {
         if panel.runModal() == .OK, let url = panel.url {
             model.settings.saveDirectory = url // persisted by AppModel.settings's didSet
         }
+    }
+
+    private func openFolder() {
+        try? FileManager.default.createDirectory(at: model.settings.saveDirectory, withIntermediateDirectories: true)
+        NSWorkspace.shared.open(model.settings.saveDirectory)
     }
 }
 
@@ -234,6 +240,7 @@ private struct NotesTagsPage: View {
                         HStack {
                             Text(model.metadataDatabaseDirectory.path)
                                 .truncationMode(.middle).lineLimit(1).foregroundStyle(.secondary)
+                            Button("Open Folder", action: openFolder)
                             Button("Change…", action: chooseFolder)
                         }
                     }
@@ -269,6 +276,12 @@ private struct NotesTagsPage: View {
         if panel.runModal() == .OK, let url = panel.url {
             Task { await model.setMetadataCustomDirectory(url) }
         }
+    }
+
+    private func openFolder() {
+        let directory = model.metadataDatabaseDirectory
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        NSWorkspace.shared.open(directory)
     }
 }
 
