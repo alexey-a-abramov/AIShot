@@ -59,4 +59,21 @@ struct RendererTests {
                 .render(AnnotationDocument(baseImageSize: .zero), onto: Data([0, 1, 2, 3]))
         }
     }
+
+    @Test func counterBadgeDrawsItsNumber() async throws {
+        // A counter with a number set must render differently than the same
+        // badge with no number — otherwise the digit isn't actually painted.
+        let base = basePNG(80, 80)
+        let numbered = AnnotationDocument(
+            baseImageSize: CGSize(width: 80, height: 80),
+            annotations: [Annotation(tool: .counter, points: [CGPoint(x: 40, y: 40)], color: .red, lineWidth: 4, text: "1")]
+        )
+        let unnumbered = AnnotationDocument(
+            baseImageSize: CGSize(width: 80, height: 80),
+            annotations: [Annotation(tool: .counter, points: [CGPoint(x: 40, y: 40)], color: .red, lineWidth: 4, text: nil)]
+        )
+        let numberedOutput = try await CoreImageAnnotationRenderer().render(numbered, onto: base)
+        let unnumberedOutput = try await CoreImageAnnotationRenderer().render(unnumbered, onto: base)
+        #expect(numberedOutput != unnumberedOutput)
+    }
 }

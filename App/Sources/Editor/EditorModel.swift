@@ -28,12 +28,30 @@ final class EditorModel: ObservableObject {
     @Published private(set) var imageData: Data
     @Published private(set) var pixelSize: CGSize
 
-    /// Snapshot-based undo: each entry is a full annotation list before an edit.
-    private var undoStack: [[Annotation]] = []
-    private var redoStack: [[Annotation]] = []
+    /// A full undo checkpoint: both the annotations AND the base image, so
+    /// image-mutating operations (Beautify, Redact) are undoable too, not just
+    /// annotation edits.
+    private struct Snapshot {
+        var imageData: Data
+        var pixelSize: CGSize
+        var annotations: [Annotation]
+    }
+
+    private var undoStack: [Snapshot] = []
+    private var redoStack: [Snapshot] = []
     /// Coalescing key so a continuous edit (a drag or slider sweep) pushes one
     /// undo step, not hundreds.
     private var lastUndoKey: String?
+    /// Stack depth right after the checkpoint for the CURRENT text-edit
+    /// session was pushed. Lets `handleEscape` discard that checkpoint
+    /// cleanly when the session turns out to be a no-op (a brand-new label
+    /// dismissed before typing anything), so it doesn't leave a stray
+    /// undo/redo step behind. `nil` — or a depth that no longer matches the
+    /// live stack (something else was pushed meanwhile) — means leave it be.
+    private var textEditCheckpointDepth: Int?
+    /// Whether the label being edited already had non-empty content before
+    /// this session started (a re-edit) — vs. a brand-new, still-empty one.
+    private var textEditHadPriorContent = false
 
     private let renderer = CoreImageAnnotationRenderer()
     private let redactor = AutoRedactor()
@@ -50,9 +68,13 @@ final class EditorModel: ObservableObject {
 
     // MARK: - Undo
 
+    private func snapshot() -> Snapshot {
+        Snapshot(imageData: imageData, pixelSize: pixelSize, annotations: annotations)
+    }
+
     private func pushUndo(_ key: String? = nil) {
         if let key, key == lastUndoKey { return } // same continuous edit
-        undoStack.append(annotations)
+        undoStack.append(snapshot())
         redoStack.removeAll()
         lastUndoKey = key
     }
@@ -63,20 +85,51 @@ final class EditorModel: ObservableObject {
     func undo() {
         endTextEditing()
         guard let previous = undoStack.popLast() else { return }
-        redoStack.append(annotations)
-        annotations = previous
-        selectedID = nil
-        editingTextID = nil
-        lastUndoKey = nil
+        redoStack.append(snapshot())
+        apply(previous)
     }
 
     func redo() {
         guard let next = redoStack.popLast() else { return }
-        undoStack.append(annotations)
-        annotations = next
+        undoStack.append(snapshot())
+        apply(next)
+    }
+
+    private func apply(_ snapshot: Snapshot) {
+        imageData = snapshot.imageData
+        pixelSize = snapshot.pixelSize
+        annotations = snapshot.annotations
+        draft = nil
         selectedID = nil
         editingTextID = nil
         lastUndoKey = nil
+        textEditCheckpointDepth = nil
+    }
+
+    /// Escape, in priority order: cancel an in-progress text edit (reverting
+    /// to how it read before this edit started), discard an in-progress drag
+    /// draft, deselect, then fall back to switching back to the pointer tool.
+    func handleEscape() {
+        if editingTextID != nil {
+            let isEmpty = (annotations.first(where: { $0.id == editingTextID })?.text ?? "").isEmpty
+            if isEmpty, !textEditHadPriorContent,
+               let depth = textEditCheckpointDepth, depth == undoStack.count {
+                // A brand-new label dismissed before typing anything:
+                // nothing meaningful happened, so drop its checkpoint instead
+                // of leaving a no-op undo/redo step behind.
+                undoStack.removeLast()
+                lastUndoKey = nil
+                endTextEditing()
+            } else {
+                undo()
+            }
+        } else if draft != nil {
+            draft = nil
+        } else if selectedID != nil {
+            selectedID = nil
+        } else if mode != .select {
+            mode = .select
+        }
     }
 
     // MARK: - Drawing (drag tools)
@@ -93,8 +146,18 @@ final class EditorModel: ObservableObject {
     }
 
     func commit() {
-        guard let draft else { return }
+        guard var draft else { return }
         pushUndo()
+        if draft.tool == .counter {
+            // Continue from the highest number already placed (not just the
+            // count), so a number is never reused after an earlier step is
+            // deleted.
+            let highest = annotations
+                .filter { $0.tool == .counter }
+                .compactMap { Int($0.text ?? "") }
+                .max() ?? 0
+            draft.text = "\(highest + 1)"
+        }
         annotations.append(draft)
         self.draft = nil
         selectedID = draft.id
@@ -105,6 +168,8 @@ final class EditorModel: ObservableObject {
     func beginText(at point: CGPoint) {
         endTextEditing()
         pushUndo()
+        textEditCheckpointDepth = undoStack.count
+        textEditHadPriorContent = false
         let annotation = Annotation(
             tool: .text, points: [point], color: color, lineWidth: lineWidth,
             text: "", fontSize: max(12, lineWidth * 5)
@@ -137,6 +202,7 @@ final class EditorModel: ObservableObject {
             if selectedID == id { selectedID = nil }
         }
         editingTextID = nil
+        textEditCheckpointDepth = nil
     }
 
     // MARK: - Selection & manipulation
@@ -151,6 +217,11 @@ final class EditorModel: ObservableObject {
         let hit = hitTest(point)
         if hit == nil { selectedID = nil; return }
         if hit == selectedID, annotations.first(where: { $0.id == hit })?.tool == .text {
+            // Preserve the pre-edit text so Undo/Escape can revert this
+            // re-edit session instead of removing the whole label.
+            pushUndo()
+            textEditCheckpointDepth = undoStack.count
+            textEditHadPriorContent = true
             editingTextID = hit
             return
         }
@@ -264,14 +335,18 @@ final class EditorModel: ObservableObject {
     }
 
     /// Bakes annotations in and frames the image on a gradient background.
+    /// Undoable: restores the pre-Beautify image and editable annotations.
     func applyBeautify() async {
         guard let flat = await flatten(), let out = try? Beautifier.beautify(flat) else { return }
+        pushUndo()
         setImage(out)
     }
 
-    /// Bakes annotations in and blurs auto-detected sensitive text.
+    /// Bakes annotations in and blurs auto-detected sensitive text. Undoable:
+    /// restores the pre-Redact image and editable annotations.
     func applyRedact() async {
         guard let flat = await flatten(), let out = try? await redactor.redact(in: flat) else { return }
+        pushUndo()
         setImage(out)
     }
 
@@ -282,9 +357,6 @@ final class EditorModel: ObservableObject {
         }
         annotations = []
         draft = nil
-        undoStack.removeAll()
-        redoStack.removeAll()
-        lastUndoKey = nil
         selectedID = nil
         editingTextID = nil
     }

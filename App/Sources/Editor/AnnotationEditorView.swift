@@ -36,6 +36,12 @@ struct AnnotationEditorView: View {
         .frame(minWidth: 820, minHeight: 480)
         .onAppear { nsImage = NSImage(data: editor.imageData) }
         .onChange(of: editor.imageData) { _, data in nsImage = NSImage(data: data) }
+        // Esc: cancel a text edit, discard an in-progress draft, deselect,
+        // then fall back to switching back to the pointer tool.
+        .onKeyPress(.escape) {
+            editor.handleEscape()
+            return .handled
+        }
     }
 
     private var toolbar: some View {
@@ -280,6 +286,13 @@ struct AnnotationEditorView: View {
                 Path(ellipseIn: CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)),
                 with: .color(color)
             )
+            if let number = annotation.text, !number.isEmpty {
+                context.draw(
+                    Text(number).font(.system(size: radius * 1.05, weight: .bold))
+                        .foregroundColor(Color(annotation.color.contrastingLabelColor)),
+                    at: center, anchor: .center
+                )
+            }
         }
     }
 }

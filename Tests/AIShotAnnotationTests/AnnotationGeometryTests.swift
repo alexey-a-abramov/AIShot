@@ -38,4 +38,16 @@ struct AnnotationGeometryTests {
         let decoded = try JSONDecoder().decode(AnnotationDocument.self, from: data)
         #expect(decoded == document)
     }
+
+    @Test func contrastingLabelColorPicksWhiteOnDarkSaturatedFills() {
+        // Red and black badges need white numbers to stay legible.
+        #expect(RGBAColor.red.contrastingLabelColor == .white)
+        #expect(RGBAColor.black.contrastingLabelColor == .white)
+    }
+
+    @Test func contrastingLabelColorPicksBlackOnLightFills() {
+        // Yellow and white badges need black numbers to stay legible.
+        #expect(RGBAColor.yellow.contrastingLabelColor == .black)
+        #expect(RGBAColor.white.contrastingLabelColor == .black)
+    }
 }

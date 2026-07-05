@@ -78,8 +78,12 @@ public actor CoreImageAnnotationRenderer: AnnotationRendering {
         ctx.restoreGState()
 
         // Text in the bottom-left frame (manual y conversion).
-        for annotation in document.annotations where annotation.tool == .text || annotation.tool == .counter {
-            drawText(annotation, in: ctx, imageHeight: h)
+        for annotation in document.annotations {
+            switch annotation.tool {
+            case .text: drawText(annotation, in: ctx, imageHeight: h)
+            case .counter: drawCounterNumber(annotation, in: ctx, imageHeight: h)
+            default: break
+            }
         }
 
         guard let out = ctx.makeImage() else {
@@ -174,6 +178,30 @@ public actor CoreImageAnnotationRenderer: AnnotationRendering {
         guard let attributed = CFAttributedStringCreate(nil, text as CFString, attributes) else { return }
         let line = CTLineCreateWithAttributedString(attributed)
         ctx.textPosition = CGPoint(x: point.x, y: imageHeight - point.y - fontSize)
+        CTLineDraw(line, ctx)
+    }
+
+    /// Draws a counter's number centered in its badge, in a color that
+    /// contrasts with the badge fill (the badge itself uses `annotation.color`
+    /// as its fill — the number can't use the same color or it'd be invisible).
+    private func drawCounterNumber(_ annotation: Annotation, in ctx: CGContext, imageHeight: CGFloat) {
+        guard let text = annotation.text, !text.isEmpty else { return }
+        let center = annotation.points.first ?? .zero
+        let radius = max(12, CGFloat(annotation.lineWidth) * 5)
+        let fontSize = radius * 1.05
+        let font = CTFontCreateWithName("Helvetica-Bold" as CFString, fontSize, nil)
+        let attributes = [
+            kCTFontAttributeName: font,
+            kCTForegroundColorAttributeName: annotation.color.contrastingLabelColor.cgColor,
+        ] as CFDictionary
+        guard let attributed = CFAttributedStringCreate(nil, text as CFString, attributes) else { return }
+        let line = CTLineCreateWithAttributedString(attributed)
+        var ascent: CGFloat = 0, descent: CGFloat = 0, leading: CGFloat = 0
+        let width = CTLineGetTypographicBounds(line, &ascent, &descent, &leading)
+        ctx.textPosition = CGPoint(
+            x: center.x - CGFloat(width) / 2,
+            y: (imageHeight - center.y) - (ascent - descent) / 2
+        )
         CTLineDraw(line, ctx)
     }
 

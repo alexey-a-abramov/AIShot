@@ -37,6 +37,14 @@ public struct RGBAColor: Sendable, Codable, Equatable {
     public func withAlpha(_ alpha: Double) -> RGBAColor {
         RGBAColor(r: r, g: g, b: b, a: alpha)
     }
+
+    /// Black or white, whichever contrasts better against this color (by
+    /// perceptual luminance). Used to keep a counter badge's number legible
+    /// regardless of the badge's own color.
+    public var contrastingLabelColor: RGBAColor {
+        let luminance = 0.299 * r + 0.587 * g + 0.114 * b
+        return luminance > 0.6 ? .black : .white
+    }
 }
 
 /// A single annotation. `points` are interpreted per-tool:
