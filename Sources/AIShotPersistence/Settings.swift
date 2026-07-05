@@ -21,6 +21,14 @@ public enum MetadataLocation: String, Sendable, Codable, CaseIterable {
     case custom
 }
 
+/// Output format for screen recordings.
+public enum RecordingFormat: String, Sendable, Codable, CaseIterable {
+    /// H.264 `.mp4`.
+    case mp4
+    /// Animated GIF, transcoded from the recorded video after it stops.
+    case gif
+}
+
 /// User-configurable settings, surfaced in the Settings window and honored by
 /// the capture pipeline and MCP server.
 public struct AppSettings: Sendable, Codable, Equatable {
@@ -59,6 +67,11 @@ public struct AppSettings: Sendable, Codable, Equatable {
     /// Folder for the shared database when `metadataLocation == .custom`
     /// (`nil` falls back to the app-support folder).
     public var metadataCustomDirectory: URL?
+    /// Self-timer: seconds to wait (showing a countdown) before Full Screen,
+    /// Window, All Displays, or Region captures actually fire. `0` disables it.
+    public var captureDelay: TimeInterval
+    /// Output format for screen recordings.
+    public var recordingFormat: RecordingFormat
 
     public init(
         saveDirectory: URL,
@@ -77,7 +90,9 @@ public struct AppSettings: Sendable, Codable, Equatable {
         applyLastTag: Bool = false,
         lastTag: String? = nil,
         metadataLocation: MetadataLocation = .hidden,
-        metadataCustomDirectory: URL? = nil
+        metadataCustomDirectory: URL? = nil,
+        captureDelay: TimeInterval = 0,
+        recordingFormat: RecordingFormat = .mp4
     ) {
         self.saveDirectory = saveDirectory
         self.defaultFormat = defaultFormat
@@ -96,6 +111,8 @@ public struct AppSettings: Sendable, Codable, Equatable {
         self.lastTag = lastTag
         self.metadataLocation = metadataLocation
         self.metadataCustomDirectory = metadataCustomDirectory
+        self.captureDelay = captureDelay
+        self.recordingFormat = recordingFormat
     }
 
     /// Resilient decoding: unknown/missing keys fall back to defaults so adding
@@ -120,6 +137,8 @@ public struct AppSettings: Sendable, Codable, Equatable {
         lastTag = try container.decodeIfPresent(String.self, forKey: .lastTag) ?? fallback.lastTag
         metadataLocation = try container.decodeIfPresent(MetadataLocation.self, forKey: .metadataLocation) ?? fallback.metadataLocation
         metadataCustomDirectory = try container.decodeIfPresent(URL.self, forKey: .metadataCustomDirectory) ?? fallback.metadataCustomDirectory
+        captureDelay = try container.decodeIfPresent(TimeInterval.self, forKey: .captureDelay) ?? fallback.captureDelay
+        recordingFormat = try container.decodeIfPresent(RecordingFormat.self, forKey: .recordingFormat) ?? fallback.recordingFormat
     }
 
     /// Sensible defaults: save to `~/Pictures/AIShot`, PNG, copy to clipboard

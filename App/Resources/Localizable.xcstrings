@@ -13,6 +13,57 @@
         }
       }
     },
+    "10 seconds" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 segundos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "10 secondes"
+          }
+        }
+      }
+    },
+    "3 seconds" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 segundos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 secondes"
+          }
+        }
+      }
+    },
+    "5 seconds" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 segundos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 secondes"
+          }
+        }
+      }
+    },
     "AI Agents" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -131,6 +182,23 @@
         }
       }
     },
+    "All Displays" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las pantallas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les écrans"
+          }
+        }
+      }
+    },
     "All captures" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -161,6 +229,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Un agent lance le pont stdio intégré, qui transmet les requêtes JSON-RPC à AIShot. Tous les agents partagent une même autorité de capture, vos autorisations sont donc réutilisées."
+          }
+        }
+      }
+    },
+    "Animated GIF" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GIF animado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GIF animé"
           }
         }
       }
@@ -410,6 +495,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Les outils de capture et de lecture — capture de zone/fenêtre/écran, énumération des écrans et fenêtres, et OCR — s’exécutent immédiatement."
+          }
+        }
+      }
+    },
+    "Capture All Displays" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturar todas las pantallas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturer tous les écrans"
           }
         }
       }
@@ -1332,6 +1434,23 @@
         }
       }
     },
+    "No captures match your search" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguna captura coincide con tu búsqueda"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune capture ne correspond à votre recherche"
+          }
+        }
+      }
+    },
     "No captures with this tag" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1495,6 +1614,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Étape numérotée"
+          }
+        }
+      }
+    },
+    "Off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé"
           }
         }
       }
@@ -1727,6 +1863,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enregistrement"
+          }
+        }
+      }
+    },
+    "Recording Format" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formato de grabación"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Format d’enregistrement"
           }
         }
       }
@@ -1996,6 +2149,23 @@
         }
       }
     },
+    "Search notes, tags, or file names" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buscar notas, etiquetas o nombres de archivo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher des notes, étiquettes ou noms de fichiers"
+          }
+        }
+      }
+    },
     "Select" : {
       "localizations" : {
         "es" : {
@@ -2024,6 +2194,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sélectionner / Déplacer"
+          }
+        }
+      }
+    },
+    "Self-Timer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autodisparador"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retardateur"
           }
         }
       }
@@ -2522,6 +2709,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Version, code source et crédits."
+          }
+        }
+      }
+    },
+    "Video (.mp4)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vídeo (.mp4)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vidéo (.mp4)"
           }
         }
       }

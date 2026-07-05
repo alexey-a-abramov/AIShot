@@ -77,8 +77,8 @@ struct SettingsView: View {
         })
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 720, idealWidth: 860, minHeight: 520, idealHeight: 580)
-        // Persist whenever any page mutates the shared settings.
-        .onChange(of: model.settings) { _, _ in model.saveSettings() }
+        // Persistence is centralized in AppModel.settings's didSet, so every
+        // mutator (this window, the Dashboard, the menu bar) is covered.
     }
 
     @ViewBuilder
@@ -164,8 +164,7 @@ private struct GeneralPage: View {
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
         if panel.runModal() == .OK, let url = panel.url {
-            // Persisted by the root `.onChange(of: model.settings)`.
-            model.settings.saveDirectory = url
+            model.settings.saveDirectory = url // persisted by AppModel.settings's didSet
         }
     }
 }
@@ -181,6 +180,12 @@ private struct CapturePage: View {
                 }
                 Toggle("Include cursor", isOn: $model.settings.includeCursor)
                 Toggle("Freeze screen before selecting", isOn: $model.settings.freezeBeforeRegionSelect)
+                Picker("Self-Timer", selection: $model.settings.captureDelay) {
+                    Text("Off").tag(0.0)
+                    Text("3 seconds").tag(3.0)
+                    Text("5 seconds").tag(5.0)
+                    Text("10 seconds").tag(10.0)
+                }
             }
             Section("After capture") {
                 Picker("Default action", selection: $model.settings.postCaptureAction) {
@@ -188,6 +193,13 @@ private struct CapturePage: View {
                     Text("Open editor").tag(PostCaptureAction.openEditor)
                     Text("Save only").tag(PostCaptureAction.saveOnly)
                 }
+            }
+            Section("Recording") {
+                Picker("Format", selection: $model.settings.recordingFormat) {
+                    Text("Video (.mp4)").tag(RecordingFormat.mp4)
+                    Text("Animated GIF").tag(RecordingFormat.gif)
+                }
+                .disabled(model.isRecording)
             }
         }
         .formStyle(.grouped)
@@ -286,6 +298,7 @@ private struct ShortcutsPage: View {
                 KeyboardShortcuts.Recorder("Region", name: .captureRegion)
                 KeyboardShortcuts.Recorder("Window", name: .captureWindow)
                 KeyboardShortcuts.Recorder("Full Screen", name: .captureFullScreen)
+                KeyboardShortcuts.Recorder("All Displays", name: .captureAllDisplays)
                 KeyboardShortcuts.Recorder("Text (OCR)", name: .captureText)
                 KeyboardShortcuts.Recorder("Scrolling", name: .scrollingCapture)
             }

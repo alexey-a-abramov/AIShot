@@ -7,6 +7,7 @@ extension KeyboardShortcuts.Name {
     static let captureRegion = Self("captureRegion", default: .init(.four, modifiers: [.command, .option, .shift]))
     static let captureWindow = Self("captureWindow", default: .init(.five, modifiers: [.command, .option, .shift]))
     static let captureFullScreen = Self("captureFullScreen", default: .init(.three, modifiers: [.command, .option, .shift]))
+    static let captureAllDisplays = Self("captureAllDisplays", default: .init(.two, modifiers: [.command, .option, .shift]))
     static let captureText = Self("captureText", default: .init(.t, modifiers: [.command, .option, .shift]))
     static let scrollingCapture = Self("scrollingCapture", default: .init(.l, modifiers: [.command, .option, .shift]))
     static let pickColor = Self("pickColor", default: .init(.c, modifiers: [.command, .option, .shift]))

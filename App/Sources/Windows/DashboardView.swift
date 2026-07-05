@@ -11,6 +11,8 @@ struct DashboardView: View {
     @State private var selectedTag: String?
     /// The capture currently being edited in the note/tag sheet.
     @State private var editing: HistoryEntry?
+    /// Free-text search across note, tag, and file name.
+    @State private var searchText = ""
 
     var body: some View {
         NavigationSplitView {
@@ -19,6 +21,10 @@ struct DashboardView: View {
         } detail: {
             recentGrid
         }
+        // `.toolbar` placement needs an NSToolbar, which this AppKit-hosted
+        // window doesn't have — `.sidebar` attaches to the NavigationSplitView
+        // sidebar instead and needs nothing further to render.
+        .searchable(text: $searchText, placement: .sidebar, prompt: Text("Search notes, tags, or file names"))
         .task {
             await model.refreshRecent()
             await model.refreshPermissions()
@@ -38,6 +44,7 @@ struct DashboardView: View {
                 Button { model.captureRegion() } label: { Label("Region", systemImage: "viewfinder") }
                 Button { model.captureFrontWindow() } label: { Label("Window", systemImage: "macwindow") }
                 Button { model.captureFullScreen() } label: { Label("Full Screen", systemImage: "display") }
+                Button { model.captureAllDisplays() } label: { Label("All Displays", systemImage: "rectangle.on.rectangle") }
             }
 
             Section("Tags") {
@@ -86,15 +93,32 @@ struct DashboardView: View {
     }
 
     private var filteredRecent: [HistoryEntry] {
-        guard let selectedTag else { return model.recent }
-        return model.recent.filter { model.metadata(for: $0)?.tag == selectedTag }
+        var entries = model.recent
+        if let selectedTag {
+            entries = entries.filter { model.metadata(for: $0)?.tag == selectedTag }
+        }
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return entries }
+        return entries.filter { entry in
+            let meta = model.metadata(for: entry)
+            return (meta?.note.localizedCaseInsensitiveContains(query) ?? false)
+                || (meta?.tag?.localizedCaseInsensitiveContains(query) ?? false)
+                || (entry.fileURL?.lastPathComponent.localizedCaseInsensitiveContains(query) ?? false)
+        }
+    }
+
+    private var emptyStateTitle: LocalizedStringKey {
+        if !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "No captures match your search"
+        }
+        return selectedTag == nil ? "No captures yet" : "No captures with this tag"
     }
 
     @ViewBuilder private var recentGrid: some View {
         let entries = filteredRecent
         if entries.isEmpty {
             ContentUnavailableView(
-                selectedTag == nil ? "No captures yet" : "No captures with this tag",
+                emptyStateTitle,
                 systemImage: "photo.on.rectangle",
                 description: Text("Use the menu bar or ⌘⌥⇧4 to capture a region.")
             )

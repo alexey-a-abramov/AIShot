@@ -77,6 +77,13 @@ final class SelectionOverlayController {
         keyMonitor = nil
         windows.forEach { $0.orderOut(nil) }
         windows.removeAll()
+        // Resolve any still-pending completion (e.g. a second capture starting
+        // while a first selection is in flight) so its caller — often an async
+        // continuation — is never left hanging.
+        if let pending = completion {
+            completion = nil
+            pending(nil)
+        }
     }
 
     private func finish(_ result: RegionSelection?) {

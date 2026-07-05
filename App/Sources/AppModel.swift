@@ -15,7 +15,12 @@ import AIShotShared
 final class AppModel: ObservableObject {
     static let shared = AppModel()
 
-    @Published var settings: AppSettings
+    // Persists on every change, from any mutator (Settings window, Dashboard,
+    // or the menu bar's own Self-Timer/Recording Format pickers) — a view-level
+    // `.onChange` would miss mutations made outside that specific view.
+    @Published var settings: AppSettings {
+        didSet { saveSettings() }
+    }
     @Published var recent: [HistoryEntry] = []
     @Published var permissions: [Permission: PermissionStatus] = [:]
     @Published var lastError: String?
@@ -32,6 +37,7 @@ final class AppModel: ObservableObject {
     private let settingsStore: UserDefaultsSettingsStore
     private let permissionsChecker = SystemPermissions()
     private let overlay = SelectionOverlayController()
+    private let countdown = CaptureCountdownController()
     private let recognizer = TextRecognizer()
     private let recorder = ScreenRecorder()
     private let scroller = ScrollingCapture()
@@ -80,28 +86,35 @@ final class AppModel: ObservableObject {
     // MARK: - Capture actions
 
     func captureRegion() {
+        Task { await captureRegionInteractive() }
+    }
+
+    /// Presents the region overlay (respecting the freeze-frame and self-timer
+    /// settings), delivers the result through the standard pipeline, and
+    /// returns the outcome — or `nil` if the user cancelled or an error
+    /// occurred. Shared by the menu/hotkey action and the Shortcuts/Siri
+    /// "Capture Region" intent.
+    @discardableResult
+    func captureRegionInteractive() async -> CaptureOutcome? {
         if settings.freezeBeforeRegionSelect {
-            Task { await beginFrozenRegionCapture() }
+            return await frozenRegionCapture()
         } else {
-            overlay.begin { [weak self] selection in
-                guard let self, let selection else { return }
-                Task { @MainActor in
-                    await self.run(CaptureRequest(
-                        mode: .region,
-                        displayID: selection.displayID,
-                        rect: selection.rect,
-                        includeCursor: self.settings.includeCursor,
-                        format: self.settings.defaultFormat
-                    ))
-                }
-            }
+            return await liveRegionCapture()
         }
+    }
+
+    private func liveRegionCapture() async -> CaptureOutcome? {
+        guard let selection = await selectRegion(frozen: nil) else { return nil }
+        return await run(CaptureRequest(
+            mode: .region, displayID: selection.displayID, rect: selection.rect,
+            includeCursor: settings.includeCursor, format: settings.defaultFormat
+        ))
     }
 
     /// Freeze-frame region capture: snapshot every display into memory, let the
     /// user select against the frozen image, then crop & deliver (or discard on
     /// cancel — nothing is captured if the user cancels).
-    private func beginFrozenRegionCapture() async {
+    private func frozenRegionCapture() async -> CaptureOutcome? {
         do {
             let displays = try await captureService.displays()
             var images: [CGDirectDisplayID: NSImage] = [:]
@@ -114,25 +127,55 @@ final class AppModel: ObservableObject {
                 captures[display.id] = snapshot
                 if let nsImage = NSImage(data: snapshot.data) { images[display.id] = nsImage }
             }
-            overlay.begin(frozen: images) { [weak self] selection in
-                guard let self, let selection, let frozen = captures[selection.displayID] else { return }
-                Task { @MainActor in await self.deliverFrozenRegion(frozen, selection: selection) }
+            guard let selection = await selectRegion(frozen: images) else { return nil }
+
+            // With a self-timer, re-capture fresh after the countdown so the
+            // delay actually has an effect — the pre-countdown snapshot above
+            // is only used to help pick the region, not as the final pixels.
+            let source: CapturedImage
+            if settings.captureDelay > 0 {
+                await countdown.run(seconds: Int(settings.captureDelay))
+                source = try await captureService.rawCapture(CaptureRequest(
+                    mode: .display, displayID: selection.displayID,
+                    includeCursor: settings.includeCursor, format: .png
+                ))
+            } else {
+                // Only reachable if a display disconnected between the initial
+                // snapshot and the user completing the selection.
+                guard let frozen = captures[selection.displayID] else {
+                    lastError = "Selected display is no longer available."
+                    return nil
+                }
+                source = frozen
             }
+            return await deliverFrozenRegion(source, selection: selection)
         } catch {
             lastError = String(describing: error)
+            return nil
         }
     }
 
-    private func deliverFrozenRegion(_ frozen: CapturedImage, selection: RegionSelection) async {
+    /// Bridges the overlay's completion-closure API to async/await.
+    private func selectRegion(frozen: [CGDirectDisplayID: NSImage]?) async -> RegionSelection? {
+        await withCheckedContinuation { continuation in
+            overlay.begin(frozen: frozen) { selection in
+                continuation.resume(returning: selection)
+            }
+        }
+    }
+
+    private func deliverFrozenRegion(_ frozen: CapturedImage, selection: RegionSelection) async -> CaptureOutcome? {
         guard let cropped = Self.crop(frozen, toPointRect: selection.rect, format: settings.defaultFormat) else {
             lastError = "Could not crop the selected region."
-            return
+            return nil
         }
         do {
             let outcome = try await captureService.deliver(cropped, mode: .region)
             await handleOutcome(outcome)
+            return outcome
         } catch {
             lastError = String(describing: error)
+            return nil
         }
     }
 
@@ -156,29 +199,22 @@ final class AppModel: ObservableObject {
     }
 
     func captureFullScreen() {
-        Task {
-            await run(CaptureRequest(
-                mode: .display, displayID: CGMainDisplayID(),
-                includeCursor: settings.includeCursor, format: settings.defaultFormat
-            ))
-        }
+        Task { await captureFullScreenReturningPath() }
     }
 
     func captureFrontWindow() {
-        Task {
-            let windows = (try? await captureService.windows()) ?? []
-            guard let target = windows.first(where: { $0.isOnScreen && !$0.title.isEmpty }) else {
-                lastError = "No window available to capture."
-                return
-            }
-            await run(CaptureRequest(
-                mode: .window, windowID: target.id,
-                includeCursor: settings.includeCursor, format: settings.defaultFormat
-            ))
-        }
+        Task { await captureFrontWindowReturningPath() }
+    }
+
+    /// Captures every connected display, stitched into one image.
+    func captureAllDisplays() {
+        Task { await captureAllDisplaysReturningPath() }
     }
 
     /// Region-select, capture, OCR, and copy the recognized text to the clipboard.
+    /// Deliberately bypasses the self-timer and freeze-frame settings — both are
+    /// about giving a screenshot's *content* time to settle, which doesn't apply
+    /// to a quick, immediate text grab.
     func captureTextOCR() {
         overlay.begin { [weak self] selection in
             guard let self, let selection else { return }
@@ -206,6 +242,8 @@ final class AppModel: ObservableObject {
     }
 
     /// Region-select, then scroll-and-stitch into one tall screenshot.
+    /// Deliberately bypasses the self-timer and freeze-frame settings — see
+    /// `captureTextOCR`.
     func scrollingCapture() {
         overlay.begin { [weak self] selection in
             guard let self, let selection else { return }
@@ -255,7 +293,10 @@ final class AppModel: ObservableObject {
                 if await recorder.isRecording {
                     let url = try await recorder.stop()
                     isRecording = false
-                    lastError = "Saved recording: \(url.lastPathComponent)"
+                    let (final, gifFailed) = await finishRecording(url)
+                    lastError = gifFailed
+                        ? "Saved recording (GIF export failed): \(final.lastPathComponent)"
+                        : "Saved recording: \(final.lastPathComponent)"
                 } else {
                     let formatter = DateFormatter()
                     formatter.dateFormat = "yyyy-MM-dd 'at' HH.mm.ss"
@@ -270,29 +311,69 @@ final class AppModel: ObservableObject {
         }
     }
 
-    /// Captures the main display, returning the saved file path (for App Intents).
-    @discardableResult
-    func captureFullScreenReturningPath() async -> String? {
+    /// When the recording format is GIF, transcodes the just-recorded video and
+    /// removes the intermediate `.mp4`; otherwise returns it unchanged. GIF
+    /// export failures keep the original video so nothing is lost.
+    private func finishRecording(_ videoURL: URL) async -> (url: URL, gifFailed: Bool) {
+        guard settings.recordingFormat == .gif else { return (videoURL, false) }
         do {
-            let outcome = try await captureService.performCapture(
-                CaptureRequest(mode: .display, displayID: CGMainDisplayID(),
-                               includeCursor: settings.includeCursor, format: settings.defaultFormat)
-            )
-            lastCapture = outcome.image
-            await refreshRecent()
-            return outcome.result.fileURL?.path
+            let gifURL = try await GIFExporter().export(videoURL: videoURL)
+            try? FileManager.default.removeItem(at: videoURL)
+            return (gifURL, false)
         } catch {
-            lastError = String(describing: error)
-            return nil
+            return (videoURL, true)
         }
     }
 
-    private func run(_ request: CaptureRequest) async {
+    /// Captures the main display, returning the saved file path — used by the
+    /// menu/hotkey action and the "Capture Full Screen" Shortcuts/Siri intent.
+    @discardableResult
+    func captureFullScreenReturningPath() async -> String? {
+        await run(CaptureRequest(
+            mode: .display, displayID: CGMainDisplayID(),
+            includeCursor: settings.includeCursor, format: settings.defaultFormat
+        ))?.result.fileURL?.path
+    }
+
+    /// Captures the frontmost window, returning the saved file path — used by
+    /// the menu/hotkey action and the "Capture Window" Shortcuts/Siri intent.
+    @discardableResult
+    func captureFrontWindowReturningPath() async -> String? {
+        let windows = (try? await captureService.windows()) ?? []
+        guard let target = windows.first(where: { $0.isOnScreen && !$0.title.isEmpty }) else {
+            lastError = "No window available to capture."
+            return nil
+        }
+        return await run(CaptureRequest(
+            mode: .window, windowID: target.id,
+            includeCursor: settings.includeCursor, format: settings.defaultFormat
+        ))?.result.fileURL?.path
+    }
+
+    /// Captures every connected display, stitched into one image, returning
+    /// the saved file path.
+    @discardableResult
+    func captureAllDisplaysReturningPath() async -> String? {
+        await run(CaptureRequest(
+            mode: .allDisplays, includeCursor: settings.includeCursor, format: settings.defaultFormat
+        ))?.result.fileURL?.path
+    }
+
+    /// Runs the self-timer countdown (if configured), executes `request`, and
+    /// delivers the outcome through the standard pipeline (save/clipboard/
+    /// notify/history, feedback, editor, notes prompt).
+    @discardableResult
+    private func run(_ request: CaptureRequest) async -> CaptureOutcome? {
+        if settings.captureDelay > 0 {
+            await countdown.run(seconds: Int(settings.captureDelay))
+        }
         do {
             let outcome = try await captureService.performCapture(request)
             await handleOutcome(outcome)
+            return outcome
         } catch {
             lastError = String(describing: error)
+            return nil
         }
     }
 
@@ -349,7 +430,6 @@ final class AppModel: ObservableObject {
         if let tag, !tag.isEmpty { settings.lastTag = tag }
         // "Apply to next" only makes sense if there's actually a tag to reuse.
         settings.applyLastTag = result.applyToNext && (settings.lastTag?.isEmpty == false)
-        saveSettings()
         await refreshMetadata(for: recent)
     }
 
@@ -365,7 +445,7 @@ final class AppModel: ObservableObject {
         let loc = metadataLocator(for: fileURL)
         let cleanTag = tag?.trimmingCharacters(in: .whitespacesAndNewlines)
         try? await metadataStore.upsert(at: loc.indexURL, key: loc.key, note: note, tag: cleanTag)
-        if let cleanTag, !cleanTag.isEmpty { settings.lastTag = cleanTag; saveSettings() }
+        if let cleanTag, !cleanTag.isEmpty { settings.lastTag = cleanTag }
         await refreshMetadata(for: recent)
     }
 
@@ -432,7 +512,6 @@ final class AppModel: ObservableObject {
         if perDirectory(oldLocation), perDirectory(newLocation), oldURL != newURL {
             await metadataStore.move(from: oldURL, to: newURL)
         }
-        saveSettings()
         await refreshMetadata(for: recent)
     }
 
@@ -444,7 +523,6 @@ final class AppModel: ObservableObject {
         if settings.metadataLocation == .custom, oldURL != newURL {
             await metadataStore.move(from: oldURL, to: newURL)
         }
-        saveSettings()
         await refreshMetadata(for: recent)
     }
 

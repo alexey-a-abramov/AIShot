@@ -25,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         on(.captureRegion) { $0.captureRegion() }
         on(.captureWindow) { $0.captureFrontWindow() }
         on(.captureFullScreen) { $0.captureFullScreen() }
+        on(.captureAllDisplays) { $0.captureAllDisplays() }
         on(.captureText) { $0.captureTextOCR() }
         on(.scrollingCapture) { $0.scrollingCapture() }
         on(.pickColor) { $0.pickColor() }
