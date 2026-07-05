@@ -55,8 +55,12 @@ final class CaptureTagPromptController: NSObject, NSWindowDelegate {
         panel.center()
         self.panel = panel
 
-        panel.makeKeyAndOrderFront(nil)
+        // Activate first: this panel appears right after a capture, which is
+        // usually triggered while another app is frontmost. Requesting key
+        // status before this app is active is a race that can leave Esc (and
+        // typing) with the other app instead of the panel.
         NSApp.activate(ignoringOtherApps: true)
+        panel.makeKeyAndOrderFront(nil)
     }
 
     /// Fires the pending completion once and tears down the panel.

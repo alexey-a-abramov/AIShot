@@ -15,6 +15,10 @@ struct RegionSelection: Sendable {
 final class SelectionOverlayController {
     private var windows: [NSWindow] = []
     private var completion: ((RegionSelection?) -> Void)?
+    /// A local key-event monitor that guarantees Esc cancels even if, for any
+    /// reason (most commonly: capture triggered by a global hotkey while a
+    /// different app was frontmost), an overlay window isn't yet key.
+    private var keyMonitor: Any?
 
     /// - Parameter frozen: optional per-display snapshot images. When provided,
     ///   each overlay shows the frozen screenshot as its background (freeze-frame
@@ -25,6 +29,12 @@ final class SelectionOverlayController {
     ) {
         cancel()
         self.completion = completion
+
+        // Activate BEFORE creating/keying the overlay windows. Capture is most
+        // often triggered by a global hotkey while another app is frontmost;
+        // requesting key-window status before this app is actually active is a
+        // race that can leave keyboard focus (and Esc) with the other app.
+        NSApp.activate(ignoringOtherApps: true)
 
         for screen in NSScreen.screens {
             let view = SelectionView(screen: screen, background: frozen?[Self.displayID(of: screen)]) { [weak self] result in
@@ -47,10 +57,24 @@ final class SelectionOverlayController {
             window.makeFirstResponder(view)
             windows.append(window)
         }
-        NSApp.activate(ignoringOtherApps: true)
+
+        // Belt-and-braces: even if a window somehow isn't key/first-responder,
+        // this local monitor still sees Esc as long as this app is frontmost.
+        // Scoped to our own overlay windows so Esc typed into some other AIShot
+        // window (e.g. Settings, if it happens to be open) isn't hijacked.
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, event.keyCode == 53 else { return event } // Esc
+            guard event.window == nil || self.windows.contains(where: { $0 === event.window }) else {
+                return event
+            }
+            self.finish(nil)
+            return nil
+        }
     }
 
     func cancel() {
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        keyMonitor = nil
         windows.forEach { $0.orderOut(nil) }
         windows.removeAll()
     }
