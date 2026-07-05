@@ -63,6 +63,14 @@ final class CaptureTagPromptController: NSObject, NSWindowDelegate {
         panel.makeKeyAndOrderFront(nil)
     }
 
+    /// Dismisses a currently-shown prompt as if the user pressed Skip — used
+    /// right before a new capture starts so a still-open prompt from a prior
+    /// capture (AIShot's own windows are no longer excluded from captures)
+    /// can never appear in it. A no-op if nothing is showing.
+    func dismiss() {
+        finish(nil)
+    }
+
     /// Fires the pending completion once and tears down the panel.
     private func finish(_ result: Result?) {
         let completion = pending

@@ -115,6 +115,7 @@ final class AppModel: ObservableObject {
     /// user select against the frozen image, then crop & deliver (or discard on
     /// cancel — nothing is captured if the user cancels).
     private func frozenRegionCapture() async -> CaptureOutcome? {
+        dismissEphemeralCaptureUI()
         do {
             let displays = try await captureService.displays()
             var images: [CGDirectDisplayID: NSImage] = [:]
@@ -216,6 +217,7 @@ final class AppModel: ObservableObject {
     /// about giving a screenshot's *content* time to settle, which doesn't apply
     /// to a quick, immediate text grab.
     func captureTextOCR() {
+        dismissEphemeralCaptureUI()
         overlay.begin { [weak self] selection in
             guard let self, let selection else { return }
             Task { @MainActor in
@@ -245,6 +247,7 @@ final class AppModel: ObservableObject {
     /// Deliberately bypasses the self-timer and freeze-frame settings — see
     /// `captureTextOCR`.
     func scrollingCapture() {
+        dismissEphemeralCaptureUI()
         overlay.begin { [weak self] selection in
             guard let self, let selection else { return }
             Task { @MainActor in
@@ -364,6 +367,7 @@ final class AppModel: ObservableObject {
     /// notify/history, feedback, editor, notes prompt).
     @discardableResult
     private func run(_ request: CaptureRequest) async -> CaptureOutcome? {
+        dismissEphemeralCaptureUI()
         if settings.captureDelay > 0 {
             await countdown.run(seconds: Int(settings.captureDelay))
         }
@@ -536,6 +540,17 @@ final class AppModel: ObservableObject {
         guard fm.fileExists(atPath: visible.path), !fm.fileExists(atPath: hidden.path) else { return }
         await metadataStore.move(from: visible, to: hidden)
         await refreshMetadata(for: recent)
+    }
+
+    /// Dismisses any lingering ephemeral capture-time UI — the post-capture
+    /// HUD (normally fades over ~1.8s) and the note/tag prompt (stays open
+    /// until Save/Skip) — immediately, before a new capture's actual pixel
+    /// grab. AIShot's own windows are no longer excluded from captures (so
+    /// the app itself can be screenshotted), so without this a rapid second
+    /// capture could otherwise show a leftover HUD or prompt from the first.
+    private func dismissEphemeralCaptureUI() {
+        hud.dismiss()
+        tagPrompt.dismiss()
     }
 
     /// Plays the capture sound and shows the fade-in HUD for a finished capture.

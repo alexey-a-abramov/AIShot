@@ -39,6 +39,16 @@ final class CaptureHUDController {
         }
     }
 
+    /// Hides the HUD immediately, skipping the fade — used right before a new
+    /// capture starts so a still-fading HUD from the previous one (AIShot's
+    /// own windows are no longer excluded from captures) can never appear in
+    /// it.
+    func dismiss() {
+        dismissTask?.cancel()
+        dismissTask = nil
+        panel?.orderOut(nil)
+    }
+
     private func makePanel() -> NSPanel {
         let panel = NSPanel(
             contentRect: .zero,

@@ -8,9 +8,18 @@ import AIShotShared
 /// ScreenCaptureKit-backed capture engine.
 ///
 /// Enumerates via `SCShareableContent`, captures stills via
-/// `SCScreenshotManager.captureImage(contentFilter:configuration:)`, excludes
-/// AIShot's own windows through the content filter, and multiplies the
-/// configuration size by the display's pixel scale for Retina-correct output.
+/// `SCScreenshotManager.captureImage(contentFilter:configuration:)`, and
+/// multiplies the configuration size by the display's pixel scale for
+/// Retina-correct output.
+///
+/// Nothing is excluded from region/display/all-displays captures — including
+/// AIShot's own menu, Dashboard, Settings, and editor windows, so those are
+/// capturable like any other app's UI. The selection overlay and self-timer
+/// countdown are synchronously torn down before this actually runs (see
+/// `SelectionOverlayController.finish` / `CaptureCountdownController.run`),
+/// and `AppModel.dismissEphemeralCaptureUI()` proactively hides the
+/// post-capture HUD and note/tag prompt at the start of every new capture —
+/// so a rapid second capture can't show leftover chrome from the first.
 public actor ScreenCaptureKitEngine: ScreenCapturing {
     private let logger = Logger.aishot("capture")
 
@@ -69,7 +78,7 @@ public actor ScreenCaptureKitEngine: ScreenCapturing {
         guard let display = content.displays.first(where: { $0.displayID == targetID }) else {
             throw AIShotError.targetNotFound("display \(targetID)")
         }
-        let filter = SCContentFilter(display: display, excludingApplications: ownApps(in: content), exceptingWindows: [])
+        let filter = SCContentFilter(display: display, excludingApplications: [], exceptingWindows: [])
         let scale = CGFloat(filter.pointPixelScale)
         let config = SCStreamConfiguration()
         config.showsCursor = request.includeCursor
@@ -110,7 +119,7 @@ public actor ScreenCaptureKitEngine: ScreenCapturing {
     private func captureAllDisplays(_ request: CaptureRequest, content: SCShareableContent) async throws -> CapturedImage {
         var shots: [(frame: CGRect, image: CGImage, scale: CGFloat)] = []
         for display in content.displays {
-            let filter = SCContentFilter(display: display, excludingApplications: ownApps(in: content), exceptingWindows: [])
+            let filter = SCContentFilter(display: display, excludingApplications: [], exceptingWindows: [])
             let scale = CGFloat(filter.pointPixelScale)
             let config = SCStreamConfiguration()
             config.showsCursor = request.includeCursor
@@ -127,11 +136,6 @@ public actor ScreenCaptureKitEngine: ScreenCapturing {
     // MARK: - Helpers
 
     private var ownBundleID: String { Bundle.main.bundleIdentifier ?? AIShot.bundleID }
-
-    private func ownApps(in content: SCShareableContent) -> [SCRunningApplication] {
-        let own = ownBundleID
-        return content.applications.filter { $0.bundleIdentifier == own }
-    }
 
     private func shareableContent() async throws -> SCShareableContent {
         do {
