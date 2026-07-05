@@ -16,13 +16,11 @@ struct MenuBarContent: View {
         Button { model.captureTextOCR() } label: { menuLabel("Capture Text (OCR)", .captureText) }
         Button { model.scrollingCapture() } label: { menuLabel("Scrolling Capture", .scrollingCapture) }
 
-        Menu("Self-Timer") {
-            Picker("Self-Timer", selection: $model.settings.captureDelay) {
-                Text("Off").tag(0.0)
-                Text("3 seconds").tag(3.0)
-                Text("5 seconds").tag(5.0)
-                Text("10 seconds").tag(10.0)
-            }
+        Picker("Self-Timer", selection: $model.settings.captureDelay) {
+            Text("Off").tag(0.0)
+            Text("3 seconds").tag(3.0)
+            Text("5 seconds").tag(5.0)
+            Text("10 seconds").tag(10.0)
         }
 
         Divider()
@@ -39,11 +37,9 @@ struct MenuBarContent: View {
             Button { model.toggleRecording() } label: { menuLabel("Stop Recording", .toggleRecording) }
         } else {
             Button { model.toggleRecording() } label: { menuLabel("Start Recording", .toggleRecording) }
-            Menu("Recording Format") {
-                Picker("Recording Format", selection: $model.settings.recordingFormat) {
-                    Text("Video (.mp4)").tag(RecordingFormat.mp4)
-                    Text("Animated GIF").tag(RecordingFormat.gif)
-                }
+            Picker("Recording Format", selection: $model.settings.recordingFormat) {
+                Text("Video (.mp4)").tag(RecordingFormat.mp4)
+                Text("Animated GIF").tag(RecordingFormat.gif)
             }
         }
 
