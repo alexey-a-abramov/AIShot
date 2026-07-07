@@ -447,7 +447,7 @@ private struct PermissionsPage: View {
 }
 
 private struct AboutPage: View {
-    private let githubURL = URL(string: "https://github.com/aishot/aishot")!
+    private let githubURL = URL(string: "https://github.com/alexey-a-abramov/AIShot")!
     private let author = "Alexey Abramov"
 
     private var marketingVersion: String {
@@ -502,7 +502,7 @@ private struct AboutPage: View {
                 }
                 LabeledContent("Source code") {
                     Link(destination: githubURL) {
-                        Text(verbatim: "github.com/aishot/aishot")
+                        Text(verbatim: "github.com/alexey-a-abramov/AIShot")
                     }
                 }
             }
