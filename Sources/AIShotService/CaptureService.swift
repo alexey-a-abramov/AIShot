@@ -98,4 +98,18 @@ public actor CaptureService {
     public func recentHistory(limit: Int = 20) async throws -> [HistoryEntry] {
         try await history.recent(limit: limit)
     }
+
+    /// Records an already-saved file (a screen recording, or an edited image
+    /// exported from the editor) so it shows up in history alongside captures.
+    /// These bypass `deliver` deliberately: their outputs are already written
+    /// and re-running the post-capture action would double-notify.
+    public func recordExisting(_ entry: HistoryEntry) async throws {
+        try await history.record(entry)
+    }
+
+    /// Removes history entries by id. The files themselves are the caller's
+    /// responsibility (the app trashes them so they stay recoverable).
+    public func removeHistory(ids: Set<UUID>) async throws {
+        try await history.remove(ids: ids)
+    }
 }

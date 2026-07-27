@@ -89,4 +89,68 @@ struct FileHistoryStoreTests {
         let recent = try await reopened.recent(limit: 10)
         #expect(recent.map(\.id) == [newer.id, older.id])
     }
+
+    @Test func removeDeletesFromDiskAndCache() async throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("aishot-history-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let store = FileHistoryStore(fileURL: url)
+        let keep = HistoryEntry(fileURL: nil, createdAt: Date(timeIntervalSince1970: 1),
+                                mode: .region, pixelWidth: 1, pixelHeight: 1)
+        let drop = HistoryEntry(fileURL: nil, createdAt: Date(timeIntervalSince1970: 2),
+                                mode: .window, pixelWidth: 2, pixelHeight: 2)
+        try await store.record(keep)
+        try await store.record(drop)
+
+        try await store.remove(ids: [drop.id])
+
+        // Same instance reflects the removal (cache stayed coherent)…
+        #expect(try await store.recent(limit: 10).map(\.id) == [keep.id])
+        // …and so does a fresh one reading the file.
+        let reopened = FileHistoryStore(fileURL: url)
+        #expect(try await reopened.recent(limit: 10).map(\.id) == [keep.id])
+    }
+
+    @Test func removeIsANoOpForUnknownIDs() async throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("aishot-history-\(UUID().uuidString).json")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let store = FileHistoryStore(fileURL: url)
+        let entry = HistoryEntry(fileURL: nil, createdAt: Date(), mode: .region,
+                                 pixelWidth: 1, pixelHeight: 1)
+        try await store.record(entry)
+        try await store.remove(ids: [UUID()])
+        #expect(try await store.recent(limit: 10).map(\.id) == [entry.id])
+    }
+}
+
+struct HistoryEntryCodingTests {
+    /// History written before `kind` existed must still decode — otherwise an
+    /// update silently wipes the user's history.
+    @Test func decodesLegacyEntryWithoutKind() throws {
+        let legacy = """
+        [{"id":"E621E1F8-C36C-495A-93FC-0C247A3E6E5F",
+          "fileURL":"file:///tmp/a.png",
+          "createdAt":760000000,
+          "mode":"region",
+          "pixelWidth":1254,
+          "pixelHeight":512}]
+        """
+        let decoder = JSONDecoder()
+        let entries = try decoder.decode([HistoryEntry].self, from: Data(legacy.utf8))
+        #expect(entries.count == 1)
+        #expect(entries[0].kind == .image) // defaulted, not thrown
+        #expect(entries[0].pixelWidth == 1254)
+    }
+
+    @Test func roundTripsKind() throws {
+        let entry = HistoryEntry(fileURL: URL(fileURLWithPath: "/tmp/a.mp4"), createdAt: Date(),
+                                 mode: .display, pixelWidth: 100, pixelHeight: 50, kind: .video)
+        let data = try JSONEncoder().encode(entry)
+        let decoded = try JSONDecoder().decode(HistoryEntry.self, from: data)
+        #expect(decoded.kind == .video)
+        #expect(decoded == entry)
+    }
 }

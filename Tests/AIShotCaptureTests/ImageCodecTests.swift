@@ -43,6 +43,55 @@ struct ImageCodecTests {
         }
     }
 
+    // MARK: - Thumbnails
+
+    @Test func thumbnailBoundsTheLongestEdge() throws {
+        let data = try ImageCodec.encode(makeImage(2000, 1000), as: .png)
+        let thumb = try ImageCodec.thumbnail(from: data, maxPixelSize: 512)
+        #expect(thumb.width == 512)
+        #expect(thumb.height == 256) // aspect preserved
+    }
+
+    @Test func thumbnailPreservesAspectForTallImages() throws {
+        let data = try ImageCodec.encode(makeImage(400, 1600), as: .png)
+        let thumb = try ImageCodec.thumbnail(from: data, maxPixelSize: 512)
+        #expect(thumb.height == 512)
+        #expect(thumb.width == 128)
+    }
+
+    /// Documents ImageIO's behavior so a future change here gets caught.
+    @Test func thumbnailNeverUpscales() throws {
+        let data = try ImageCodec.encode(makeImage(64, 64), as: .png)
+        let thumb = try ImageCodec.thumbnail(from: data, maxPixelSize: 512)
+        #expect(thumb.width == 64)
+        #expect(thumb.height == 64)
+    }
+
+    @Test func thumbnailFromFileMatchesInMemory() throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("aishot-thumb-\(UUID().uuidString).png")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try ImageCodec.encode(makeImage(1200, 600), as: .png).write(to: url)
+
+        let thumb = try ImageCodec.thumbnail(contentsOf: url, maxPixelSize: 300)
+        #expect(thumb.width == 300)
+        #expect(thumb.height == 150)
+    }
+
+    @Test func thumbnailFromMissingFileThrows() throws {
+        let missing = FileManager.default.temporaryDirectory
+            .appendingPathComponent("aishot-does-not-exist-\(UUID().uuidString).png")
+        #expect(throws: AIShotError.self) {
+            _ = try ImageCodec.thumbnail(contentsOf: missing, maxPixelSize: 256)
+        }
+    }
+
+    @Test func thumbnailFromGarbageDataThrows() throws {
+        #expect(throws: AIShotError.self) {
+            _ = try ImageCodec.thumbnail(from: Data("not an image".utf8), maxPixelSize: 256)
+        }
+    }
+
     @Test func stitchVerticalTrimsOverlap() throws {
         let a = try ImageCodec.encode(makeImage(20, 30), as: .png)
         let b = try ImageCodec.encode(makeImage(20, 30), as: .png)

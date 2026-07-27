@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import CoreGraphics
+import CryptoKit
 import SwiftUI
 import AIShotCore
 import AIShotCapture
@@ -32,6 +33,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var captureMeta: [URL: CaptureMetadata] = [:]
     /// All known project tags across the recent captures and save folder.
     @Published private(set) var knownTags: [String] = []
+    /// Tagged files confirmed to exist on disk, resolved once per metadata
+    /// refresh so tag browsing never hits the filesystem mid-render.
+    private var existingTaggedURLs: Set<URL> = []
 
     let captureService: CaptureService
     private let settingsStore: UserDefaultsSettingsStore
@@ -56,7 +60,12 @@ final class AppModel: ObservableObject {
     ) { [unowned self] in AnyView(SettingsView().environmentObject(self)) }
 
     private lazy var dashboardWindow = HostingWindowController(
-        title: "AIShot", size: NSSize(width: 860, height: 580)
+        title: String(localized: "Dashboard"),
+        size: NSSize(width: 980, height: 660),
+        // Matches the split view's column minimums (200 + 400 + 250 + chrome);
+        // anything smaller can't satisfy them and clips the inspector.
+        minSize: NSSize(width: 880, height: 520),
+        autosaveName: "AIShotDashboardWindow"
     ) { [unowned self] in AnyView(DashboardView().environmentObject(self)) }
 
     @Published var isRecording = false
@@ -297,6 +306,7 @@ final class AppModel: ObservableObject {
                     let url = try await recorder.stop()
                     isRecording = false
                     let (final, gifFailed) = await finishRecording(url)
+                    await recordFinishedRecording(final)
                     lastError = gifFailed
                         ? "Saved recording (GIF export failed): \(final.lastPathComponent)"
                         : "Saved recording: \(final.lastPathComponent)"
@@ -312,6 +322,44 @@ final class AppModel: ObservableObject {
                 }
             } catch { lastError = String(describing: error) }
         }
+    }
+
+    /// Records a finished recording into history so it appears in the Dashboard
+    /// alongside screenshots. Recordings are written straight to disk by
+    /// `ScreenRecorder`, bypassing `CaptureService.deliver` (which would
+    /// re-apply the post-capture action and re-notify), so history has to be
+    /// updated explicitly here.
+    private func recordFinishedRecording(_ url: URL) async {
+        let kind = Self.kind(for: url)
+        let size: CGSize
+        switch kind {
+        case .video:
+            size = await VideoThumbnail.pixelSize(contentsOf: url) ?? .zero
+        case .image:
+            // A GIF recording is still an image file — ImageIO reads it.
+            size = await Task.detached {
+                (try? ImageCodec.decode(Data(contentsOf: url)))
+                    .map { CGSize(width: $0.width, height: $0.height) } ?? .zero
+            }.value
+        }
+        try? await captureService.recordExisting(HistoryEntry(
+            fileURL: url,
+            createdAt: Date(),
+            mode: .display,
+            pixelWidth: Int(size.width),
+            pixelHeight: Int(size.height),
+            kind: kind
+        ))
+        await refreshRecent()
+    }
+
+    /// Classifies a file for thumbnailing and for which actions apply.
+    ///
+    /// GIF counts as an **image**: ImageIO decodes frame 0 fine, whereas
+    /// AVFoundation can't open one at all — and treating it as an image also
+    /// keeps Open in Editor / Copy / Pin available for GIF recordings.
+    static func kind(for url: URL) -> CaptureKind {
+        ["mp4", "m4v", "mov"].contains(url.pathExtension.lowercased()) ? .video : .image
     }
 
     /// When the recording format is GIF, transcodes the just-recorded video and
@@ -451,6 +499,139 @@ final class AppModel: ObservableObject {
         try? await metadataStore.upsert(at: loc.indexURL, key: loc.key, note: note, tag: cleanTag)
         if let cleanTag, !cleanTag.isEmpty { settings.lastTag = cleanTag }
         await refreshMetadata(for: recent)
+    }
+
+    // MARK: - Actions on an existing capture
+
+    /// Opens a past capture in the annotation editor. Videos aren't editable.
+    func openInEditor(_ entry: HistoryEntry) {
+        guard entry.kind == .image, let url = entry.fileURL else { return }
+        Task {
+            guard let data = await Self.readFile(url) else {
+                lastError = "Could not read \(url.lastPathComponent)."
+                return
+            }
+            // Entries synthesized from the tag index have no recorded pixel
+            // size; the editor lays out everything from it, so a zero size
+            // would open a blank canvas. Derive it from the bytes instead.
+            var size = CGSize(width: entry.pixelWidth, height: entry.pixelHeight)
+            if size.width <= 0 || size.height <= 0 {
+                size = await Task.detached {
+                    (try? ImageCodec.decode(data))
+                        .map { CGSize(width: $0.width, height: $0.height) } ?? .zero
+                }.value
+            }
+            guard size.width > 0, size.height > 0 else {
+                lastError = "Could not read \(url.lastPathComponent)."
+                return
+            }
+            openEditor(imageData: data, pixelSize: size)
+        }
+    }
+
+    /// Copies a past capture's image to the clipboard.
+    func copyToClipboard(_ entry: HistoryEntry) {
+        guard entry.kind == .image, let url = entry.fileURL else { return }
+        Task {
+            guard let data = await Self.readFile(url) else {
+                lastError = "Could not read \(url.lastPathComponent)."
+                return
+            }
+            try? await AppKitClipboard().copyImage(data)
+            hud.show(message: String(localized: "Copied to clipboard"), thumbnail: NSImage(data: data))
+        }
+    }
+
+    /// Pins a past capture in a floating always-on-top window.
+    func pin(_ entry: HistoryEntry) {
+        guard entry.kind == .image, let url = entry.fileURL else { return }
+        Task {
+            guard let data = await Self.readFile(url), let image = NSImage(data: data) else {
+                lastError = "Could not read \(url.lastPathComponent)."
+                return
+            }
+            pinController.pin(image)
+        }
+    }
+
+    func revealInFinder(_ entry: HistoryEntry) {
+        guard let url = entry.fileURL else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+
+    /// Moves captures to the Trash and drops their history + metadata entries.
+    ///
+    /// Uses `NSWorkspace.recycle` rather than deleting outright, so the files
+    /// stay recoverable with Finder's own "Put Back" — deleting a screenshot is
+    /// not worth making irreversible.
+    func delete(_ entries: [HistoryEntry]) async {
+        guard !entries.isEmpty else { return }
+        let urls = entries.compactMap(\.fileURL)
+
+        var trashed: Set<URL> = []
+        if !urls.isEmpty {
+            trashed = await withCheckedContinuation { continuation in
+                NSWorkspace.shared.recycle(urls) { newURLs, error in
+                    if let error { Task { @MainActor in self.lastError = error.localizedDescription } }
+                    continuation.resume(returning: Set(newURLs.keys.map(\.standardizedFileURL)))
+                }
+            }
+        }
+
+        // Only forget a capture whose file actually went away — otherwise a
+        // failed trash (locked volume, no permission) would destroy the history
+        // row and its note/tag while leaving the file on disk. A row whose file
+        // was already gone is still removable, so stale entries can be cleared.
+        let removed = entries.filter { entry in
+            guard let url = entry.fileURL?.standardizedFileURL else { return true }
+            return trashed.contains(url) || !FileManager.default.fileExists(atPath: url.path)
+        }
+        guard !removed.isEmpty else { return }
+
+        // Match by file too: an entry synthesized from the tag index carries a
+        // derived id, so removing by id alone would leave the real row behind.
+        let removedURLs = Set(removed.compactMap { $0.fileURL?.standardizedFileURL })
+        var ids = Set(removed.map(\.id))
+        let allRows = (try? await captureService.recentHistory(limit: 10_000)) ?? []
+        ids.formUnion(allRows.filter { row in
+            guard let url = row.fileURL?.standardizedFileURL else { return false }
+            return removedURLs.contains(url)
+        }.map(\.id))
+        try? await captureService.removeHistory(ids: ids)
+
+        // Clear each capture's note/tag (an empty upsert removes the entry).
+        for entry in removed {
+            guard let fileURL = entry.fileURL else { continue }
+            let loc = metadataLocator(for: fileURL)
+            try? await metadataStore.upsert(at: loc.indexURL, key: loc.key, note: "", tag: nil)
+            await ThumbnailLoader.shared.invalidate(fileURL)
+        }
+
+        await refreshRecent()
+    }
+
+    /// History rows whose file is gone — shown as "File missing" cards, and
+    /// clearable in one go via `removeMissingEntries()`.
+    var missingEntries: [HistoryEntry] {
+        recent.filter { entry in
+            guard let url = entry.fileURL else { return true }
+            return !FileManager.default.fileExists(atPath: url.path)
+        }
+    }
+
+    /// Drops history rows whose files no longer exist. Nothing is deleted from
+    /// disk — the files are already gone (moved or trashed outside the app);
+    /// this just clears the stale rows they left behind.
+    func removeMissingEntries() async {
+        let stale = missingEntries
+        guard !stale.isEmpty else { return }
+        try? await captureService.removeHistory(ids: Set(stale.map(\.id)))
+        await refreshRecent()
+    }
+
+    /// Reads a file off the main actor.
+    private static func readFile(_ url: URL) async -> Data? {
+        await Task.detached(priority: .userInitiated) { try? Data(contentsOf: url) }.value
     }
 
     // MARK: Metadata location
@@ -604,37 +785,116 @@ final class AppModel: ObservableObject {
     // MARK: - State
 
     func refreshRecent() async {
-        let entries = (try? await captureService.recentHistory(limit: 30)) ?? []
+        let entries = (try? await captureService.recentHistory(limit: 200)) ?? []
         recent = entries
         await refreshMetadata(for: entries)
     }
 
-    /// Loads note/tag metadata for the captures in `entries` (plus the active
-    /// index) so the dashboard can show and filter by tag. Works across all
-    /// location modes, since each entry resolves its own index file + key.
+    /// Loads note/tag metadata so the dashboard can show and filter by tag.
+    ///
+    /// Resolves **every** entry in each index — not just the ones inside the
+    /// recent-history window — because the sidebar's tag list is built from the
+    /// whole index. Without this, selecting a tag whose captures are older than
+    /// the window showed an empty grid while the sidebar insisted the tag
+    /// existed. Works across all location modes, since key semantics differ:
+    /// hidden/visible keys are file names relative to the index's own folder,
+    /// custom keys are absolute paths.
     private func refreshMetadata(for entries: [HistoryEntry]) async {
-        var indexes: [URL: [String: URL]] = [:]
-        for entry in entries {
-            guard let fileURL = entry.fileURL else { continue }
-            let loc = metadataLocator(for: fileURL)
-            indexes[loc.indexURL, default: [:]][loc.key] = fileURL.standardizedFileURL
-        }
+        var indexURLs = Set(entries.compactMap { $0.fileURL.map { metadataLocator(for: $0).indexURL } })
         // Always load the active index so its tags populate the sidebar even
         // before any of its captures appear in recent history.
-        let activeIndex = primaryMetadataIndexURL()
-        if indexes[activeIndex] == nil { indexes[activeIndex] = [:] }
+        indexURLs.insert(primaryMetadataIndexURL())
 
         var byURL: [URL: CaptureMetadata] = [:]
         var tags = Set<String>()
-        for (indexURL, keyToFile) in indexes {
+        for indexURL in indexURLs {
             let index = await metadataStore.index(at: indexURL)
             for (key, meta) in index.items {
-                if let fileURL = keyToFile[key] { byURL[fileURL] = meta }
+                // Only count a tag once its file actually resolves — otherwise
+                // an unresolvable key contributes a sidebar tag that shows an
+                // empty grid, the exact symptom this set out to fix.
+                guard let fileURL = resolveMetadataKey(key, in: indexURL) else { continue }
+                byURL[fileURL] = meta
                 if let tag = meta.tag, !tag.isEmpty { tags.insert(tag) }
             }
         }
         captureMeta = byURL
         knownTags = tags.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+
+        // Resolve which tagged files still exist ONCE per refresh, off the main
+        // actor. `entries(taggedWith:)` is read from several places in every
+        // dashboard render, so it must not hit the filesystem itself.
+        let taggedURLs = byURL.filter { $0.value.tag?.isEmpty == false }.map(\.key)
+        existingTaggedURLs = await Task.detached {
+            Set(taggedURLs.filter { FileManager.default.fileExists(atPath: $0.path) })
+        }.value
+    }
+
+    /// Inverse of `metadataLocator`: turns a stored index key back into the file
+    /// it describes.
+    private func resolveMetadataKey(_ key: String, in indexURL: URL) -> URL? {
+        switch settings.metadataLocation {
+        case .hidden, .visible:
+            // Key is a bare file name, relative to the index's own directory.
+            // Reject a path — a shared index previously written in `.custom`
+            // mode holds absolute keys, which would otherwise resolve to
+            // nonsense like `…/Pictures/AIShot/Users/me/Pictures/a.png`.
+            guard !key.contains("/") else { return nil }
+            return indexURL.deletingLastPathComponent()
+                .appendingPathComponent(key).standardizedFileURL
+        case .custom:
+            // Key is an absolute path.
+            guard key.hasPrefix("/") else { return nil }
+            return URL(fileURLWithPath: key).standardizedFileURL
+        }
+    }
+
+    /// Every capture carrying `tag`, including ones older than the recent
+    /// window (synthesized from the metadata index so tag browsing is complete).
+    /// Pure in-memory: existence was resolved during `refreshMetadata`, so this
+    /// is safe to call repeatedly from a SwiftUI body.
+    func entries(taggedWith tag: String) -> [HistoryEntry] {
+        var results = recent.filter { metadata(for: $0)?.tag == tag }
+        let known = Set(results.compactMap { $0.fileURL?.standardizedFileURL })
+
+        let extra = captureMeta
+            .filter { $0.value.tag == tag && !known.contains($0.key) }
+            .keys
+            .filter { existingTaggedURLs.contains($0) }
+            .map(Self.synthesizedEntry(for:))
+
+        results.append(contentsOf: extra)
+        return results.sorted { $0.createdAt > $1.createdAt }
+    }
+
+    /// Builds a history entry for a tagged file that predates the recent
+    /// window. Pixel size is unknown without decoding the file, so it's left at
+    /// zero and the UI omits the dimension label.
+    private static func synthesizedEntry(for url: URL) -> HistoryEntry {
+        let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
+        return HistoryEntry(
+            // Stable across refreshes so SwiftUI selection doesn't jump.
+            id: deterministicID(for: url),
+            fileURL: url,
+            createdAt: values?.contentModificationDate ?? .distantPast,
+            // Unknown — the UI gates the mode badge on `pixelWidth > 0` so this
+            // placeholder is never presented as fact.
+            mode: .region,
+            pixelWidth: 0,
+            pixelHeight: 0,
+            kind: kind(for: url)
+        )
+    }
+
+    /// A UUID derived from the file path, so a synthesized entry keeps the same
+    /// identity every time it's rebuilt. Uses a stable digest rather than
+    /// `Hasher`, whose seed is randomized per process launch.
+    private static func deterministicID(for url: URL) -> UUID {
+        let digest = Array(SHA256.hash(data: Data(url.standardizedFileURL.path.utf8)).prefix(16))
+        return UUID(uuid: (digest[0], digest[1], digest[2], digest[3],
+                           digest[4], digest[5], digest[6], digest[7],
+                           digest[8], digest[9], digest[10], digest[11],
+                           digest[12], digest[13], digest[14], digest[15]))
     }
 
     func refreshPermissions() async {

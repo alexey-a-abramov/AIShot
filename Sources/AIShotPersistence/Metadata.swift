@@ -97,6 +97,11 @@ public actor CaptureMetadataStore {
             tag: (cleanTag?.isEmpty == false) ? cleanTag : nil
         )
 
+        // Clearing an entry that was never there is a no-op — don't create an
+        // index file in a folder that has no metadata (e.g. trashing an
+        // untagged capture would otherwise litter one into its folder).
+        guard !meta.isEmpty || index.items[key] != nil else { return nil }
+
         if meta.isEmpty {
             index.items[key] = nil
         } else {

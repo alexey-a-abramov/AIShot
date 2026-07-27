@@ -41,6 +41,15 @@ public actor FileHistoryStore: HistoryStore {
         Array(try loadAll().prefix(max(0, limit)))
     }
 
+    public func remove(ids: Set<UUID>) async throws {
+        guard !ids.isEmpty else { return }
+        var entries = try loadAll()
+        let remaining = entries.filter { !ids.contains($0.id) }
+        guard remaining.count != entries.count else { return } // nothing matched
+        entries = remaining
+        try persist(entries) // also refreshes the in-memory cache
+    }
+
     private func loadAll() throws -> [HistoryEntry] {
         if let cache { return cache }
         guard FileManager.default.fileExists(atPath: url.path) else {

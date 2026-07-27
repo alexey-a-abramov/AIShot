@@ -60,20 +60,37 @@ public actor ScreenshotMCPService {
                 name: url.lastPathComponent,
                 uri: "aishot://history/\(entry.id.uuidString)",
                 description: "Capture \(entry.pixelWidth)×\(entry.pixelHeight)",
-                mimeType: "image/png"
+                mimeType: Self.mimeType(for: url)
             )
         }
     }
 
-    /// Reads a history resource by URI, returning the image bytes.
+    /// Reads a history resource by URI, returning the file bytes.
     public func readResource(uri: String) async -> ReadResource.Result {
         let id = uri.split(separator: "/").last.map(String.init)
         let entries = (try? await capture.recentHistory(limit: 200)) ?? []
         if let id, let entry = entries.first(where: { $0.id.uuidString == id }),
            let url = entry.fileURL, let data = try? Data(contentsOf: url) {
-            return ReadResource.Result(contents: [.binary(data, uri: uri, mimeType: "image/png")])
+            return ReadResource.Result(
+                contents: [.binary(data, uri: uri, mimeType: Self.mimeType(for: url))]
+            )
         }
         return ReadResource.Result(contents: [.text("resource not found: \(uri)", uri: uri)])
+    }
+
+    /// History holds screenshots *and* screen recordings, so the type has to be
+    /// derived per file rather than assumed to be PNG.
+    static func mimeType(for url: URL) -> String {
+        switch url.pathExtension.lowercased() {
+        case "png": "image/png"
+        case "jpg", "jpeg": "image/jpeg"
+        case "heic": "image/heic"
+        case "tiff", "tif": "image/tiff"
+        case "gif": "image/gif"
+        case "mp4", "m4v": "video/mp4"
+        case "mov": "video/quicktime"
+        default: "application/octet-stream"
+        }
     }
 
     /// Dispatches a tool call to the right engine and encodes the result.

@@ -32,4 +32,45 @@ public enum ImageCodec {
         }
         return image
     }
+
+    /// Decodes a downsampled thumbnail from a file **without** ever allocating
+    /// the full-resolution bitmap — essential for grids of large screenshots.
+    ///
+    /// - Parameter maxPixelSize: bounds the longest edge, in *pixels*. Pass the
+    ///   point size multiplied by the display scale so Retina output stays crisp.
+    public static func thumbnail(contentsOf url: URL, maxPixelSize: Int) throws -> CGImage {
+        // `kCGImageSourceShouldCache: false` — we only want the thumbnail, so
+        // don't let the source hold the full-size decode too.
+        guard let source = CGImageSourceCreateWithURL(
+            url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary
+        ) else {
+            throw AIShotError.encodingFailed("could not read image at \(url.lastPathComponent)")
+        }
+        return try makeThumbnail(source, maxPixelSize: maxPixelSize)
+    }
+
+    /// In-memory variant, for callers that already hold the bytes.
+    public static func thumbnail(from data: Data, maxPixelSize: Int) throws -> CGImage {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
+            throw AIShotError.encodingFailed("could not read image data")
+        }
+        return try makeThumbnail(source, maxPixelSize: maxPixelSize)
+    }
+
+    private static func makeThumbnail(_ source: CGImageSource, maxPixelSize: Int) throws -> CGImage {
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            // Honor EXIF orientation so rotated sources aren't shown sideways.
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            // Decode here, on this (background) thread. Without it ImageIO defers
+            // the pixel decode until first draw — i.e. onto the main thread while
+            // the user is scrolling, which is exactly what we're avoiding.
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+        ]
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+            throw AIShotError.encodingFailed("could not create thumbnail")
+        }
+        return image
+    }
 }
