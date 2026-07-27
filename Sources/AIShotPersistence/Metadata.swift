@@ -111,6 +111,37 @@ public actor CaptureMetadataStore {
         return meta.isEmpty ? nil : meta
     }
 
+    /// Applies the same note/tag to several entries in one index, writing the
+    /// file once. Bulk-tagging via `upsert` would rewrite the whole index per
+    /// entry, which gets slow fast.
+    public func upsertMany(at url: URL, keys: [String], note: String?, tag: String?) throws {
+        guard !keys.isEmpty else { return }
+        let standardized = url.standardizedFileURL
+        var index = index(at: standardized)
+
+        let cleanTag = tag?.trimmingCharacters(in: .whitespacesAndNewlines)
+        var changed = false
+        for key in keys {
+            // `nil` means "leave this field alone", so callers can set a tag
+            // without clobbering existing notes.
+            let existing = index.items[key]
+            let newNote = note ?? existing?.note ?? ""
+            let newTag = cleanTag.map { $0.isEmpty ? nil : $0 } ?? existing?.tag
+            let meta = CaptureMetadata(note: newNote, tag: newTag)
+            if meta.isEmpty {
+                if existing != nil { index.items[key] = nil; changed = true }
+            } else if existing?.note != newNote || existing?.tag != newTag {
+                // Compare fields, not whole values: `meta` carries a fresh
+                // `updatedAt`, so `existing != meta` is always true and
+                // re-applying the same tag would rewrite the whole index.
+                index.items[key] = meta
+                changed = true
+            }
+        }
+        guard changed else { return }
+        try persist(index, to: standardized)
+    }
+
     /// Moves an index file from `oldURL` to `newURL` (used when the user changes
     /// the database location). No-op if the source is missing or identical.
     /// If a target already exists, the two indexes are **merged** (newer entry

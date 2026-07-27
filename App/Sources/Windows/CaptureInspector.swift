@@ -8,6 +8,9 @@ import AIShotPersistence
 struct CaptureInspector: View {
     @EnvironmentObject private var model: AppModel
     let entry: HistoryEntry?
+    /// How many captures are selected — with more than one, per-capture editing
+    /// doesn't apply and the grid's bulk bar takes over.
+    var multiSelectionCount: Int = 0
 
     @State private var note = ""
     @State private var tag = ""
@@ -27,6 +30,12 @@ struct CaptureInspector: View {
         Group {
             if let entry {
                 details(for: entry)
+            } else if multiSelectionCount > 1 {
+                ContentUnavailableView(
+                    String(format: String(localized: "%lld captures selected"), multiSelectionCount),
+                    systemImage: "square.stack",
+                    description: Text("Use the actions above the grid to tag, copy, or delete them.")
+                )
             } else {
                 ContentUnavailableView(
                     "No capture selected",
@@ -175,8 +184,12 @@ struct CaptureInspector: View {
         // Stat off the main actor — a slow/network volume shouldn't stall the UI.
         let id = entry.id
         let probe = await Task.detached(priority: .utility) { () -> (Int?, Bool) in
-            let values = try? url.resourceValues(forKeys: [.fileSizeKey])
-            return (values?.fileSize, FileManager.default.fileExists(atPath: url.path))
+            // FileManager, not URL.resourceValues — a URL caches resource
+            // values on the instance, so an edited file would report its old
+            // size forever.
+            let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+            return (attributes?[.size] as? Int,
+                    FileManager.default.fileExists(atPath: url.path))
         }.value
         // A detached task isn't cancelled with the enclosing `.task(id:)`, so a
         // rapid selection change could otherwise land stale values here.

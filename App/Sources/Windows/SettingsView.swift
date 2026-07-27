@@ -447,6 +447,7 @@ private struct PermissionsPage: View {
 }
 
 private struct AboutPage: View {
+    @EnvironmentObject private var model: AppModel
     private let githubURL = URL(string: "https://github.com/alexey-a-abramov/AIShot")!
     private let author = "Alexey Abramov"
 
@@ -504,6 +505,9 @@ private struct AboutPage: View {
                     Link(destination: githubURL) {
                         Text(verbatim: "github.com/alexey-a-abramov/AIShot")
                     }
+                }
+                LabeledContent("Help") {
+                    Button("Open Help") { model.openHelp() }
                 }
             }
 

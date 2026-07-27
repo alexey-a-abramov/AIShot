@@ -23,6 +23,10 @@ public actor ScreenshotMCPService {
     private let recognizer: TextRecognizer
     private let redactor: AutoRedactor
     private let confirmInput: InputConfirmation
+    /// Optional: when present, `search_captures` can match the text *inside*
+    /// past captures, not just their notes/tags/file names.
+    private let textIndexer: TextIndexer?
+    private let metadataStore = CaptureMetadataStore()
 
     public init(
         capture: CaptureService,
@@ -31,6 +35,7 @@ public actor ScreenshotMCPService {
         renderer: any AnnotationRendering = CoreImageAnnotationRenderer(),
         recognizer: TextRecognizer = TextRecognizer(),
         redactor: AutoRedactor = AutoRedactor(),
+        textIndexer: TextIndexer? = nil,
         confirmInput: @escaping InputConfirmation = { _, _ in false }
     ) {
         self.capture = capture
@@ -39,6 +44,7 @@ public actor ScreenshotMCPService {
         self.renderer = renderer
         self.recognizer = recognizer
         self.redactor = redactor
+        self.textIndexer = textIndexer
         self.confirmInput = confirmInput
     }
 
@@ -104,6 +110,7 @@ public actor ScreenshotMCPService {
             case .listWindows: return try await json(capture.windows())
             case .listApps: return try await json(automation.runningApps())
             case .getHistory: return try await json(capture.recentHistory(limit: arguments?["limit"]?.intValue ?? 20))
+            case .searchCaptures: return try await searchCaptures(arguments)
             case .captureRegion: return try await runCapture(regionRequest(arguments))
             case .captureWindow: return try await runCapture(windowRequest(arguments))
             case .captureDisplay: return try await runCapture(displayRequest(arguments))
@@ -225,6 +232,94 @@ public actor ScreenshotMCPService {
     }
 
     // MARK: - OCR
+
+    /// Finds past captures by the text inside them, plus note/tag/file name.
+    ///
+    /// One index, two consumers: the same OCR data backs the Dashboard's search
+    /// box and this tool, so an agent can find "the screenshot with the stack
+    /// trace" instead of only listing the most recent ones.
+    private func searchCaptures(_ args: [String: Value]?) async throws -> CallTool.Result {
+        let query = (args?["query"]?.stringValue ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return Self.error("search_captures: 'query' is required") }
+        // Bounded so an agent can't inline the whole index into one result.
+        let limit = min(100, max(1, args?["limit"]?.intValue ?? 20))
+
+        let entries = (try? await capture.recentHistory(limit: 500)) ?? []
+        let textHits = await textIndexer?.search(query) ?? []
+        let snippets = Dictionary(
+            textHits.map { ($0.fileURL.standardizedFileURL, $0.snippet) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
+        var results: [SearchResult] = []
+        var seen = Set<URL>()
+        for entry in entries {
+            guard let url = entry.fileURL?.standardizedFileURL else { continue }
+            let meta = await metadata(for: url)
+            let matchedText = snippets[url]
+            let matchedNote = meta?.note.localizedCaseInsensitiveContains(query) ?? false
+            let matchedTag = meta?.tag?.localizedCaseInsensitiveContains(query) ?? false
+            let matchedName = url.lastPathComponent.localizedCaseInsensitiveContains(query)
+            guard matchedText != nil || matchedNote || matchedTag || matchedName else { continue }
+            guard seen.insert(url).inserted else { continue }
+            results.append(SearchResult(
+                path: url.path,
+                createdAt: entry.createdAt,
+                width: entry.pixelWidth,
+                height: entry.pixelHeight,
+                matchedOn: matchedText != nil ? "text"
+                    : matchedNote ? "note"
+                    : matchedTag ? "tag" : "filename",
+                note: meta?.note.isEmpty == false ? meta?.note : nil,
+                tag: meta?.tag,
+                snippet: matchedText
+            ))
+            if results.count >= limit { break }
+        }
+
+        // Indexed captures that predate the history window still count.
+        if results.count < limit {
+            for hit in textHits {
+                let url = hit.fileURL.standardizedFileURL
+                guard seen.insert(url).inserted,
+                      FileManager.default.fileExists(atPath: url.path) else { continue }
+                results.append(SearchResult(
+                    path: url.path, createdAt: nil, width: 0, height: 0,
+                    matchedOn: "text", note: nil, tag: nil, snippet: hit.snippet
+                ))
+                if results.count >= limit { break }
+            }
+        }
+
+        return try json(results)
+    }
+
+    /// Note/tag for a capture, resolved through the same per-directory index
+    /// the app writes (hidden dotfile beside the image, or the visible one).
+    private func metadata(for fileURL: URL) async -> CaptureMetadata? {
+        let directory = fileURL.deletingLastPathComponent()
+        for name in [CaptureMetadataStore.hiddenFileName, CaptureMetadataStore.visibleFileName] {
+            let indexURL = directory.appendingPathComponent(name)
+            if let meta = await metadataStore.metadata(at: indexURL, key: fileURL.lastPathComponent) {
+                return meta
+            }
+        }
+        return nil
+    }
+
+    /// Agent-facing shape of a `search_captures` result.
+    private struct SearchResult: Encodable {
+        var path: String
+        var createdAt: Date?
+        var width: Int
+        var height: Int
+        /// Which field matched: "text" (words inside the image), "note", "tag",
+        /// or "filename".
+        var matchedOn: String
+        var note: String?
+        var tag: String?
+        var snippet: String?
+    }
 
     private func runOCR(_ args: [String: Value]?) async throws -> CallTool.Result {
         let displayID = args?["displayID"]?.intValue.map { UInt32($0) } ?? CGMainDisplayID()

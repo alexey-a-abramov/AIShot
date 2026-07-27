@@ -10,6 +10,14 @@ enum ToolSchemas {
             return object(["onScreenOnly": prop("boolean", "Only on-screen windows")])
         case .getHistory:
             return object(["limit": prop("integer", "Maximum number of entries")])
+        case .searchCaptures:
+            return object(
+                [
+                    "query": prop("string", "Text to look for inside captures, or in a note/tag/file name"),
+                    "limit": prop("integer", "Maximum number of results (default 20)"),
+                ],
+                required: ["query"]
+            )
         case .captureRegion:
             return object([
                 "displayID": prop("integer", "Target display id"),

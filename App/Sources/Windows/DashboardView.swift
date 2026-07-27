@@ -12,10 +12,14 @@ struct DashboardView: View {
 
     @State private var filter: SidebarFilter? = .all
     @State private var searchText = ""
-    @State private var selection: HistoryEntry.ID?
+    @State private var selection = Set<HistoryEntry.ID>()
+    /// Anchor for shift-click range selection.
+    @State private var selectionAnchor: HistoryEntry.ID?
     @State private var showsInspector = true
     @State private var quickLookURL: URL?
-    @State private var deleteTarget: HistoryEntry?
+    @State private var deleteTargets: [HistoryEntry] = []
+    @State private var bulkTag = ""
+    @State private var showsBulkTagField = false
     @State private var columnCount = 3
     @FocusState private var gridFocused: Bool
 
@@ -52,7 +56,10 @@ struct DashboardView: View {
         } detail: {
             browser
                 .inspector(isPresented: $showsInspector) {
-                    CaptureInspector(entry: selectedEntry)
+                    // With several selected, the per-capture editor doesn't
+                    // apply — the bulk bar in the grid takes over instead.
+                    CaptureInspector(entry: selection.count == 1 ? selectedEntry : nil,
+                                     multiSelectionCount: selection.count)
                         .environmentObject(model)
                         .inspectorColumnWidth(min: 250, ideal: 300, max: 380)
                 }
@@ -62,36 +69,46 @@ struct DashboardView: View {
         // `.toolbar` placement needs an NSToolbar, which this AppKit-hosted
         // window doesn't have — `.sidebar` renders with nothing further.
         .searchable(text: $searchText, placement: .sidebar,
-                    prompt: Text("Search notes, tags, or file names"))
+                    prompt: Text("Search text in images, notes, tags, or file names"))
         // Column minimums (200 + 400 + 250) plus dividers set the real floor.
         .frame(minWidth: 880, idealWidth: 980, minHeight: 520, idealHeight: 660)
         .task {
             await model.refreshRecent()
             await model.refreshPermissions()
             recompute()
+            // Build the full-text index in the background so searching by the
+            // words inside a screenshot works.
+            model.indexCapturesForSearch()
         }
         .onChange(of: model.recent) { _, _ in recompute() }
         .onChange(of: model.captureMeta) { _, _ in recompute() }
+        .onChange(of: model.textMatches) { _, _ in recompute() }
         .onChange(of: filter) { _, _ in recompute() }
-        .onChange(of: searchText) { _, _ in recompute() }
+        .onChange(of: searchText) { _, query in
+            recompute()
+            Task { await model.updateTextMatches(for: query) }
+        }
         // If the selected tag disappears (renamed/cleared), fall back to "All".
         .onChange(of: model.knownTags) { _, tags in
             if case .tag(let name) = filter, !tags.contains(name) { filter = .all }
         }
         .quickLookPreview($quickLookURL)
         .confirmationDialog(
-            Text("Move “\(deleteTarget?.fileURL?.lastPathComponent ?? "")” to the Trash?"),
-            isPresented: Binding(get: { deleteTarget != nil },
-                                 set: { if !$0 { deleteTarget = nil } }),
-            titleVisibility: .visible,
-            presenting: deleteTarget
-        ) { target in
+            deleteTargets.count == 1
+                ? Text("Move “\(deleteTargets[0].fileURL?.lastPathComponent ?? "")” to the Trash?")
+                : Text("Move \(deleteTargets.count) captures to the Trash?"),
+            isPresented: Binding(get: { !deleteTargets.isEmpty },
+                                 set: { if !$0 { deleteTargets = [] } }),
+            titleVisibility: .visible
+        ) {
             Button("Move to Trash", role: .destructive) {
-                deleteTarget = nil
-                Task { await model.delete([target]) }
+                let targets = deleteTargets
+                deleteTargets = []
+                selection.subtract(targets.map(\.id))
+                Task { await model.delete(targets) }
             }
-            Button("Cancel", role: .cancel) { deleteTarget = nil }
-        } message: { _ in
+            Button("Cancel", role: .cancel) { deleteTargets = [] }
+        } message: {
             Text("You can restore it from the Trash.")
         }
     }
@@ -158,9 +175,62 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 0) {
             header
             Divider()
+            if selection.count > 1 { bulkBar; Divider() }
             grid
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    /// Actions that apply to the whole selection. Only shown for 2+ captures —
+    /// a single selection is handled by the inspector.
+    private var bulkBar: some View {
+        HStack(spacing: 10) {
+            Text(verbatim: String(
+                format: String(localized: "%lld selected"), selection.count
+            ))
+            .font(.callout.weight(.medium))
+
+            Button("Clear") { selection.removeAll() }
+                .buttonStyle(.borderless)
+
+            Spacer(minLength: 0)
+
+            if showsBulkTagField {
+                TagComboBox(text: $bulkTag, options: model.knownTags, focusOnAppear: true)
+                    .frame(width: 180, height: 22)
+                Button("Apply") {
+                    let targets = selectedEntries
+                    let tag = bulkTag
+                    showsBulkTagField = false
+                    bulkTag = ""
+                    Task { await model.applyTag(tag, to: targets) }
+                }
+                .disabled(bulkTag.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Button("Cancel") { showsBulkTagField = false; bulkTag = "" }
+                    .buttonStyle(.borderless)
+            } else {
+                Button {
+                    bulkTag = model.settings.lastTag ?? ""
+                    showsBulkTagField = true
+                } label: {
+                    Label("Tag…", systemImage: "tag")
+                }
+                Button {
+                    model.copyToClipboard(selectedEntries)
+                } label: {
+                    Label("Copy", systemImage: "doc.on.doc")
+                }
+                .disabled(selectedEntries.allSatisfy { $0.kind != .image })
+                Button(role: .destructive) {
+                    deleteTargets = selectedEntries
+                } label: {
+                    Label("Move to Trash", systemImage: "trash")
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .background(.quaternary.opacity(0.35))
     }
 
     private var header: some View {
@@ -185,7 +255,7 @@ struct DashboardView: View {
                 } label: {
                     Label {
                         Text(verbatim: String(
-                            format: String(localized: "Clear %d missing"), missing
+                            format: String(localized: "Clear %lld missing"), missing
                         ))
                     } icon: {
                         Image(systemName: "questionmark.folder")
@@ -241,11 +311,9 @@ struct DashboardView: View {
                                         entry: entry,
                                         metadata: model.metadata(for: entry),
                                         timestamp: group.group.timestamp(for: entry.createdAt),
-                                        isSelected: selection == entry.id,
-                                        onSelect: {
-                                            selection = entry.id
-                                            gridFocused = true
-                                        },
+                                        snippet: model.textSnippet(for: entry, query: searchText),
+                                        isSelected: selection.contains(entry.id),
+                                        onSelect: { select(entry) },
                                         onOpen: { open(entry) },
                                         menu: { AnyView(contextMenu(for: entry)) }
                                     )
@@ -282,12 +350,19 @@ struct DashboardView: View {
                 .onKeyPress(.return, phases: .down) { _ in openSelected() }
                 .onKeyPress(.delete, phases: .down) { _ in requestDeleteSelected() }
                 .onKeyPress(.escape, phases: .down) { _ in
-                    guard selection != nil else { return .ignored }
-                    selection = nil
+                    guard !selection.isEmpty else { return .ignored }
+                    selection.removeAll()
                     return .handled
                 }
-                .onChange(of: selection) { _, id in
-                    guard let id else { return }
+                .onKeyPress(KeyEquivalent("a"), phases: .down) { press in
+                    guard press.modifiers.contains(.command) else { return .ignored }
+                    selection = Set(visible.map(\.id))
+                    return .handled
+                }
+                .onChange(of: selection) { old, new in
+                    // Scroll to follow a keyboard move (exactly one selected and
+                    // it changed), not to fight a multi-select.
+                    guard new.count == 1, let id = new.first, old.first != id else { return }
                     withAnimation(.easeOut(duration: 0.15)) { proxy.scrollTo(id, anchor: .center) }
                 }
             }
@@ -319,7 +394,7 @@ struct DashboardView: View {
         }
         Button("Quick Look") { quickLookURL = entry.fileURL }
         Button("Edit note & tag…") {
-            selection = entry.id
+            selection = [entry.id]
             showsInspector = true
         }
         Divider()
@@ -329,7 +404,15 @@ struct DashboardView: View {
         }
         Button("Reveal in Finder") { model.revealInFinder(entry) }
         Divider()
-        Button("Move to Trash", role: .destructive) { deleteTarget = entry }
+        // Right-clicking inside a multi-selection acts on the whole selection,
+        // matching Finder.
+        if selection.count > 1, selection.contains(entry.id) {
+            Button("Move \(selection.count) to Trash", role: .destructive) {
+                deleteTargets = selectedEntries
+            }
+        } else {
+            Button("Move to Trash", role: .destructive) { deleteTargets = [entry] }
+        }
     }
 
     // MARK: - Derived state
@@ -354,6 +437,8 @@ struct DashboardView: View {
                 return (meta?.note.localizedCaseInsensitiveContains(query) ?? false)
                     || (meta?.tag?.localizedCaseInsensitiveContains(query) ?? false)
                     || (entry.fileURL?.lastPathComponent.localizedCaseInsensitiveContains(query) ?? false)
+                    // Words *inside* the image, from the OCR index.
+                    || model.textSnippet(for: entry, query: query) != nil
             }
         }
 
@@ -365,16 +450,48 @@ struct DashboardView: View {
             .sorted { $0.key.rawValue < $1.key.rawValue }
             .map { EntryGroup(group: $0.key, entries: $0.value) }
 
-        // Drop a selection that's no longer on screen (deleted, filtered out,
+        // Drop selections that are no longer on screen (deleted, filtered out,
         // or searched away) so the inspector never points at nothing.
-        if let id = selection, byID[id] == nil { selection = nil }
+        let stillVisible = selection.filter { byID[$0] != nil }
+        if stillVisible.count != selection.count { selection = stillVisible }
+        if let anchor = selectionAnchor, byID[anchor] == nil { selectionAnchor = nil }
     }
 
     private var selectedEntry: HistoryEntry? {
-        selection.flatMap { byID[$0] }
+        selection.count == 1 ? selection.first.flatMap { byID[$0] } : nil
+    }
+
+    /// The selected captures, in the order they appear in the grid.
+    private var selectedEntries: [HistoryEntry] {
+        visible.filter { selection.contains($0.id) }
     }
 
     // MARK: - Actions
+
+    /// Click selection, honoring the standard macOS modifiers: ⌘ toggles,
+    /// ⇧ extends from the anchor, a plain click replaces.
+    private func select(_ entry: HistoryEntry) {
+        gridFocused = true
+        let modifiers = NSEvent.modifierFlags
+        if modifiers.contains(.command) {
+            if selection.contains(entry.id) {
+                selection.remove(entry.id)
+            } else {
+                selection.insert(entry.id)
+                selectionAnchor = entry.id
+            }
+        } else if modifiers.contains(.shift), let anchor = selectionAnchor,
+                  let from = visible.firstIndex(where: { $0.id == anchor }),
+                  let to = visible.firstIndex(where: { $0.id == entry.id }) {
+            // Replace rather than union, so shift-clicking a nearer item
+            // shrinks the range like it does in Finder.
+            let range = from <= to ? from...to : to...from
+            selection = Set(visible[range].map(\.id))
+        } else {
+            selection = [entry.id]
+            selectionAnchor = entry.id
+        }
+    }
 
     private func open(_ entry: HistoryEntry) {
         if entry.kind == .video {
@@ -397,8 +514,9 @@ struct DashboardView: View {
     }
 
     private func requestDeleteSelected() -> KeyPress.Result {
-        guard let entry = selectedEntry else { return .ignored }
-        deleteTarget = entry
+        let targets = selectedEntries
+        guard !targets.isEmpty else { return .ignored }
+        deleteTargets = targets
         return .handled
     }
 
@@ -407,13 +525,21 @@ struct DashboardView: View {
     /// last row) — the usual trade-off in a grouped photo grid.
     private func move(by offset: Int) -> KeyPress.Result {
         guard !visible.isEmpty else { return .ignored }
-        guard let current = selection,
-              let index = visible.firstIndex(where: { $0.id == current }) else {
-            selection = visible.first?.id
+        // From a multi-selection, arrow keys collapse to the end nearest the
+        // direction of travel and move on from there, like Finder.
+        let current = selection.count == 1
+            ? selection.first
+            : (offset < 0 ? selectedEntries.first : selectedEntries.last)?.id
+        guard let current, let index = visible.firstIndex(where: { $0.id == current }) else {
+            let first = visible[0].id
+            selection = [first]
+            selectionAnchor = first
             return .handled
         }
         let next = min(max(index + offset, 0), visible.count - 1)
-        selection = visible[next].id
+        let id = visible[next].id
+        selection = [id]
+        selectionAnchor = id
         return .handled
     }
 }
@@ -424,6 +550,8 @@ private struct CaptureCard: View {
     let entry: HistoryEntry
     let metadata: CaptureMetadata?
     let timestamp: String
+    /// OCR excerpt explaining why this matched the current search, if it did.
+    let snippet: String?
     let isSelected: Bool
     let onSelect: () -> Void
     let onOpen: () -> Void
@@ -473,7 +601,17 @@ private struct CaptureCard: View {
                         .foregroundStyle(.tint)
                 }
 
-                if let note = metadata?.note, !note.isEmpty {
+                // A search hit on the text inside the image — show the excerpt
+                // so it's obvious why this capture matched.
+                if let snippet, !snippet.isEmpty {
+                    Label {
+                        Text(verbatim: snippet).lineLimit(2)
+                    } icon: {
+                        Image(systemName: "text.viewfinder")
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                } else if let note = metadata?.note, !note.isEmpty {
                     Text(verbatim: note)
                         .font(.caption2).foregroundStyle(.tertiary)
                         .lineLimit(1)

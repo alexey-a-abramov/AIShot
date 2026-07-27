@@ -48,6 +48,8 @@ struct MenuBarContent: View {
         Button("Open Dashboard") { model.openDashboard() }
         Button("Settings…") { model.openSettings() }
             .keyboardShortcut(",", modifiers: .command)
+        Button("AIShot Help") { model.openHelp() }
+            .keyboardShortcut("?", modifiers: .command)
         Button("Check for Updates…") { model.checkForUpdates() }
 
         Divider()

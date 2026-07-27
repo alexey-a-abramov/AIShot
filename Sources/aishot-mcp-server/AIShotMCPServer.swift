@@ -11,15 +11,22 @@ import AIShotMCP
 ///
 /// Capture/enumeration/history tools work headless; privileged input tools are
 /// denied by default (no confirmation UI in a headless process).
+///
+/// The history and search-index stores point at the same files the app uses
+/// (`DataPaths`), so `get_history` and `search_captures` see the user's real
+/// captures rather than an empty in-process store.
 @main
 struct AIShotMCPServerMain {
     static func main() async {
         let capture = CaptureService(
             engine: ScreenCaptureKitEngine(),
             settingsStore: UserDefaultsSettingsStore(),
-            history: InMemoryHistoryStore()
+            history: FileHistoryStore(fileURL: DataPaths.historyFile)
         )
-        let service = ScreenshotMCPService(capture: capture)
+        let service = ScreenshotMCPService(
+            capture: capture,
+            textIndexer: TextIndexer(store: CaptureTextIndexStore(fileURL: DataPaths.textIndexFile))
+        )
         let host = MCPServerHost(service: service)
         do {
             try await host.start(transport: StdioTransport())

@@ -36,6 +36,8 @@ final class AppModel: ObservableObject {
     /// Tagged files confirmed to exist on disk, resolved once per metadata
     /// refresh so tag browsing never hits the filesystem mid-render.
     private var existingTaggedURLs: Set<URL> = []
+    private var indexingTask: Task<Void, Never>?
+    private var lastSearchQuery = ""
 
     let captureService: CaptureService
     private let settingsStore: UserDefaultsSettingsStore
@@ -51,6 +53,9 @@ final class AppModel: ObservableObject {
     private let updater = UpdaterController()
     let metadataStore = CaptureMetadataStore()
     private let tagPrompt = CaptureTagPromptController()
+    /// Full-text (OCR) index over captures, powering search here and the
+    /// `search_captures` MCP tool.
+    let textIndexer = TextIndexer(store: CaptureTextIndexStore(fileURL: AppPaths.textIndexFile))
 
     private lazy var settingsWindow = HostingWindowController(
         title: "Settings",
@@ -439,6 +444,9 @@ final class AppModel: ObservableObject {
             openEditor(imageData: outcome.image.data, pixelSize: outcome.image.pixelSize)
         }
         await promptOrApplyMetadata(for: outcome)
+        // Keep the search index current, so a capture taken while the Dashboard
+        // is open is searchable without reopening it.
+        indexCapturesForSearch()
     }
 
     // MARK: - Notes & tags
@@ -501,6 +509,25 @@ final class AppModel: ObservableObject {
         await refreshMetadata(for: recent)
     }
 
+    /// Applies a tag to many captures at once, grouped by index file so each is
+    /// written once rather than once per capture.
+    func applyTag(_ tag: String, to entries: [HistoryEntry]) async {
+        let clean = tag.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty, !entries.isEmpty else { return }
+
+        var byIndex: [URL: [String]] = [:]
+        for entry in entries {
+            guard let fileURL = entry.fileURL else { continue }
+            let loc = metadataLocator(for: fileURL)
+            byIndex[loc.indexURL, default: []].append(loc.key)
+        }
+        for (indexURL, keys) in byIndex {
+            try? await metadataStore.upsertMany(at: indexURL, keys: keys, note: nil, tag: clean)
+        }
+        settings.lastTag = clean
+        await refreshMetadata(for: recent)
+    }
+
     // MARK: - Actions on an existing capture
 
     /// Opens a past capture in the annotation editor. Videos aren't editable.
@@ -554,6 +581,27 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Copies several captures to the clipboard at once.
+    ///
+    /// Writes the **file URLs**, not decoded bitmaps: Mail, Finder, Slack and
+    /// Messages all accept that as N attachments, whereas multiple `NSImage`s
+    /// collapse to a single image in most readers — and decoding a large
+    /// selection would pull gigabytes into memory.
+    func copyToClipboard(_ entries: [HistoryEntry]) {
+        let urls = entries.filter { $0.kind == .image }.compactMap(\.fileURL)
+        guard !urls.isEmpty else { return }
+        guard urls.count > 1 else {
+            if let entry = entries.first(where: { $0.kind == .image }) { copyToClipboard(entry) }
+            return
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.writeObjects(urls as [NSURL])
+        hud.show(
+            message: String(format: String(localized: "Copied %lld images"), urls.count),
+            thumbnail: nil
+        )
+    }
+
     func revealInFinder(_ entry: HistoryEntry) {
         guard let url = entry.fileURL else { return }
         NSWorkspace.shared.activateFileViewerSelecting([url])
@@ -605,9 +653,68 @@ final class AppModel: ObservableObject {
             let loc = metadataLocator(for: fileURL)
             try? await metadataStore.upsert(at: loc.indexURL, key: loc.key, note: "", tag: nil)
             await ThumbnailLoader.shared.invalidate(fileURL)
+            await textIndexer.forget(fileURL)
         }
 
         await refreshRecent()
+    }
+
+    // MARK: - Full-text search
+
+    /// Full-text hits for a specific query. Carrying the query alongside the
+    /// results lets the UI ignore matches that belong to an older keystroke,
+    /// which would otherwise briefly widen the visible set.
+    struct TextMatches: Equatable {
+        var query = ""
+        var hits: [URL: String] = [:]
+    }
+
+    /// Captures whose OCR'd text matches the current query, keyed by file URL
+    /// with the matching excerpt. Empty until the background index has run.
+    @Published private(set) var textMatches = TextMatches()
+
+    /// Kicks off (or continues) background OCR indexing of the current history.
+    /// Safe to call repeatedly: already-indexed, unchanged files are skipped.
+    func indexCapturesForSearch() {
+        guard indexingTask == nil else { return }
+        let entries = recent
+        indexingTask = Task { [weak self] in
+            guard let self else { return }
+            await textIndexer.pruneMissing()
+            _ = await textIndexer.index(entries)
+            self.indexingTask = nil
+            // Re-run the active query now that more text is available.
+            await self.updateTextMatches(for: self.lastSearchQuery)
+        }
+    }
+
+    /// Recomputes full-text matches for `query` (too-short clears them).
+    func updateTextMatches(for query: String) async {
+        lastSearchQuery = query
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else {
+            textMatches = TextMatches(query: trimmed, hits: [:])
+            return
+        }
+        let hits = await textIndexer.search(trimmed)
+        // Ignore a result that arrived after the user typed something else.
+        guard trimmed == lastSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines) else { return }
+        textMatches = TextMatches(
+            query: trimmed,
+            hits: Dictionary(
+                hits.map { ($0.fileURL.standardizedFileURL, $0.snippet) },
+                uniquingKeysWith: { first, _ in first }
+            )
+        )
+    }
+
+    /// The OCR excerpt explaining why a capture matched `query` — `nil` unless
+    /// the stored matches were computed for that exact query.
+    func textSnippet(for entry: HistoryEntry, query: String) -> String? {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, textMatches.query == trimmed,
+              let url = entry.fileURL?.standardizedFileURL else { return nil }
+        return textMatches.hits[url]
     }
 
     /// History rows whose file is gone — shown as "File missing" cards, and
@@ -769,12 +876,41 @@ final class AppModel: ObservableObject {
     func openSettings() { settingsWindow.show() }
     func openDashboard() { dashboardWindow.show() }
 
+    /// Opens the bundled offline help page in the default browser. Falls back
+    /// to the project's README online if the resource is somehow missing.
+    func openHelp() {
+        if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "Help")
+            ?? Bundle.main.url(forResource: "index", withExtension: "html") {
+            NSWorkspace.shared.open(url)
+        } else if let fallback = URL(string: "https://github.com/alexey-a-abramov/AIShot") {
+            NSWorkspace.shared.open(fallback)
+        }
+    }
+
     /// Saves and/or copies edited image bytes using the current settings.
+    ///
+    /// A saved export is recorded in history too — it bypasses
+    /// `CaptureService.deliver` (which would re-apply the post-capture action
+    /// and re-notify), so without this an annotated image would silently never
+    /// appear in the Dashboard.
     func export(_ data: Data, copy: Bool, save: Bool) async {
         if save {
             let name = FileNameFormatter(template: settings.fileNameTemplate)
                 .fileName(format: .png, date: Date())
-            _ = try? CaptureSaver().save(data, fileName: name, to: settings.saveDirectory)
+            if let url = try? CaptureSaver().save(data, fileName: name, to: settings.saveDirectory) {
+                let size = await Task.detached {
+                    (try? ImageCodec.decode(data))
+                        .map { CGSize(width: $0.width, height: $0.height) } ?? .zero
+                }.value
+                try? await captureService.recordExisting(HistoryEntry(
+                    fileURL: url,
+                    createdAt: Date(),
+                    mode: .region,
+                    pixelWidth: Int(size.width),
+                    pixelHeight: Int(size.height),
+                    kind: .image
+                ))
+            }
             await refreshRecent()
         }
         if copy {
@@ -871,12 +1007,13 @@ final class AppModel: ObservableObject {
     /// window. Pixel size is unknown without decoding the file, so it's left at
     /// zero and the UI omits the dimension label.
     private static func synthesizedEntry(for url: URL) -> HistoryEntry {
-        let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
+        // FileManager rather than URL.resourceValues, which caches per instance.
+        let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
         return HistoryEntry(
             // Stable across refreshes so SwiftUI selection doesn't jump.
             id: deterministicID(for: url),
             fileURL: url,
-            createdAt: values?.contentModificationDate ?? .distantPast,
+            createdAt: attributes?[.modificationDate] as? Date ?? .distantPast,
             // Unknown — the UI gates the mode badge on `pixelWidth > 0` so this
             // placeholder is never presented as fact.
             mode: .region,

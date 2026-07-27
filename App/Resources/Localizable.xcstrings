@@ -1,6 +1,40 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%lld captures selected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld capturas seleccionadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld captures sélectionnées"
+          }
+        }
+      }
+    },
+    "%lld selected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld seleccionadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld sélectionnées"
+          }
+        }
+      }
+    },
     "10 seconds" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -65,6 +99,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Agents IA"
+          }
+        }
+      }
+    },
+    "AIShot Help" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayuda de AIShot"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aide AIShot"
           }
         }
       }
@@ -234,6 +285,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GIF animé"
+          }
+        }
+      }
+    },
+    "Apply" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplicar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appliquer"
           }
         }
       }
@@ -706,19 +774,36 @@
         }
       }
     },
-    "Clear %d missing" : {
+    "Clear" : {
       "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Borrar %d faltantes"
+            "value" : "Borrar"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Effacer %d manquantes"
+            "value" : "Effacer"
+          }
+        }
+      }
+    },
+    "Clear %lld missing" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Borrar %lld faltantes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer %lld manquantes"
           }
         }
       }
@@ -802,6 +887,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Confirmer avant les clics/saisies"
+          }
+        }
+      }
+    },
+    "Copied %lld images" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld imágenes copiadas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld images copiées"
           }
         }
       }
@@ -1325,6 +1427,23 @@
         }
       }
     },
+    "Help" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ayuda"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aide"
+          }
+        }
+      }
+    },
     "Hidden, beside screenshots" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1554,6 +1673,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mode"
+          }
+        }
+      }
+    },
+    "Move %lld captures to the Trash?" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Mover %lld capturas a la papelera?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placer %lld captures dans la corbeille ?"
+          }
+        }
+      }
+    },
+    "Move %lld to Trash" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mover %lld a la papelera"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placer %lld dans la corbeille"
           }
         }
       }
@@ -1840,6 +1993,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouvrir le tableau de bord"
+          }
+        }
+      }
+    },
+    "Open Help" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir la ayuda"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir l’aide"
           }
         }
       }
@@ -2409,19 +2579,19 @@
         }
       }
     },
-    "Search notes, tags, or file names" : {
+    "Search text in images, notes, tags, or file names" : {
       "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Buscar notas, etiquetas o nombres de archivo"
+            "value" : "Buscar texto en imágenes, notas, etiquetas o nombres de archivo"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rechercher des notes, étiquettes ou noms de fichiers"
+            "value" : "Rechercher le texte des images, notes, étiquettes ou noms de fichiers"
           }
         }
       }
@@ -2778,6 +2948,23 @@
         }
       }
     },
+    "Tag…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etiquetar…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Étiqueter…"
+          }
+        }
+      }
+    },
     "Text" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3004,6 +3191,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annuler (⌘Z)"
+          }
+        }
+      }
+    },
+    "Use the actions above the grid to tag, copy, or delete them." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa las acciones sobre la cuadrícula para etiquetarlas, copiarlas o eliminarlas."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisez les actions au-dessus de la grille pour les étiqueter, copier ou supprimer."
           }
         }
       }

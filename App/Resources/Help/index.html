@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIShot Help</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1d1d1f;
+    --muted: #6e6e73;
+    --line: #e3e3e6;
+    --card: #f6f6f8;
+    --accent: #2f6df6;
+    --code-bg: #f4f4f6;
+    --kbd-bg: #ececed;
+    --warn-bg: #fff6e5;
+    --warn-line: #f0c86a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e;
+      --fg: #f2f2f7;
+      --muted: #9a9aa0;
+      --line: #35353a;
+      --card: #262629;
+      --accent: #64a0ff;
+      --code-bg: #2a2a2e;
+      --kbd-bg: #3a3a3f;
+      --warn-bg: #332a17;
+      --warn-line: #7d6428;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 15px/1.65 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { display: flex; max-width: 1100px; margin: 0 auto; gap: 32px; padding: 0 24px; }
+  nav {
+    position: sticky; top: 0; align-self: flex-start;
+    height: 100vh; overflow-y: auto; padding: 32px 0 40px;
+    width: 190px; flex: 0 0 190px;
+  }
+  nav h2 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); margin: 20px 0 8px; font-weight: 600;
+  }
+  nav h2:first-child { margin-top: 0; }
+  nav a {
+    display: block; padding: 4px 0; color: var(--fg);
+    text-decoration: none; font-size: 13.5px;
+  }
+  nav a:hover { color: var(--accent); }
+  main { flex: 1; min-width: 0; padding: 32px 0 96px; }
+  header.hero { border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 8px; }
+  .mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 46px; height: 46px; border-radius: 11px;
+    background: linear-gradient(135deg, var(--accent), #7aa8ff);
+    color: #fff; font-size: 22px; margin-bottom: 12px;
+  }
+  h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -.02em; }
+  .tagline { color: var(--muted); font-size: 16px; margin: 0; }
+  h2.section {
+    font-size: 21px; margin: 40px 0 12px; padding-top: 8px;
+    letter-spacing: -.01em;
+  }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  p { margin: 10px 0; }
+  ul, ol { margin: 10px 0; padding-left: 22px; }
+  li { margin: 5px 0; }
+  code {
+    font: 13px/1.5 ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    background: var(--code-bg); padding: 2px 5px; border-radius: 4px;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 14px; overflow-x: auto; margin: 12px 0;
+  }
+  pre code { background: none; padding: 0; }
+  kbd {
+    font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--kbd-bg); border: 1px solid var(--line);
+    border-bottom-width: 2px; border-radius: 5px;
+    padding: 2px 6px; white-space: nowrap;
+  }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-weight: 600; color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+  td:first-child { white-space: nowrap; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 14px 16px; margin: 14px 0;
+  }
+  .note {
+    background: var(--warn-bg); border: 1px solid var(--warn-line);
+    border-radius: 10px; padding: 12px 15px; margin: 14px 0; font-size: 14px;
+  }
+  .lead { font-size: 16px; color: var(--muted); }
+  footer {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 13px;
+  }
+  a { color: var(--accent); }
+  .pill {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 2px 7px; border-radius: 20px;
+    background: var(--accent); color: #fff; margin-left: 6px; vertical-align: middle;
+  }
+  @media (max-width: 820px) {
+    nav { display: none; }
+    .wrap { padding: 0 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav>
+  <h2>Start</h2>
+  <a href="#what">What is AIShot</a>
+  <a href="#quickstart">Quick start</a>
+  <a href="#permissions">Permissions</a>
+  <h2>Capturing</h2>
+  <a href="#capture">Capture modes</a>
+  <a href="#shortcuts">Keyboard shortcuts</a>
+  <a href="#after">After a capture</a>
+  <a href="#recording">Recording</a>
+  <h2>Organising</h2>
+  <a href="#notes">Notes &amp; tags</a>
+  <a href="#dashboard">Dashboard</a>
+  <a href="#search">Search inside images</a>
+  <h2>Editing</h2>
+  <a href="#editor">Annotation editor</a>
+  <h2>AI agents</h2>
+  <a href="#mcp">MCP server</a>
+  <a href="#mcp-setup">Setup</a>
+  <a href="#mcp-tools">Tools</a>
+  <a href="#mcp-safety">Safety</a>
+  <h2>Reference</h2>
+  <a href="#files">Where things live</a>
+  <a href="#troubleshooting">Troubleshooting</a>
+</nav>
+
+<main>
+
+<header class="hero">
+  <div class="mark">◉</div>
+  <h1>AIShot Help</h1>
+  <p class="tagline">A native macOS screen-capture tool built for both humans and local AI agents.</p>
+</header>
+
+<h2 class="section" id="what">What is AIShot</h2>
+<p class="lead">
+  AIShot captures a region, window, or display; lets you annotate it; organises captures with
+  notes and project tags; and exposes the same capabilities to local AI agents through an
+  embedded MCP server — all on your Mac, with nothing uploaded anywhere.
+</p>
+<p>
+  Most screenshot tools are built for a person clicking a shutter. AIShot is built for the
+  workflow where an <strong>AI assistant also needs to see your screen</strong>, act on it, and hand
+  images back — while still being a first-class capture tool for you.
+</p>
+<div class="card">
+  <strong>Local-first by design.</strong> Captures, recognised text, notes, and tags never leave
+  your machine. The MCP server talks to your agent over stdio and opens no network socket. There is no account, no telemetry, and no
+  cloud upload.
+</div>
+
+<h2 class="section" id="quickstart">Quick start</h2>
+<ol>
+  <li>AIShot lives in the <strong>menu bar</strong> — it has no Dock icon. Click the camera icon to open the menu.</li>
+  <li>Grant <strong>Screen Recording</strong> permission when asked (see below).</li>
+  <li>Press <kbd>⌘⌥⇧4</kbd> and drag to capture a region.</li>
+  <li>The capture is saved and copied to your clipboard. Paste it anywhere.</li>
+  <li>Open <strong>Dashboard</strong> from the menu to browse everything you've captured.</li>
+</ol>
+
+<h2 class="section" id="permissions">Permissions</h2>
+<table>
+  <tr><th>Permission</th><th>Needed for</th></tr>
+  <tr><td><strong>Screen Recording</strong></td><td>Required. Any capture or recording at all.</td></tr>
+  <tr><td><strong>Accessibility</strong></td><td>Only for agent-driven clicking and typing via MCP.</td></tr>
+  <tr><td><strong>Notifications</strong></td><td>Optional. The banner shown after a capture.</td></tr>
+</table>
+<p>
+  Grant them in <strong>Settings → Permissions</strong>, or in System Settings → Privacy &amp; Security.
+  AIShot re-checks whenever you switch back to it.
+</p>
+
+<h2 class="section" id="capture">Capture modes</h2>
+<table>
+  <tr><th>Mode</th><th>What it does</th></tr>
+  <tr><td><strong>Region</strong></td><td>Drag to select any rectangle. Shows a live pixel-size readout.</td></tr>
+  <tr><td><strong>Window</strong></td><td>Captures the frontmost window, even if partly covered.</td></tr>
+  <tr><td><strong>Full Screen</strong></td><td>The whole main display.</td></tr>
+  <tr><td><strong>All Displays</strong></td><td>Every connected monitor, stitched into one image.</td></tr>
+  <tr><td><strong>Text (OCR)</strong></td><td>Select an area; the <em>text</em> in it is copied to your clipboard instead of an image.</td></tr>
+  <tr><td><strong>Scrolling</strong></td><td>Captures a tall area by scrolling and stitching frames together.</td></tr>
+</table>
+
+<h3>Freeze-frame selection</h3>
+<p>
+  By default, region capture snapshots the screen the instant you press the shortcut, then lets
+  you select from that frozen image. Menus and tooltips stay open instead of vanishing the moment
+  you start dragging. Cancel and nothing is saved. Turn it off in
+  <strong>Settings → Capture</strong> if you prefer selecting against the live screen.
+</p>
+
+<h3>Self-timer</h3>
+<p>
+  Set a 3, 5, or 10 second delay from the menu bar or <strong>Settings → Capture</strong> — useful for
+  capturing hover states and menus that need a moment to appear. A countdown shows before the shot.
+</p>
+
+<h2 class="section" id="shortcuts">Keyboard shortcuts</h2>
+<p>Every shortcut is reassignable in <strong>Settings → Shortcuts</strong>. The defaults use ⌘⌥⇧ to avoid clashing with macOS's own ⌘⇧3/4/5.</p>
+<table>
+  <tr><th>Shortcut</th><th>Action</th></tr>
+  <tr><td><kbd>⌘⌥⇧4</kbd></td><td>Capture region</td></tr>
+  <tr><td><kbd>⌘⌥⇧5</kbd></td><td>Capture window</td></tr>
+  <tr><td><kbd>⌘⌥⇧3</kbd></td><td>Capture full screen</td></tr>
+  <tr><td><kbd>⌘⌥⇧2</kbd></td><td>Capture all displays</td></tr>
+  <tr><td><kbd>⌘⌥⇧T</kbd></td><td>Capture text (OCR)</td></tr>
+  <tr><td><kbd>⌘⌥⇧L</kbd></td><td>Scrolling capture</td></tr>
+  <tr><td><kbd>⌘⌥⇧C</kbd></td><td>Pick colour (eyedropper)</td></tr>
+  <tr><td><kbd>⌘⌥⇧E</kbd></td><td>Edit last capture</td></tr>
+  <tr><td><kbd>⌘⌥⇧P</kbd></td><td>Pin last capture to screen</td></tr>
+  <tr><td><kbd>⌘⌥⇧R</kbd></td><td>Start / stop recording</td></tr>
+  <tr><td><kbd>Esc</kbd></td><td>Cancel an in-progress capture</td></tr>
+</table>
+
+<h2 class="section" id="after">After a capture</h2>
+<p>Choose what happens automatically in <strong>Settings → Capture → Default action</strong>:</p>
+<ul>
+  <li><strong>Copy to clipboard</strong> — save and copy, ready to paste (default).</li>
+  <li><strong>Open editor</strong> — save and open the annotation editor.</li>
+  <li><strong>Save only</strong> — save quietly.</li>
+</ul>
+<p>
+  You can also configure the capture sound and notification banner in
+  <strong>Settings → Notifications</strong>.
+</p>
+
+<h2 class="section" id="recording">Screen recording</h2>
+<p>
+  Press <kbd>⌘⌥⇧R</kbd> or use the menu to start and stop. Pick <strong>Video (.mp4)</strong> or
+  <strong>Animated GIF</strong> from the menu bar's Recording Format submenu (or Settings → Capture)
+  <em>before</em> you start. Recordings appear in the Dashboard alongside screenshots.
+</p>
+
+<h2 class="section" id="notes">Notes &amp; project tags</h2>
+<p>
+  After a capture, AIShot can ask for a short <strong>note</strong> and a <strong>project tag</strong>.
+  The tag field is a combo box — type a new tag or pick an existing one.
+</p>
+<div class="card">
+  <strong>Tick “Apply this tag to the next captures”</strong> when you're about to take a run of
+  related screenshots. Every following capture gets that tag silently, with no prompt, until you
+  turn it off in <strong>Settings → Notes &amp; Tags</strong>.
+</div>
+<p>
+  Notes and tags are stored in a small JSON database. By default it's a <strong>hidden file beside
+  your screenshots</strong>; you can make it visible or move it to a folder of your choice in
+  <strong>Settings → Notes &amp; Tags → Database</strong>.
+</p>
+
+<h2 class="section" id="dashboard">Dashboard</h2>
+<p>Open it from the menu bar. It's where you browse, organise, and act on everything you've captured.</p>
+<table>
+  <tr><th>Action</th><th>How</th></tr>
+  <tr><td>Select</td><td>Click. <kbd>⌘</kbd>-click to add, <kbd>⇧</kbd>-click for a range, <kbd>⌘A</kbd> for all.</td></tr>
+  <tr><td>Navigate</td><td>Arrow keys</td></tr>
+  <tr><td>Quick Look</td><td><kbd>Space</kbd></td></tr>
+  <tr><td>Open in editor</td><td>Double-click or <kbd>↩</kbd></td></tr>
+  <tr><td>Move to Trash</td><td><kbd>⌫</kbd> (recoverable — it goes to Finder's Trash)</td></tr>
+  <tr><td>Drag into another app</td><td>Drag a card straight into Mail, Slack, Figma…</td></tr>
+  <tr><td>Browse by tag</td><td>Click a tag in the sidebar</td></tr>
+  <tr><td>Bulk actions</td><td>Select several — a bar appears to tag, copy, or trash them together</td></tr>
+</table>
+<p>
+  Captures are grouped by date, and each card shows how it was taken, when, and its pixel size.
+  Select one to edit its note and tag in the details pane on the right.
+</p>
+
+<h2 class="section" id="search">Search inside your images <span class="pill">OCR</span></h2>
+<p>
+  AIShot reads the text in your recent screenshots in the background and builds a private, on-device
+  index. That means the Dashboard's search box finds captures by <strong>the words that appear
+  inside them</strong> — not just by file name or tag.
+</p>
+<div class="card">
+  Search <code>connection refused</code> and you'll get the screenshot of that error from three
+  weeks ago, even though you never named or tagged it. Matching cards show the excerpt that matched.
+</div>
+<p>
+  Indexing runs quietly when the Dashboard is open and only processes images it hasn't seen before.
+  The index is derived data — delete it any time and it rebuilds itself.
+</p>
+
+<h2 class="section" id="editor">Annotation editor</h2>
+<p>
+  Opens automatically if you've set that as your default action, or via <kbd>⌘⌥⇧E</kbd>, a
+  double-click in the Dashboard.
+</p>
+<h3>Tools</h3>
+<ul>
+  <li><strong>Select</strong> — click any object to move it, or change its colour and size. Annotations stay editable until you save.</li>
+  <li><strong>Arrow, Line, Rectangle, Ellipse</strong> — drag to draw.</li>
+  <li><strong>Text</strong> — click and type directly on the image.</li>
+  <li><strong>Highlighter</strong> — translucent marker.</li>
+  <li><strong>Blur / Pixelate</strong> — hide sensitive parts of the image.</li>
+  <li><strong>Counter</strong> — numbered step badges that count up automatically (1, 2, 3…).</li>
+</ul>
+<h3>Image actions</h3>
+<ul>
+  <li><strong>Beautify</strong> — frames the image on a gradient background with padding and a shadow.</li>
+  <li><strong>Redact</strong> — automatically finds and blurs emails, card numbers, and IP addresses.</li>
+</ul>
+<p>
+  <strong>Everything is undoable</strong> — including Beautify and Redact — with <kbd>⌘Z</kbd> and
+  <kbd>⇧⌘Z</kbd>. <kbd>Esc</kbd> backs out of whatever you're doing: cancels a text edit, discards an
+  in-progress shape, deselects, then returns to the pointer.
+</p>
+
+<h2 class="section" id="mcp">MCP server — let AI agents use your screen</h2>
+<p class="lead">
+  AIShot ships a local <strong>MCP (Model Context Protocol)</strong> server. MCP is the open standard
+  assistants use to call tools, so any MCP-capable agent — Claude Code, Claude Desktop — can capture
+  and read your screen through AIShot.
+</p>
+<p>
+  An agent launches the bundled stdio bridge, which forwards JSON-RPC requests to AIShot. Every agent
+  shares one capture authority, so your permission grants are reused rather than requested again per
+  tool. It talks over stdio and opens no network socket, so images and recognised text never leave the device.
+</p>
+
+<h3 id="mcp-setup">Setup</h3>
+<p><strong>1.</strong> Register the bundled server with your agent.</p>
+
+<p>Claude Code — one command:</p>
+<pre><code>claude mcp add aishot -- /Applications/AIShot.app/Contents/Helpers/aishot-mcp-server</code></pre>
+
+<p>Claude Desktop, or any client with a JSON config:</p>
+<pre><code>{
+  "mcpServers": {
+    "aishot": {
+      "command": "/Applications/AIShot.app/Contents/Helpers/aishot-mcp-server"
+    }
+  }
+}</code></pre>
+<p>
+  Claude Desktop's config lives at
+  <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>.
+</p>
+
+<p><strong>2.</strong> Restart your agent so it picks up the new tools. Ask it something like
+  <em>“take a screenshot of my screen and tell me what's in it”</em> to confirm.</p>
+
+<div class="note">
+  <strong>Running a dev build?</strong> The helper is at
+  <code>.build/debug/aishot-mcp-server</code> in the repo after <code>swift build</code>.
+  Use that path instead.
+</div>
+
+<h3 id="mcp-tools">What agents can do</h3>
+<table>
+  <tr><th>Tool</th><th>Purpose</th></tr>
+  <tr><td><code>capture_region</code></td><td>Capture a rectangle of a display</td></tr>
+  <tr><td><code>capture_window</code></td><td>Capture one window by id</td></tr>
+  <tr><td><code>capture_display</code></td><td>Capture a whole display</td></tr>
+  <tr><td><code>list_displays</code></td><td>Enumerate monitors</td></tr>
+  <tr><td><code>list_windows</code></td><td>Enumerate on-screen windows</td></tr>
+  <tr><td><code>list_apps</code></td><td>Enumerate running apps</td></tr>
+  <tr><td><code>get_history</code></td><td>Recent captures</td></tr>
+  <tr><td><code>search_captures</code></td><td>Find past captures <em>by the text inside them</em></td></tr>
+  <tr><td><code>ocr</code></td><td>Read text from the screen or a region</td></tr>
+  <tr><td><code>locate</code></td><td>Find on-screen UI by text or template</td></tr>
+  <tr><td><code>annotate</code></td><td>Draw arrows/boxes/text on an image</td></tr>
+  <tr><td><code>beautify</code></td><td>Frame an image on a gradient background</td></tr>
+  <tr><td><code>redact</code></td><td>Blur sensitive text in an image</td></tr>
+  <tr><td><code>switch_app</code></td><td>Bring an app to the front <em>(gated)</em></td></tr>
+  <tr><td><code>click</code></td><td>Click at a coordinate <em>(gated)</em></td></tr>
+  <tr><td><code>type_text</code></td><td>Type into the focused app <em>(gated)</em></td></tr>
+</table>
+<p>
+  <code>search_captures</code> is worth calling out: because AIShot indexes the text inside your
+  screenshots, an agent can find <em>“the screenshot with the stack trace”</em> instead of guessing
+  from the most recent few.
+</p>
+
+<h3 id="mcp-safety">Safety</h3>
+<ul>
+  <li>Capture and read tools run immediately.</li>
+  <li>Tools that <strong>synthesise input</strong> — click, type, switch app — are
+      <strong>always refused by the standalone bridge</strong>, because a headless process has no
+      UI in which to confirm them.</li>
+  <li>The server communicates over stdio and opens no network socket at all — nothing is exposed to your network.</li>
+  <li>Agent clicking and typing additionally requires the Accessibility permission.</li>
+</ul>
+
+<h2 class="section" id="files">Where things live</h2>
+<table>
+  <tr><th>What</th><th>Where</th></tr>
+  <tr><td>Screenshots &amp; recordings</td><td><code>~/Pictures/AIShot</code> (change in Settings → General)</td></tr>
+  <tr><td>Notes &amp; tags</td><td><code>.aishot-metadata.json</code> beside your captures (hidden by default)</td></tr>
+  <tr><td>Capture history</td><td><code>~/Library/Application Support/AIShot/history.json</code></td></tr>
+  <tr><td>Search index</td><td><code>~/Library/Application Support/AIShot/text-index.json</code></td></tr>
+</table>
+<p>
+  Settings → General and Settings → Notes &amp; Tags both have an <strong>Open Folder</strong> button
+  to jump straight to the relevant location in Finder.
+</p>
+
+<h2 class="section" id="troubleshooting">Troubleshooting</h2>
+
+<h3>“Screen Recording permission not granted” even though I granted it</h3>
+<p>
+  macOS ties permissions to an app's exact code signature. If you rebuilt AIShot from source with a
+  different signing identity, the old grant no longer applies. Remove the stale AIShot entry in
+  System Settings → Privacy &amp; Security → Screen Recording, then grant it again. Development builds
+  should be signed with a stable identity (<code>scripts/dev-sign.sh</code>) so the grant persists.
+</p>
+
+<h3>Cards say “File missing”</h3>
+<p>
+  The capture was moved or deleted outside AIShot, so history points at a file that's gone. Click
+  <strong>Clear N missing</strong> in the Dashboard header to prune those entries.
+</p>
+
+<h3>My agent doesn't see AIShot's tools</h3>
+<ul>
+  <li>Check the helper path exists — the app must be in <code>/Applications</code> for the path above.</li>
+  <li>Restart the agent; most only read their MCP config at launch.</li>
+</ul>
+
+<h3>Search doesn't find text I can see in a screenshot</h3>
+<p>
+  Indexing happens in the background while the Dashboard is open — give it a moment on first run.
+  Very low-contrast or stylised text may not be recognised.
+</p>
+
+<footer>
+  AIShot — native macOS screen capture for humans and AI agents.<br>
+  Source: <a href="https://github.com/alexey-a-abramov/AIShot">github.com/alexey-a-abramov/AIShot</a>
+</footer>
+
+</main>
+</div>
+</body>
+</html>

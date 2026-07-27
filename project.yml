@@ -35,6 +35,11 @@ targets:
     sources:
       - path: App/Sources
       - path: App/Resources/Localizable.xcstrings
+      # Offline help page, opened from the menu bar. A folder reference so it
+      # lands at Contents/Resources/Help/ — a flat copy would collide with any
+      # other index.html and break relative links if assets are ever added.
+      - path: App/Resources/Help
+        type: folder
     dependencies:
       - package: AIShotKit
         product: AIShotKit
