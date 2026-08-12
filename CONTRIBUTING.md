@@ -10,7 +10,7 @@
 ```bash
 swift build          # engine
 swift test           # 89 unit + contract suites
-xcodegen generate    # (re)create AIShot.xcodeproj from project.yml
+./scripts/gen-project.sh   # (re)create AIShot.xcodeproj + stamp the build number
 xcodebuild -project AIShot.xcodeproj -scheme AIShot -configuration Debug build
 open AIShot.xcodeproj
 ```
@@ -29,6 +29,11 @@ ad-hoc-signed rebuild silently loses Screen Recording every time. The script cre
 stable self-signed identity so you grant once. See [docs/PERMISSIONS.md](docs/PERMISSIONS.md).
 
 The `.xcodeproj` is generated and **git-ignored** — never commit it; edit `project.yml` instead.
+
+The build number (`CFBundleVersion`) is the git commit count, written into
+`Config/Version.xcconfig` by `gen-project.sh`. It's an xcconfig rather than a build-phase
+script because Xcode schedules `ProcessInfoPlistFile` in parallel with script phases — a
+script that edits the built `Info.plist` gets silently clobbered on clean builds.
 
 ## Project shape
 

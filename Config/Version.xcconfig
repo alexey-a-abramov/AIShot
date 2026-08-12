@@ -1,0 +1,11 @@
+// Build number, derived from the git commit count.
+//
+// Regenerate with `scripts/gen-project.sh` (which also runs xcodegen).
+//
+// This is an xcconfig rather than a build-phase script that edits the built
+// Info.plist: Xcode schedules ProcessInfoPlistFile in parallel with script
+// phases, so such a script sometimes writes *before* the plist is processed and
+// its value is silently discarded — which meant a clean build always shipped
+// build number 1. Feeding the value through a build setting lets the plist
+// processor consume it, which is race-free.
+CURRENT_PROJECT_VERSION = 56

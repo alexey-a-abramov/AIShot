@@ -16,8 +16,8 @@ DIST="$ROOT/dist"
 rm -rf "$DIST"
 mkdir -p "$DIST"
 
-echo "==> Generating Xcode project"
-xcodegen generate
+echo "==> Generating Xcode project (stamps the build number from git)"
+"$ROOT/scripts/gen-project.sh"
 
 echo "==> Building MCP server (release)"
 swift build -c release --product aishot-mcp-server

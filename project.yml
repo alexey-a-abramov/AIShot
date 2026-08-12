@@ -47,12 +47,16 @@ targets:
         product: KeyboardShortcuts
       - package: LaunchAtLogin
         product: LaunchAtLogin
+    # CURRENT_PROJECT_VERSION comes from here so the Info.plist processor picks
+    # it up; see the file's header for why a script phase can't do this.
+    configFiles:
+      Debug: Config/Version.xcconfig
+      Release: Config/Version.xcconfig
     settings:
       base:
         PRODUCT_NAME: AIShot
         PRODUCT_BUNDLE_IDENTIFIER: com.aishot.app
         MARKETING_VERSION: "0.0.1"
-        CURRENT_PROJECT_VERSION: "1"
         INFOPLIST_FILE: App/Resources/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: App/Resources/AIShot.entitlements
@@ -61,19 +65,3 @@ targets:
         SWIFT_STRICT_CONCURRENCY: complete
         MACOSX_DEPLOYMENT_TARGET: "15.0"
         COMBINE_HIDPI_IMAGES: YES
-    # Derive the build number (CFBundleVersion) from the git commit count so it
-    # increments automatically on every commit instead of being a static "1".
-    # MARKETING_VERSION stays the human-facing release version.
-    postBuildScripts:
-      - name: Set build number from git commit count
-        basedOnDependencyAnalysis: false
-        script: |
-          set -e
-          plist="${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
-          count=$(git -C "${SRCROOT}" rev-list --count HEAD 2>/dev/null || true)
-          if [ -n "${count:-}" ] && [ -f "$plist" ]; then
-            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${count}" "$plist"
-            echo "AIShot build number set to ${count}"
-          else
-            echo "warning: build number not set (no git history?); keeping CURRENT_PROJECT_VERSION"
-          fi

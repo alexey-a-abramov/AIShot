@@ -122,8 +122,8 @@ AIShot/
 swift build
 swift test
 
-# App
-xcodegen generate
+# App — gen-project.sh runs xcodegen and stamps the build number from git
+./scripts/gen-project.sh
 xcodebuild -project AIShot.xcodeproj -scheme AIShot -configuration Debug build
 
 # Run it from Xcode, or install + sign so permissions persist across rebuilds:
