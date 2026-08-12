@@ -15,6 +15,7 @@ final class HostingWindowController<Content: View> {
     private let size: NSSize
     private let minSize: NSSize?
     private let autosaveName: String?
+    private let resizable: Bool
     private let makeContent: () -> Content
 
     /// - Parameters:
@@ -23,17 +24,21 @@ final class HostingWindowController<Content: View> {
     ///     classic resizable window never collapses into a broken layout.
     ///   - autosaveName: when set, the window remembers its size and position
     ///     across launches (standard macOS behavior).
+    ///   - resizable: pass `false` for a fixed-size panel such as About, which
+    ///     sizes itself to its content and looks broken when stretched.
     init(
         title: String,
         size: NSSize,
         minSize: NSSize? = nil,
         autosaveName: String? = nil,
+        resizable: Bool = true,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.title = title
         self.size = size
         self.minSize = minSize
         self.autosaveName = autosaveName
+        self.resizable = resizable
         self.makeContent = content
     }
 
@@ -42,7 +47,9 @@ final class HostingWindowController<Content: View> {
             let hosting = NSHostingController(rootView: makeContent())
             let window = NSWindow(contentViewController: hosting)
             window.title = title
-            window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+            window.styleMask = resizable
+                ? [.titled, .closable, .miniaturizable, .resizable]
+                : [.titled, .closable]
             window.setContentSize(size)
             if let minSize { window.contentMinSize = minSize }
             window.isReleasedWhenClosed = false

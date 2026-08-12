@@ -448,15 +448,9 @@ private struct PermissionsPage: View {
 
 private struct AboutPage: View {
     @EnvironmentObject private var model: AppModel
-    private let githubURL = URL(string: "https://github.com/alexey-a-abramov/AIShot")!
-    private let author = "Alexey Abramov"
-
-    private var marketingVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
-    }
-    private var buildNumber: String {
-        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "—"
-    }
+    // Values come from AppInfo so this page and the About window agree.
+    private let githubURL = AppInfo.repositoryURL
+    private let author = AppInfo.author
 
     var body: some View {
         Form {
@@ -494,7 +488,7 @@ private struct AboutPage: View {
 
             Section {
                 LabeledContent("Version") {
-                    Text(verbatim: "\(marketingVersion) (\(buildNumber))")
+                    Text(verbatim: AppInfo.versionString)
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
                 }
@@ -503,7 +497,7 @@ private struct AboutPage: View {
                 }
                 LabeledContent("Source code") {
                     Link(destination: githubURL) {
-                        Text(verbatim: "github.com/alexey-a-abramov/AIShot")
+                        Text(verbatim: AppInfo.repositoryLabel)
                     }
                 }
                 LabeledContent("Help") {
@@ -512,7 +506,7 @@ private struct AboutPage: View {
             }
 
             Section {
-                Text(verbatim: "© 2026 \(author) · Built with Swift, SwiftUI & ScreenCaptureKit")
+                Text(verbatim: "\(AppInfo.copyright) · \(AppInfo.licenseName)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)

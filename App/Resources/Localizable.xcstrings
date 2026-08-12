@@ -154,6 +154,23 @@
         }
       }
     },
+    "About AIShot" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acerca de AIShot"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À propos d’AIShot"
+          }
+        }
+      }
+    },
     "Accessibility" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -908,6 +925,23 @@
         }
       }
     },
+    "Copied" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiado"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié"
+          }
+        }
+      }
+    },
     "Copied %lld images" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -988,6 +1022,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copier dans le presse-papiers"
+          }
+        }
+      }
+    },
+    "Copy version" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar la versión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier la version"
           }
         }
       }
@@ -1640,6 +1691,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Permettez aux agents IA locaux de capturer et de lire votre écran."
+          }
+        }
+      }
+    },
+    "License" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licencia"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licence"
           }
         }
       }
@@ -2631,6 +2699,23 @@
         }
       }
     },
+    "Screen capture for humans and AI agents" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capturas de pantalla para humanos y agentes de IA"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Capture d’écran pour les humains et les agents IA"
+          }
+        }
+      }
+    },
     "Scrolling" : {
       "localizations" : {
         "es" : {
@@ -2876,6 +2961,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Son et bannière affichés après chaque capture."
+          }
+        }
+      }
+    },
+    "Source" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Source"
           }
         }
       }
@@ -3326,6 +3428,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Version"
+          }
+        }
+      }
+    },
+    "Version %@" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@"
           }
         }
       }

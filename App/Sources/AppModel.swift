@@ -68,6 +68,12 @@ final class AppModel: ObservableObject {
         autosaveName: "AIShotSettingsWindow"
     ) { [unowned self] in AnyView(SettingsView().environmentObject(self)) }
 
+    private lazy var aboutWindow = HostingWindowController(
+        title: String(localized: "About AIShot"),
+        size: NSSize(width: 320, height: 430),
+        resizable: false
+    ) { [unowned self] in AnyView(AboutView().environmentObject(self)) }
+
     private lazy var dashboardWindow = HostingWindowController(
         title: String(localized: "Dashboard"),
         size: NSSize(width: 980, height: 660),
@@ -898,6 +904,7 @@ final class AppModel: ObservableObject {
                    sourceURL: lastCaptureURL)
     }
 
+    func openAbout() { aboutWindow.show() }
     func openSettings() { settingsWindow.show() }
     func openDashboard() { dashboardWindow.show() }
 
