@@ -317,6 +317,10 @@ final class AppModel: ObservableObject {
                         : "Saved recording: \(final.lastPathComponent)"
                 } else {
                     let formatter = DateFormatter()
+                    // POSIX locale, like FileNameFormatter: otherwise a non-Gregorian
+                    // regional calendar (e.g. Thai Buddhist) writes year 2569 into the
+                    // file name.
+                    formatter.locale = Locale(identifier: "en_US_POSIX")
                     formatter.dateFormat = "yyyy-MM-dd 'at' HH.mm.ss"
                     let name = "AIShot Recording \(formatter.string(from: Date())).mp4"
                     try FileManager.default.createDirectory(at: settings.saveDirectory, withIntermediateDirectories: true)

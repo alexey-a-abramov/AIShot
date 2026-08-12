@@ -34,3 +34,42 @@ struct SettingsTests {
         #expect(recent.first == newer)
     }
 }
+
+/// Decoding must never be all-or-nothing: `load()` throwing makes `AppModel`
+/// fall back to `.default`, which silently resets everything the user set.
+struct SettingsResilientDecodingTests {
+    @Test func unknownEnumRawValueFallsBackInsteadOfWipingEverything() throws {
+        // `postCaptureAction` holds a value this build has never heard of —
+        // written by a newer version, or hand-edited.
+        let json = """
+        {"saveDirectory":"file:///Users/me/Shots/",
+         "fileNameTemplate":"MyTemplate {date}",
+         "postCaptureAction":"byMoonPhase",
+         "captureSoundName":"Tink",
+         "mcpEnabled":true}
+        """
+        let settings = try JSONDecoder().decode(AppSettings.self, from: Data(json.utf8))
+
+        // The bad key falls back...
+        #expect(settings.postCaptureAction == AppSettings.default.postCaptureAction)
+        // ...and every *other* setting survives.
+        #expect(settings.fileNameTemplate == "MyTemplate {date}")
+        #expect(settings.captureSoundName == "Tink")
+        #expect(settings.mcpEnabled == true)
+        #expect(settings.saveDirectory.path == "/Users/me/Shots")
+    }
+
+    @Test func legacySettingsWithoutNewKeysDecodeWithDefaults() throws {
+        // A blob written before several fields existed.
+        let json = """
+        {"saveDirectory":"file:///Users/me/Pictures/AIShot/",
+         "defaultFormat":"png",
+         "fileNameTemplate":"AIShot {date} at {time}"}
+        """
+        let settings = try JSONDecoder().decode(AppSettings.self, from: Data(json.utf8))
+        #expect(settings.fileNameTemplate == "AIShot {date} at {time}")
+        #expect(settings.metadataLocation == AppSettings.default.metadataLocation)
+        #expect(settings.recordingFormat == AppSettings.default.recordingFormat)
+        #expect(settings.captureMetadataEnabled == AppSettings.default.captureMetadataEnabled)
+    }
+}

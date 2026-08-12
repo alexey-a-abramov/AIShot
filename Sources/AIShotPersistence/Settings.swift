@@ -73,6 +73,26 @@ public struct AppSettings: Sendable, Codable, Equatable {
     /// Output format for screen recordings.
     public var recordingFormat: RecordingFormat
 
+    // MARK: Saving
+
+    /// How captures are filed inside `saveDirectory`.
+    public var folderOrganization: FolderOrganization
+    /// Granularity of the date subfolder, when the organization uses one.
+    public var dateFolderGranularity: DateFolderGranularity
+    /// Folder used when organizing by tag and the capture has none.
+    public var untaggedFolderName: String
+    /// Last directory chosen in a "Save As…" panel, used to seed the next one.
+    /// Deliberately never affects where automatic saves go — see
+    /// `SaveDestinationResolver`.
+    public var lastSaveAsDirectory: URL?
+    /// Seed the next "Save As…" panel with `lastSaveAsDirectory`.
+    public var rememberLastSaveAsDirectory: Bool
+    /// ⌘S in the editor writes back to the file it was opened from, instead of
+    /// creating a second timestamped copy.
+    public var editorSaveOverwritesOriginal: Bool
+    /// Show the inline annotation panel after a region selection.
+    public var inlineCapturePanel: Bool
+
     public init(
         saveDirectory: URL,
         defaultFormat: ImageFormat = .png,
@@ -92,7 +112,14 @@ public struct AppSettings: Sendable, Codable, Equatable {
         metadataLocation: MetadataLocation = .hidden,
         metadataCustomDirectory: URL? = nil,
         captureDelay: TimeInterval = 0,
-        recordingFormat: RecordingFormat = .mp4
+        recordingFormat: RecordingFormat = .mp4,
+        folderOrganization: FolderOrganization = .none,
+        dateFolderGranularity: DateFolderGranularity = .month,
+        untaggedFolderName: String = "Unsorted",
+        lastSaveAsDirectory: URL? = nil,
+        rememberLastSaveAsDirectory: Bool = true,
+        editorSaveOverwritesOriginal: Bool = true,
+        inlineCapturePanel: Bool = true
     ) {
         self.saveDirectory = saveDirectory
         self.defaultFormat = defaultFormat
@@ -113,19 +140,31 @@ public struct AppSettings: Sendable, Codable, Equatable {
         self.metadataCustomDirectory = metadataCustomDirectory
         self.captureDelay = captureDelay
         self.recordingFormat = recordingFormat
+        self.folderOrganization = folderOrganization
+        self.dateFolderGranularity = dateFolderGranularity
+        self.untaggedFolderName = untaggedFolderName
+        self.lastSaveAsDirectory = lastSaveAsDirectory
+        self.rememberLastSaveAsDirectory = rememberLastSaveAsDirectory
+        self.editorSaveOverwritesOriginal = editorSaveOverwritesOriginal
+        self.inlineCapturePanel = inlineCapturePanel
     }
 
     /// Resilient decoding: unknown/missing keys fall back to defaults so adding
     /// a setting never invalidates a user's stored configuration.
+    ///
+    /// Note the `try?` on every enum and URL: `decodeIfPresent` *throws* on an
+    /// unrecognised raw value, which would propagate out of
+    /// `UserDefaultsSettingsStore.load()` and make `AppModel` fall back to
+    /// `.default` — silently resetting every other setting the user had.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let fallback = AppSettings.default
-        saveDirectory = try container.decodeIfPresent(URL.self, forKey: .saveDirectory) ?? fallback.saveDirectory
-        defaultFormat = try container.decodeIfPresent(ImageFormat.self, forKey: .defaultFormat) ?? fallback.defaultFormat
+        saveDirectory = (try? container.decodeIfPresent(URL.self, forKey: .saveDirectory)) ?? fallback.saveDirectory
+        defaultFormat = (try? container.decodeIfPresent(ImageFormat.self, forKey: .defaultFormat)) ?? fallback.defaultFormat
         fileNameTemplate = try container.decodeIfPresent(String.self, forKey: .fileNameTemplate) ?? fallback.fileNameTemplate
         includeCursor = try container.decodeIfPresent(Bool.self, forKey: .includeCursor) ?? fallback.includeCursor
         freezeBeforeRegionSelect = try container.decodeIfPresent(Bool.self, forKey: .freezeBeforeRegionSelect) ?? fallback.freezeBeforeRegionSelect
-        postCaptureAction = try container.decodeIfPresent(PostCaptureAction.self, forKey: .postCaptureAction) ?? fallback.postCaptureAction
+        postCaptureAction = (try? container.decodeIfPresent(PostCaptureAction.self, forKey: .postCaptureAction)) ?? fallback.postCaptureAction
         showNotification = try container.decodeIfPresent(Bool.self, forKey: .showNotification) ?? fallback.showNotification
         captureSoundName = try container.decodeIfPresent(String.self, forKey: .captureSoundName) ?? fallback.captureSoundName
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? fallback.launchAtLogin
@@ -135,10 +174,17 @@ public struct AppSettings: Sendable, Codable, Equatable {
         captureMetadataEnabled = try container.decodeIfPresent(Bool.self, forKey: .captureMetadataEnabled) ?? fallback.captureMetadataEnabled
         applyLastTag = try container.decodeIfPresent(Bool.self, forKey: .applyLastTag) ?? fallback.applyLastTag
         lastTag = try container.decodeIfPresent(String.self, forKey: .lastTag) ?? fallback.lastTag
-        metadataLocation = try container.decodeIfPresent(MetadataLocation.self, forKey: .metadataLocation) ?? fallback.metadataLocation
-        metadataCustomDirectory = try container.decodeIfPresent(URL.self, forKey: .metadataCustomDirectory) ?? fallback.metadataCustomDirectory
+        metadataLocation = (try? container.decodeIfPresent(MetadataLocation.self, forKey: .metadataLocation)) ?? fallback.metadataLocation
+        metadataCustomDirectory = (try? container.decodeIfPresent(URL.self, forKey: .metadataCustomDirectory)) ?? fallback.metadataCustomDirectory
         captureDelay = try container.decodeIfPresent(TimeInterval.self, forKey: .captureDelay) ?? fallback.captureDelay
-        recordingFormat = try container.decodeIfPresent(RecordingFormat.self, forKey: .recordingFormat) ?? fallback.recordingFormat
+        recordingFormat = (try? container.decodeIfPresent(RecordingFormat.self, forKey: .recordingFormat)) ?? fallback.recordingFormat
+        folderOrganization = (try? container.decodeIfPresent(FolderOrganization.self, forKey: .folderOrganization)) ?? fallback.folderOrganization
+        dateFolderGranularity = (try? container.decodeIfPresent(DateFolderGranularity.self, forKey: .dateFolderGranularity)) ?? fallback.dateFolderGranularity
+        untaggedFolderName = (try? container.decodeIfPresent(String.self, forKey: .untaggedFolderName)) ?? fallback.untaggedFolderName
+        lastSaveAsDirectory = (try? container.decodeIfPresent(URL.self, forKey: .lastSaveAsDirectory)) ?? fallback.lastSaveAsDirectory
+        rememberLastSaveAsDirectory = (try? container.decodeIfPresent(Bool.self, forKey: .rememberLastSaveAsDirectory)) ?? fallback.rememberLastSaveAsDirectory
+        editorSaveOverwritesOriginal = (try? container.decodeIfPresent(Bool.self, forKey: .editorSaveOverwritesOriginal)) ?? fallback.editorSaveOverwritesOriginal
+        inlineCapturePanel = (try? container.decodeIfPresent(Bool.self, forKey: .inlineCapturePanel)) ?? fallback.inlineCapturePanel
     }
 
     /// Sensible defaults: save to `~/Pictures/AIShot`, PNG, copy to clipboard

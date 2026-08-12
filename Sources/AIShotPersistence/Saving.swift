@@ -37,6 +37,13 @@ public struct FileNameFormatter: Sendable {
     }
 
     private static func sanitize(_ string: String) -> String {
+        sanitizedComponent(string)
+    }
+
+    /// Makes a string safe to use as a single path component: path separators and
+    /// other reserved characters become `-`, so a value like `a/b` can never
+    /// become two directory levels.
+    public static func sanitizedComponent(_ string: String) -> String {
         let invalid = CharacterSet(charactersIn: "/:\\?%*|\"<>")
         return string
             .components(separatedBy: invalid)
