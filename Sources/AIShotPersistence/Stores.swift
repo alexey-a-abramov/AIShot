@@ -49,6 +49,22 @@ public actor FileHistoryStore: HistoryStore {
         Array(try loadAll().prefix(max(0, limit)))
     }
 
+    public func upsert(_ entry: HistoryEntry) async throws {
+        var entries = try loadAll()
+        if let index = entries.firstIndex(where: {
+            $0.fileURL?.standardizedFileURL == entry.fileURL?.standardizedFileURL
+                && entry.fileURL != nil
+        }) {
+            // Keep the original id and position; refresh the mutable facts.
+            var updated = entry
+            updated.id = entries[index].id
+            entries[index] = updated
+        } else {
+            entries.insert(entry, at: 0)
+        }
+        try persist(entries)
+    }
+
     public func remove(ids: Set<UUID>) async throws {
         guard !ids.isEmpty else { return }
         var entries = try loadAll()

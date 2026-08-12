@@ -72,6 +72,9 @@ public protocol HistoryStore: Sendable {
     /// Removes entries by id. Batched so deleting a selection rewrites the
     /// backing file once rather than once per entry.
     func remove(ids: Set<UUID>) async throws
+    /// Updates the entry for `entry.fileURL` in place, or records it if there
+    /// isn't one. Used when a file is overwritten and its dimensions change.
+    func upsert(_ entry: HistoryEntry) async throws
 }
 
 /// A trivial, thread-safe history store for tests and SwiftUI previews.
@@ -89,5 +92,13 @@ public actor InMemoryHistoryStore: HistoryStore {
 
     public func remove(ids: Set<UUID>) async throws {
         entries.removeAll { ids.contains($0.id) }
+    }
+
+    public func upsert(_ entry: HistoryEntry) async throws {
+        if let index = entries.firstIndex(where: { $0.fileURL == entry.fileURL }) {
+            entries[index] = entry
+        } else {
+            entries.insert(entry, at: 0)
+        }
     }
 }

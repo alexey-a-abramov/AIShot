@@ -64,6 +64,19 @@ public struct CaptureSaver: Sendable {
         return url
     }
 
+    /// Writes to an exact path, replacing what's there.
+    ///
+    /// Unlike `save`, this does **not** append " (2)" on collision: the caller
+    /// has already chosen this path — either the user confirmed Replace in a
+    /// save panel, or they asked to overwrite the file the editor opened — and
+    /// silently writing somewhere else would defeat that.
+    public func write(_ data: Data, to url: URL) throws {
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(), withIntermediateDirectories: true
+        )
+        try data.write(to: url, options: .atomic)
+    }
+
     static func uniqueURL(in directory: URL, fileName: String) -> URL {
         let fm = FileManager.default
         var candidate = directory.appendingPathComponent(fileName)

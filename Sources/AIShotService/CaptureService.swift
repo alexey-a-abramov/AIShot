@@ -149,6 +149,12 @@ public actor CaptureService {
         try await history.record(entry)
     }
 
+    /// Updates an existing history row in place (or records it), for a file
+    /// that was overwritten — its pixel size changes after e.g. Beautify.
+    public func upsertExisting(_ entry: HistoryEntry) async throws {
+        try await history.upsert(entry)
+    }
+
     /// Removes history entries by id. The files themselves are the caller's
     /// responsibility (the app trashes them so they stay recoverable).
     public func removeHistory(ids: Set<UUID>) async throws {

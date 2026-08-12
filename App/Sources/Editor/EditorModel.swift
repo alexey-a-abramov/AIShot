@@ -56,9 +56,26 @@ final class EditorModel: ObservableObject {
     private let renderer = CoreImageAnnotationRenderer()
     private let redactor = AutoRedactor()
 
-    init(imageData: Data, pixelSize: CGSize) {
+    /// The file this image was opened from, when it came from one. ⌘S writes
+    /// back here; Save As… re-points it, like any document-based app.
+    @Published private(set) var sourceURL: URL?
+    /// Undo depth at the last save, so "has unsaved changes" needs no extra
+    /// bookkeeping in every mutator.
+    private var savedUndoDepth = 0
+
+    init(imageData: Data, pixelSize: CGSize, sourceURL: URL? = nil) {
         self.imageData = imageData
         self.pixelSize = pixelSize
+        self.sourceURL = sourceURL
+    }
+
+    var hasUnsavedChanges: Bool { undoStack.count != savedUndoDepth }
+
+    /// Records that the current state is on disk at `url` (nil for a copy that
+    /// shouldn't become the new save target).
+    func markSaved(url: URL?) {
+        if let url { sourceURL = url }
+        savedUndoDepth = undoStack.count
     }
 
     var canUndo: Bool { !undoStack.isEmpty }

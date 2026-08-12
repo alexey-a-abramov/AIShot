@@ -8,4 +8,4 @@
 // its value is silently discarded — which meant a clean build always shipped
 // build number 1. Feeding the value through a build setting lets the plist
 // processor consume it, which is race-free.
-CURRENT_PROJECT_VERSION = 56
+CURRENT_PROJECT_VERSION = 59

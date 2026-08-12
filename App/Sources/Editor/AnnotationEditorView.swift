@@ -79,8 +79,12 @@ struct AnnotationEditorView: View {
             Button { editor.redo() } label: { Image(systemName: "arrow.uturn.forward") }
                 .disabled(!editor.canRedo).keyboardShortcut("z", modifiers: [.command, .shift]).help("Redo (⇧⌘Z)")
             Button("Copy") { export(copy: true, save: false) }
+            Button("Save As…") { export(copy: false, save: false, saveAs: true) }
+                .keyboardShortcut("s", modifiers: [.command, .shift])
+                .help("Choose where to save a copy (⇧⌘S)")
             Button("Save") { export(copy: false, save: true) }
                 .keyboardShortcut("s", modifiers: .command).buttonStyle(.borderedProminent)
+                .help(saveHelp)
         }
         .padding(8)
     }
@@ -95,6 +99,15 @@ struct AnnotationEditorView: View {
             in: RoundedRectangle(cornerRadius: 6)
         )
         .help(help)
+    }
+
+    /// Says plainly which file ⌘S will replace — overwriting silently would be
+    /// a nasty surprise.
+    private var saveHelp: Text {
+        if let name = editor.sourceURL?.lastPathComponent, app.settings.editorSaveOverwritesOriginal {
+            return Text(verbatim: String(format: String(localized: "Overwrite %@ (⌘S)"), name))
+        }
+        return Text("Save a new file (⌘S)")
     }
 
     private var modeName: String {
@@ -189,10 +202,10 @@ struct AnnotationEditorView: View {
         }
     }
 
-    private func export(copy: Bool, save: Bool) {
+    private func export(copy: Bool, save: Bool, saveAs: Bool = false) {
         Task {
             if let data = await editor.flatten() {
-                await app.export(data, copy: copy, save: save)
+                await app.export(data, copy: copy, save: save, saveAs: saveAs, editor: editor)
             }
         }
     }

@@ -21,6 +21,18 @@ public enum ImageFormat: String, Sendable, Codable, CaseIterable {
     case heic
     case tiff
 
+    /// The format for a file extension, or `nil` if it isn't an image AIShot
+    /// can write (e.g. `mp4`, `gif`).
+    public init?(fileExtension: String) {
+        switch fileExtension.lowercased() {
+        case "png": self = .png
+        case "jpg", "jpeg": self = .jpeg
+        case "heic": self = .heic
+        case "tiff", "tif": self = .tiff
+        default: return nil
+        }
+    }
+
     /// File extension (without the dot).
     public var fileExtension: String {
         switch self {

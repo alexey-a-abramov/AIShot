@@ -8,21 +8,27 @@ import SwiftUI
 @MainActor
 final class EditorWindowController {
     private var window: NSWindow?
+    private var currentEditor: EditorModel?
 
-    func present(imageData: Data, pixelSize: CGSize, app: AppModel) {
-        let editor = EditorModel(imageData: imageData, pixelSize: pixelSize)
+    func present(imageData: Data, pixelSize: CGSize, sourceURL: URL? = nil, app: AppModel) {
+        let editor = EditorModel(imageData: imageData, pixelSize: pixelSize, sourceURL: sourceURL)
         let hosting = NSHostingController(
             rootView: AnnotationEditorView(editor: editor).environmentObject(app)
         )
 
-        let window = self.window ?? makeWindow()
+        // Reusing the window would silently discard annotations in progress, so
+        // open a second one when the current editor has unsaved work.
+        let reusable = currentEditor?.hasUnsavedChanges != true
+        let window = (reusable ? self.window : nil) ?? makeWindow()
         window.contentViewController = hosting
-        window.title = "Edit Screenshot"
+        window.representedURL = sourceURL
+        window.title = sourceURL?.lastPathComponent ?? String(localized: "Edit Screenshot")
         window.setContentSize(NSSize(width: 1080, height: 720))
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         self.window = window
+        self.currentEditor = editor
     }
 
     private func makeWindow() -> NSWindow {

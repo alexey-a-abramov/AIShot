@@ -26,6 +26,10 @@ final class AppModel: ObservableObject {
     @Published var permissions: [Permission: PermissionStatus] = [:]
     @Published var lastError: String?
 
+    /// File the most recent capture was saved to, so "Edit Last Capture" can
+    /// overwrite it rather than making a copy.
+    @Published private(set) var lastCaptureURL: URL?
+
     /// The most recent capture, available for "Edit Last Capture".
     @Published private(set) var lastCapture: CapturedImage?
 
@@ -442,6 +446,7 @@ final class AppModel: ObservableObject {
     /// then attach a note/tag (silently or via the prompt).
     private func handleOutcome(_ outcome: CaptureOutcome) async {
         lastCapture = outcome.image
+        lastCaptureURL = outcome.result.fileURL
         // The capture still succeeded — it just didn't land where configured.
         if let saveError = outcome.saveError {
             lastError = String(
@@ -452,7 +457,8 @@ final class AppModel: ObservableObject {
         await refreshRecent()
         feedback(for: outcome)
         if settings.postCaptureAction == .openEditor {
-            openEditor(imageData: outcome.image.data, pixelSize: outcome.image.pixelSize)
+            openEditor(imageData: outcome.image.data, pixelSize: outcome.image.pixelSize,
+                       sourceURL: outcome.result.fileURL)
         }
         await promptOrApplyMetadata(for: outcome)
         // Keep the search index current, so a capture taken while the Dashboard
@@ -563,7 +569,7 @@ final class AppModel: ObservableObject {
                 lastError = "Could not read \(url.lastPathComponent)."
                 return
             }
-            openEditor(imageData: data, pixelSize: size)
+            openEditor(imageData: data, pixelSize: size, sourceURL: url)
         }
     }
 
@@ -874,14 +880,18 @@ final class AppModel: ObservableObject {
     // MARK: - Editor
 
     /// Opens the annotation editor on the given image.
-    func openEditor(imageData: Data, pixelSize: CGSize) {
-        editorWindow.present(imageData: imageData, pixelSize: pixelSize, app: self)
+    /// - Parameter sourceURL: the file this image is on disk as, when it has
+    ///   one. ⌘S in the editor writes back to it instead of making a copy.
+    func openEditor(imageData: Data, pixelSize: CGSize, sourceURL: URL? = nil) {
+        editorWindow.present(imageData: imageData, pixelSize: pixelSize,
+                             sourceURL: sourceURL, app: self)
     }
 
     /// Opens the editor on the most recent capture.
     func editLastCapture() {
         guard let capture = lastCapture else { return }
-        openEditor(imageData: capture.data, pixelSize: capture.pixelSize)
+        openEditor(imageData: capture.data, pixelSize: capture.pixelSize,
+                   sourceURL: lastCaptureURL)
     }
 
     func openSettings() { settingsWindow.show() }
@@ -904,29 +914,112 @@ final class AppModel: ObservableObject {
     /// `CaptureService.deliver` (which would re-apply the post-capture action
     /// and re-notify), so without this an annotated image would silently never
     /// appear in the Dashboard.
-    func export(_ data: Data, copy: Bool, save: Bool) async {
-        if save {
-            let name = FileNameFormatter(template: settings.fileNameTemplate)
-                .fileName(format: .png, date: Date())
-            if let url = try? CaptureSaver().save(data, fileName: name, to: settings.saveDirectory) {
-                let size = await Task.detached {
-                    (try? ImageCodec.decode(data))
-                        .map { CGSize(width: $0.width, height: $0.height) } ?? .zero
-                }.value
-                try? await captureService.recordExisting(HistoryEntry(
-                    fileURL: url,
-                    createdAt: Date(),
-                    mode: .region,
-                    pixelWidth: Int(size.width),
-                    pixelHeight: Int(size.height),
-                    kind: .image
-                ))
-            }
-            await refreshRecent()
-        }
+    /// Saves and/or copies edited image bytes.
+    ///
+    /// `saveAs` always asks for a location. Otherwise the destination follows
+    /// `resolveSaveIntent`: overwrite the file the editor opened, else write a
+    /// new one into the configured folder.
+    func export(
+        _ data: Data,
+        copy: Bool,
+        save: Bool,
+        saveAs: Bool = false,
+        editor: EditorModel? = nil
+    ) async {
         if copy {
             try? await AppKitClipboard().copyImage(data)
         }
+        guard save || saveAs else { return }
+
+        let sourceURL = editor?.sourceURL
+        let exists = sourceURL.map { FileManager.default.fileExists(atPath: $0.path) } ?? false
+        let intent = resolveSaveIntent(
+            sourceURL: sourceURL,
+            sourceExists: exists,
+            overwriteEnabled: settings.editorSaveOverwritesOriginal,
+            settings: settings,
+            tag: settings.applyLastTag ? settings.lastTag : nil,
+            date: Date()
+        )
+
+        var target: URL
+        var format: ImageFormat
+        if saveAs {
+            let suggested: String
+            let directory: URL
+            switch intent {
+            case .overwrite(let url, let fmt):
+                suggested = url.lastPathComponent
+                format = fmt
+                directory = url.deletingLastPathComponent()
+            case .newFile(let dir, let name):
+                suggested = name
+                format = settings.defaultFormat
+                directory = dir
+            }
+            let seed = (settings.rememberLastSaveAsDirectory ? settings.lastSaveAsDirectory : nil)
+                ?? directory
+            guard let chosen = await SaveAsPanel.run(.init(
+                suggestedName: suggested, directory: seed,
+                format: format, host: NSApp.keyWindow
+            )) else { return }
+            target = chosen
+            format = ImageFormat(fileExtension: chosen.pathExtension) ?? format
+            settings.lastSaveAsDirectory = chosen.deletingLastPathComponent()
+        } else {
+            switch intent {
+            case .overwrite(let url, let fmt):
+                target = url
+                format = fmt
+            case .newFile(let dir, let name):
+                target = dir.appendingPathComponent(name)
+                format = settings.defaultFormat
+            }
+        }
+
+        // Re-encode when the destination isn't PNG, so a .jpg keeps being a .jpg.
+        var bytes = data
+        if format != .png {
+            bytes = await Task.detached {
+                (try? ImageCodec.decode(data)).flatMap { try? ImageCodec.encode($0, as: format) } ?? data
+            }.value
+        }
+
+        do {
+            if case .newFile(let dir, let name) = intent, !saveAs {
+                // Collision-safe for brand new files; Save As and overwrite go
+                // to the exact path the user confirmed.
+                target = try CaptureSaver().save(bytes, fileName: name, to: dir)
+            } else {
+                try CaptureSaver().write(bytes, to: target)
+            }
+        } catch {
+            lastError = error.localizedDescription
+            return
+        }
+
+        let size = await Task.detached {
+            (try? ImageCodec.decode(bytes)).map { CGSize(width: $0.width, height: $0.height) } ?? .zero
+        }.value
+        try? await captureService.upsertExisting(HistoryEntry(
+            fileURL: target,
+            createdAt: Date(),
+            mode: .region,
+            pixelWidth: Int(size.width),
+            pixelHeight: Int(size.height),
+            kind: .image
+        ))
+
+        // The bytes at this path changed — drop derived data keyed off it.
+        await ThumbnailLoader.shared.invalidate(target)
+        await textIndexer.forget(target)
+
+        // The editor adopts the file it just wrote, so the next ⌘S replaces it.
+        editor?.markSaved(url: target)
+
+        await refreshRecent()
+        indexCapturesForSearch()
+        hud.show(message: String(localized: "Saved"), thumbnail: NSImage(data: bytes))
     }
 
     // MARK: - State
