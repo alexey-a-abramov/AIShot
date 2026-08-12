@@ -122,7 +122,7 @@ final class AppModel: ObservableObject {
     }
 
     private func liveRegionCapture() async -> CaptureOutcome? {
-        guard let selection = await selectRegion(frozen: nil) else { return nil }
+        guard let selection = await selectRegion(frozen: nil)?.selection else { return nil }
         return await run(CaptureRequest(
             mode: .region, displayID: selection.displayID, rect: selection.rect,
             includeCursor: settings.includeCursor, format: settings.defaultFormat
@@ -146,7 +146,8 @@ final class AppModel: ObservableObject {
                 captures[display.id] = snapshot
                 if let nsImage = NSImage(data: snapshot.data) { images[display.id] = nsImage }
             }
-            guard let selection = await selectRegion(frozen: images) else { return nil }
+            guard let picked = await selectRegion(frozen: images) else { return nil }
+            let selection = picked.selection
 
             // With a self-timer, re-capture fresh after the countdown so the
             // delay actually has an effect — the pre-countdown snapshot above
@@ -175,10 +176,10 @@ final class AppModel: ObservableObject {
     }
 
     /// Bridges the overlay's completion-closure API to async/await.
-    private func selectRegion(frozen: [CGDirectDisplayID: NSImage]?) async -> RegionSelection? {
+    private func selectRegion(frozen: [CGDirectDisplayID: NSImage]?) async -> CaptureSelectionResult? {
         await withCheckedContinuation { continuation in
-            overlay.begin(frozen: frozen) { selection in
-                continuation.resume(returning: selection)
+            overlay.begin(frozen: frozen) { result in
+                continuation.resume(returning: result)
             }
         }
     }
@@ -236,8 +237,8 @@ final class AppModel: ObservableObject {
     /// to a quick, immediate text grab.
     func captureTextOCR() {
         dismissEphemeralCaptureUI()
-        overlay.begin { [weak self] selection in
-            guard let self, let selection else { return }
+        overlay.begin { [weak self] result in
+            guard let self, let selection = result?.selection else { return }
             Task { @MainActor in
                 do {
                     let outcome = try await self.captureService.performCapture(
@@ -266,8 +267,8 @@ final class AppModel: ObservableObject {
     /// `captureTextOCR`.
     func scrollingCapture() {
         dismissEphemeralCaptureUI()
-        overlay.begin { [weak self] selection in
-            guard let self, let selection else { return }
+        overlay.begin { [weak self] result in
+            guard let self, let selection = result?.selection else { return }
             Task { @MainActor in
                 do {
                     let data = try await self.scroller.capture(displayID: selection.displayID, rect: selection.rect, frames: 8)
@@ -856,6 +857,9 @@ final class AppModel: ObservableObject {
     private func dismissEphemeralCaptureUI() {
         hud.dismiss()
         tagPrompt.dismiss()
+        // A leftover overlay from an abandoned capture would dim the screen the
+        // next one is about to grab.
+        overlay.cancel()
     }
 
     /// Plays the capture sound and shows the fade-in HUD for a finished capture.

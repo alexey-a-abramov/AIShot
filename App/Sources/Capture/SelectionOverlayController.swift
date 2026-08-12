@@ -14,18 +14,25 @@ struct RegionSelection: Sendable {
 @MainActor
 final class SelectionOverlayController {
     private var windows: [NSWindow] = []
-    private var completion: ((RegionSelection?) -> Void)?
+    private var completion: ((CaptureSelectionResult?) -> Void)?
     /// A local key-event monitor that guarantees Esc cancels even if, for any
     /// reason (most commonly: capture triggered by a global hotkey while a
     /// different app was frontmost), an overlay window isn't yet key.
     private var keyMonitor: Any?
+    /// Observers torn down alongside the windows, so a cancelled capture leaves
+    /// nothing behind.
+    private var lifetimeObservers: [NSObjectProtocol] = []
 
     /// - Parameter frozen: optional per-display snapshot images. When provided,
     ///   each overlay shows the frozen screenshot as its background (freeze-frame
     ///   mode) instead of the live screen.
+    /// True while an overlay is on screen. Other actions check this so they
+    /// can't fire underneath a capture.
+    var isActive: Bool { !windows.isEmpty }
+
     func begin(
         frozen: [CGDirectDisplayID: NSImage]? = nil,
-        _ completion: @escaping (RegionSelection?) -> Void
+        _ completion: @escaping (CaptureSelectionResult?) -> Void
     ) {
         cancel()
         self.completion = completion
@@ -37,8 +44,8 @@ final class SelectionOverlayController {
         NSApp.activate(ignoringOtherApps: true)
 
         for screen in NSScreen.screens {
-            let view = SelectionView(screen: screen, background: frozen?[Self.displayID(of: screen)]) { [weak self] result in
-                self?.finish(result)
+            let view = SelectionView(screen: screen, background: frozen?[Self.displayID(of: screen)]) { [weak self] selection in
+                self?.finish(selection.map { CaptureSelectionResult(selection: $0) })
             }
             let window = OverlayWindow(
                 contentRect: screen.frame,
@@ -58,6 +65,18 @@ final class SelectionOverlayController {
             windows.append(window)
         }
 
+        // A display reconfiguration invalidates every overlay's geometry, and
+        // losing activation means the user is somewhere else entirely. Losing
+        // the capture beats leaving an un-dismissable full-screen dim.
+        for name in [NSApplication.didChangeScreenParametersNotification,
+                     NSApplication.didResignActiveNotification] {
+            lifetimeObservers.append(
+                NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                    Task { @MainActor in self?.cancel() }
+                }
+            )
+        }
+
         // Belt-and-braces: even if a window somehow isn't key/first-responder,
         // this local monitor still sees Esc as long as this app is frontmost.
         // Scoped to our own overlay windows so Esc typed into some other AIShot
@@ -75,6 +94,8 @@ final class SelectionOverlayController {
     func cancel() {
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         keyMonitor = nil
+        lifetimeObservers.forEach(NotificationCenter.default.removeObserver)
+        lifetimeObservers.removeAll()
         windows.forEach { $0.orderOut(nil) }
         windows.removeAll()
         // Resolve any still-pending completion (e.g. a second capture starting
@@ -86,7 +107,7 @@ final class SelectionOverlayController {
         }
     }
 
-    private func finish(_ result: RegionSelection?) {
+    private func finish(_ result: CaptureSelectionResult?) {
         let completion = self.completion
         self.completion = nil
         cancel()
