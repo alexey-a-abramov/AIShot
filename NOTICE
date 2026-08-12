@@ -1,0 +1,11 @@
+AIShot
+Copyright 2026 Alexey Abramov
+
+This product includes software developed as part of the AIShot project
+(https://github.com/alexey-a-abramov/AIShot), licensed under the Apache
+License, Version 2.0.
+
+Third-party dependencies, each under its own license:
+  - KeyboardShortcuts  (Sindre Sorhus)          — MIT
+  - LaunchAtLogin-Modern (Sindre Sorhus)        — MIT
+  - swift-sdk / MCP    (Model Context Protocol) — MIT

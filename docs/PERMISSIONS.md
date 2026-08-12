@@ -10,7 +10,7 @@ AIShot relies on three TCC-gated capabilities. None require Info.plist usage str
 
 ## Re-prompt limitations
 
-macOS prompts for each permission **once**. After a decision, you cannot re-trigger the dialog — the app can only deep-link the user to the relevant System Settings pane. So onboarding (P1e) must:
+macOS prompts for each permission **once**. After a decision, you cannot re-trigger the dialog — the app can only deep-link the user to the relevant System Settings pane. So onboarding must:
 
 1. Show live status per permission.
 2. Offer "Open System Settings" deep links when denied/not-determined.
@@ -31,7 +31,7 @@ The automation/agent features (synthetic `CGEvent` input + cross-app `AXUIElemen
 - Sandboxed processes can't post synthetic events to other apps, and `kTCCServiceAccessibility` requests don't surface properly.
 - Some apps reject events flagged as synthetic from sandboxed senders.
 
-**Decision: ship Developer ID, notarized, NON-sandboxed**, distributed outside the Mac App Store. This is compatible with Sparkle for auto-updates (Phase 4).
+**Decision: ship Developer ID, notarized, NON-sandboxed**, distributed outside the Mac App Store.
 
 ### Entitlements (`App/Resources/AIShot.entitlements`)
 
@@ -48,3 +48,14 @@ The automation/agent features (synthetic `CGEvent` input + cross-app `AXUIElemen
 - ScreenCaptureKit permissions — Apple Developer Forums [#732726](https://developer.apple.com/forums/thread/732726)
 - `AXIsProcessTrustedWithOptions` — [Apple docs](https://developer.apple.com/documentation/applicationservices/1459186-axisprocesstrustedwithoptions)
 - Synthetic events & sandbox — [QA1888](https://developer.apple.com/library/archive/qa/qa1888/_index.html), Forums [#724603](https://developer.apple.com/forums/thread/724603)
+
+## The MCP helper is a separate TCC identity
+
+`Contents/Helpers/aishot-mcp-server` is its own executable, so macOS treats it as a
+separate subject for permissions: the first time an agent captures through it, macOS
+prompts for **Screen Recording for the helper**, independently of the grant you gave
+AIShot.app. Likewise, agent-driven `click` / `type_text` need Accessibility for the
+helper.
+
+This is a direct consequence of the server being a spawned process rather than hosted
+in the app — see [ARCHITECTURE.md](ARCHITECTURE.md#why-the-mcp-server-isnt-hosted-in-process).

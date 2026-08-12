@@ -20,27 +20,42 @@ Goal: keep as much logic as possible in pure, fast, deterministic unit tests tha
 
 ## Tiers
 
-### Unit — `swift test` (CI, every push)
-Pure logic, no platform permissions. Already present (18 tests):
+### Unit — `swift test` (every push)
+Pure logic, no platform permissions. **89 tests** today:
+
 - **Core:** `ImageFormat` mapping, `CaptureRequest` `Codable`/defaults, `CaptureMode` cases.
-- **Shared:** `Geometry` clamp/scale/union, **coordinate flip** (multi-display correctness).
-- **Annotation:** arrowhead symmetry, bounding boxes, document `Codable`.
-- **MCP:** tool catalog uniqueness, snake_case wire names, **privileged-tool gating**.
-- **Persistence:** settings defaults (safe MCP default), `Codable`, in-memory history ordering.
+- **Shared:** `Geometry` clamp/scale/union, coordinate flip (multi-display correctness).
+- **Annotation:** arrowhead symmetry, bounding boxes, document `Codable`, contrasting
+  label colour, counter badges actually rendering their number.
+- **Capture:** image round-trips per format, stitching overlap, and **thumbnail
+  downsampling** (longest-edge bound, aspect preserved, never upscales, missing/garbage
+  input throws).
+- **Persistence:** settings defaults and resilient decoding; history ordering, removal,
+  and **decoding rows written before a field existed**; notes/tags upsert, tag
+  normalisation, index relocation and merge-on-conflict; **OCR index** store/reload,
+  change detection, search, snippet elision, prune.
+- **MCP:** tool-catalog uniqueness, snake_case wire names, and the **policy gates** —
+  server disabled, confirmation required, confirmation opted out.
 
-Add per phase: filename templating, content-filter exclusion logic, locator scoring, settings migrations.
+### Contract (MCP)
+Runs the service over `InMemoryTransport`: asserts the advertised tool list, validates
+argument schemas, and verifies `AIShotError` → MCP error mapping. No ports, no
+permissions.
 
-### Contract (MCP) — added P1b
-Run the embedded server over `InMemoryTransport`: assert advertised tools, validate argument JSON schemas, and verify `AIShotError` → MCP error mapping. No network, no permissions → runs in CI.
+### Integration (gated) — local only
+Real ScreenCaptureKit capture and real `CGEvent` input need Screen-Recording /
+Accessibility, so they're guarded by `AISHOT_INTEGRATION=1` and skipped by default.
 
-### Render snapshots — added P1c
-Flatten an `AnnotationDocument` onto a fixed base image and assert a **pixel hash** per tool (arrow, rect, text, blur). Deterministic and CI-safe (Core Image render is reproducible for fixed inputs).
+### Manual — what tests can't reach
+Some behaviour only exists against a real windowserver and real TCC, and is verified by
+hand before release:
 
-### Integration (gated) — local
-Real ScreenCaptureKit capture and real `CGEvent` clicks need Screen-Recording / Accessibility. Guard with an env flag (e.g. `AISHOT_INTEGRATION=1`) so they're **skipped in CI** and run on a developer machine that has granted permissions. Assert: a capture returns non-empty pixels of expected size/scale; a click lands at the expected point in a test harness window.
-
-### UI smoke — optional
-XCUITest: app launches as an agent, Dashboard/Settings open, menu items exist. Kept minimal and opt-in.
+- Permission grants surviving a rebuild (the signing-identity trap — see PERMISSIONS.md).
+- Global hotkeys, the selection overlay, Esc-cancel, freeze-frame.
+- Quick Look, drag-out to another app, Trash + Put Back.
+- The MCP helper end to end over stdio (keep stdin open — it exits when the pipe closes).
+- Locale-sensitive formatting: launch with `-AppleLanguages "(fr)"` and confirm a
+  1254×512 capture still reads `1254×512`, not `1 254×512`.
 
 ## What runs where
 
@@ -48,9 +63,8 @@ XCUITest: app launches as an agent, Dashboard/Settings open, menu items exist. K
 |---|:--:|:--:|
 | Unit | ✅ | ✅ |
 | MCP contract | ✅ | ✅ |
-| Render snapshots | ✅ | ✅ |
 | Integration (capture/input) | ⬜ skipped (no TCC) | ✅ with permissions |
-| UI smoke | optional | ✅ |
+| Manual | ⬜ | ✅ before release |
 
 ## Conventions
 
@@ -58,10 +72,21 @@ XCUITest: app launches as an agent, Dashboard/Settings open, menu items exist. K
 - One behavior per test; deterministic inputs (no wall-clock/random in assertions).
 - New engine code lands with its unit tests in the same PR (see CONTRIBUTING).
 - Coverage target: ≥80% of `AIShotKit` non-UI logic.
+- `EditorModel` and the SwiftUI views live in the **app** target and aren't covered by
+  `swift test`. That's the biggest coverage gap; extracting `EditorModel` into a library
+  target would close most of it.
 
 ## Running
 
 ```bash
-swift test                       # unit + contract + snapshots
+swift test                       # unit + contract
 AISHOT_INTEGRATION=1 swift test  # also run gated integration (needs permissions)
+swift test --filter CaptureTextIndexStoreTests   # one suite
+```
+
+If you see `no such module 'Testing'`, `xcode-select` is pointing at the Command Line
+Tools, which don't ship swift-testing:
+
+```bash
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 ```
