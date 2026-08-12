@@ -975,6 +975,23 @@
         }
       }
     },
+    "Couldn’t use the configured folder (%@). Saved to the default folder instead." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo usar la carpeta configurada (%@). Se guardó en la carpeta predeterminada."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’utiliser le dossier configuré (%@). Enregistré dans le dossier par défaut."
+          }
+        }
+      }
+    },
     "Custom folder" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -8,9 +8,22 @@ import AIShotPersistence
 public struct CaptureOutcome: Sendable {
     public var result: CaptureResult
     public var image: CapturedImage
-    public init(result: CaptureResult, image: CapturedImage) {
+    /// Where the capture was filed, when it was persisted.
+    public var destination: ResolvedDestination?
+    /// Set when the configured destination was unwritable and the capture was
+    /// saved to the default folder instead. The capture still happened.
+    public var saveError: String?
+
+    public init(
+        result: CaptureResult,
+        image: CapturedImage,
+        destination: ResolvedDestination? = nil,
+        saveError: String? = nil
+    ) {
         self.result = result
         self.image = image
+        self.destination = destination
+        self.saveError = saveError
     }
 }
 
@@ -56,14 +69,43 @@ public actor CaptureService {
     /// Applies the configured outputs (save / clipboard / notify / history) to an
     /// already-captured image.
     @discardableResult
-    public func deliver(_ image: CapturedImage, mode: CaptureMode, persist: Bool = true) async throws -> CaptureOutcome {
+    /// - Parameters:
+    ///   - tag: project tag to file this capture under, when organising by tag.
+    ///     Falls back to the "apply last tag" setting — that's the workflow where
+    ///     the tag is genuinely known at write time. A capture tagged *later* in
+    ///     the prompt keeps its tag in metadata but stays where it was written;
+    ///     moving it afterwards would strand history, the OCR index and the
+    ///     notes index, which all key off the path.
+    ///   - rootOverride: write into this directory instead of the save folder.
+    public func deliver(
+        _ image: CapturedImage,
+        mode: CaptureMode,
+        persist: Bool = true,
+        tag: String? = nil,
+        rootOverride: URL? = nil
+    ) async throws -> CaptureOutcome {
         let settings = (try? settingsStore.load()) ?? .default
 
         var fileURL: URL?
+        var destination: ResolvedDestination?
+        var saveError: String?
         if persist {
             let name = FileNameFormatter(template: settings.fileNameTemplate)
                 .fileName(format: image.format, date: Date())
-            fileURL = try saver.save(image.data, fileName: name, to: settings.saveDirectory)
+            let effectiveTag = tag ?? (settings.applyLastTag ? settings.lastTag : nil)
+            let resolved = SaveDestinationResolver().resolve(
+                settings: settings, tag: effectiveTag, date: Date(), rootOverride: rootOverride
+            )
+            destination = resolved
+            do {
+                fileURL = try saver.save(image.data, fileName: name, to: resolved.directory)
+            } catch {
+                // A misconfigured subfolder must never cost the user the capture:
+                // fall back to the default folder and report it.
+                saveError = error.localizedDescription
+                destination = nil
+                fileURL = try saver.save(image.data, fileName: name, to: AppSettings.default.saveDirectory)
+            }
         }
 
         if settings.postCaptureAction == .copyToClipboard, let clipboard {
@@ -89,7 +131,7 @@ public actor CaptureService {
             pixelHeight: Int(image.pixelSize.height)
         ))
 
-        return CaptureOutcome(result: result, image: image)
+        return CaptureOutcome(result: result, image: image, destination: destination, saveError: saveError)
     }
 
     // Pass-throughs used by the UI and MCP enumeration tools.

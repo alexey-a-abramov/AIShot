@@ -52,3 +52,4 @@ ExportOptions.plist
 .vscode/
 *.swp
 coverage/
+.plan/

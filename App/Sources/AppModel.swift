@@ -442,6 +442,13 @@ final class AppModel: ObservableObject {
     /// then attach a note/tag (silently or via the prompt).
     private func handleOutcome(_ outcome: CaptureOutcome) async {
         lastCapture = outcome.image
+        // The capture still succeeded — it just didn't land where configured.
+        if let saveError = outcome.saveError {
+            lastError = String(
+                format: String(localized: "Couldn’t use the configured folder (%@). Saved to the default folder instead."),
+                saveError
+            )
+        }
         await refreshRecent()
         feedback(for: outcome)
         if settings.postCaptureAction == .openEditor {

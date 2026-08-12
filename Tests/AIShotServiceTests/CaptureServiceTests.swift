@@ -95,3 +95,119 @@ struct CaptureServiceTests {
         #expect(copied.count == 1)
     }
 }
+
+/// Filing captures into subfolders. The point of these is that resolution and
+/// the actual write agree — a resolver unit test can't catch a wiring mistake.
+struct CaptureServiceDestinationTests {
+    private func tempDir() -> URL {
+        FileManager.default.temporaryDirectory
+            .appendingPathComponent("aishot-dest-\(UUID().uuidString)", isDirectory: true)
+    }
+
+    private func sampleImage() -> CapturedImage {
+        CapturedImage(pixelSize: CGSize(width: 10, height: 8), scale: 2, format: .png,
+                      data: Data([0x89, 0x50, 0x4E, 0x47, 0x0D]))
+    }
+
+    private func service(_ settings: AppSettings) -> CaptureService {
+        CaptureService(
+            engine: FakeCapturing(image: sampleImage()),
+            settingsStore: FakeSettingsStore(settings: settings),
+            history: InMemoryHistoryStore()
+        )
+    }
+
+    private func settings(in root: URL, _ organization: FolderOrganization) -> AppSettings {
+        var s = AppSettings.default
+        s.saveDirectory = root
+        s.folderOrganization = organization
+        s.showNotification = false
+        s.postCaptureAction = .saveOnly
+        return s
+    }
+
+    @Test func deliverFilesIntoADateSubfolder() async throws {
+        let root = tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let outcome = try await service(settings(in: root, .byDate))
+            .deliver(sampleImage(), mode: .region)
+
+        let url = try #require(outcome.result.fileURL)
+        // The parent directory is a date folder inside the root, not the root.
+        #expect(url.deletingLastPathComponent() != root)
+        #expect(url.path.hasPrefix(root.path))
+        #expect(outcome.destination?.subpath.count == 1)
+        #expect(FileManager.default.fileExists(atPath: url.path))
+    }
+
+    @Test func explicitTagWins() async throws {
+        let root = tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let outcome = try await service(settings(in: root, .byTag))
+            .deliver(sampleImage(), mode: .region, tag: "ProjectX")
+
+        #expect(outcome.destination?.subpath == ["ProjectX"])
+        #expect(try #require(outcome.result.fileURL).path.contains("/ProjectX/"))
+    }
+
+    /// The "run of related screenshots" workflow: the tag is known at write time.
+    @Test func lastTagIsUsedWhenApplyLastTagIsOn() async throws {
+        let root = tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        var s = settings(in: root, .byTag)
+        s.applyLastTag = true
+        s.lastTag = "Sprint7"
+
+        let outcome = try await service(s).deliver(sampleImage(), mode: .region)
+        #expect(outcome.destination?.subpath == ["Sprint7"])
+    }
+
+    @Test func anUntaggedCaptureLandsInTheUnsortedFolder() async throws {
+        let root = tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let outcome = try await service(settings(in: root, .byTag))
+            .deliver(sampleImage(), mode: .region)
+        #expect(outcome.destination?.subpath == ["Unsorted"])
+    }
+
+    @Test func rootOverrideRedirectsTheWrite() async throws {
+        let root = tempDir(), other = tempDir()
+        defer { [root, other].forEach { try? FileManager.default.removeItem(at: $0) } }
+
+        let outcome = try await service(settings(in: root, .none))
+            .deliver(sampleImage(), mode: .region, rootOverride: other)
+        #expect(try #require(outcome.result.fileURL).path.hasPrefix(other.path))
+    }
+
+    /// A misconfigured destination must never cost the user the capture.
+    @Test func anUnwritableDestinationFallsBackInsteadOfLosingTheCapture() async throws {
+        var s = AppSettings.default
+        // /dev/null is a file: creating a directory inside it always fails.
+        s.saveDirectory = URL(fileURLWithPath: "/dev/null/nope", isDirectory: true)
+        s.showNotification = false
+        s.postCaptureAction = .saveOnly
+
+        let outcome = try await service(s).deliver(sampleImage(), mode: .region)
+        #expect(outcome.saveError != nil)
+        let url = try #require(outcome.result.fileURL)
+        #expect(FileManager.default.fileExists(atPath: url.path))
+        try? FileManager.default.removeItem(at: url)
+    }
+
+    /// The app and the MCP helper are separate processes sharing settings; they
+    /// must resolve identically or agent captures scatter.
+    @Test func twoServicesWithTheSameSettingsResolveIdentically() async throws {
+        let root = tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let s = settings(in: root, .byTagThenDate)
+
+        let a = try await service(s).deliver(sampleImage(), mode: .region, tag: "P")
+        let b = try await service(s).deliver(sampleImage(), mode: .region, tag: "P")
+        #expect(a.destination?.subpath == b.destination?.subpath)
+        #expect(a.result.fileURL?.deletingLastPathComponent()
+                == b.result.fileURL?.deletingLastPathComponent())
+    }
+}
