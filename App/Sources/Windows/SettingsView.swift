@@ -360,7 +360,7 @@ private struct MCPPage: View {
                 howItWorksRow("camera.viewfinder",
                               "Capture & read tools — region/window/display capture, display and window enumeration, and OCR — run immediately.")
                 howItWorksRow("cursorarrow.rays",
-                              "Click, type, and app-switch tools synthesize input. They're confirmation-gated whenever the toggle above is on.")
+                              "Click, type, and app-switch tools synthesize input. While “Confirm before clicks/typing” is on they're refused, because the bridge runs headless with no way to ask you — turning it off is the opt-in that lets agents click and type.")
                 howItWorksRow("lock.shield",
                               "The server is loopback-only — images and recognized text never leave the device.")
             }

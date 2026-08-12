@@ -841,19 +841,19 @@
         }
       }
     },
-    "Click, type, and app-switch tools synthesize input. They're confirmation-gated whenever the toggle above is on." : {
+    "Click, type, and app-switch tools synthesize input. While “Confirm before clicks/typing” is on they're refused, because the bridge runs headless with no way to ask you — turning it off is the opt-in that lets agents click and type." : {
       "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Las herramientas de clic, escritura y cambio de app simulan entradas. Requieren confirmación cuando la opción de arriba está activada."
+            "value" : "Las herramientas de clic, escritura y cambio de app simulan entradas. Mientras «Confirmar antes de hacer clic o escribir» esté activado se rechazan, porque el puente se ejecuta sin interfaz y no puede preguntarte; desactivarlo es la opción explícita que permite a los agentes hacer clic y escribir."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les outils de clic, de saisie et de changement d’app simulent des entrées. Ils nécessitent une confirmation lorsque l’option ci-dessus est activée."
+            "value" : "Les outils de clic, de saisie et de changement d’app simulent des entrées. Tant que « Confirmer avant les clics/saisies » est activé, ils sont refusés, car le pont s’exécute sans interface et ne peut pas vous demander ; le désactiver est le consentement explicite qui permet aux agents de cliquer et de saisir."
           }
         }
       }

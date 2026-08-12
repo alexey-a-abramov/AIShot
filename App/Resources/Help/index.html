@@ -341,7 +341,8 @@
 </p>
 
 <h3 id="mcp-setup">Setup</h3>
-<p><strong>1.</strong> Register the bundled server with your agent.</p>
+<p><strong>1.</strong> Turn it on in <strong>Settings → AI Agents → Enable MCP server</strong>. Until you do, every tool is refused with a message telling the agent to enable it.</p>
+<p><strong>2.</strong> Register the bundled server with your agent.</p>
 
 <p>Claude Code — one command:</p>
 <pre><code>claude mcp add aishot -- /Applications/AIShot.app/Contents/Helpers/aishot-mcp-server</code></pre>
@@ -359,7 +360,7 @@
   <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>.
 </p>
 
-<p><strong>2.</strong> Restart your agent so it picks up the new tools. Ask it something like
+<p><strong>3.</strong> Restart your agent so it picks up the new tools. Ask it something like
   <em>“take a screenshot of my screen and tell me what's in it”</em> to confirm.</p>
 
 <div class="note">
@@ -397,9 +398,12 @@
 <h3 id="mcp-safety">Safety</h3>
 <ul>
   <li>Capture and read tools run immediately.</li>
-  <li>Tools that <strong>synthesise input</strong> — click, type, switch app — are
-      <strong>always refused by the standalone bridge</strong>, because a headless process has no
-      UI in which to confirm them.</li>
+  <li>Tools that <strong>synthesise input</strong> — click, type, switch app — are refused while
+      <em>“Confirm before clicks/typing”</em> is on, because the bridge runs headless and has no UI
+      in which to ask you. Turning that setting <strong>off</strong> is the deliberate opt-in that
+      lets agents click and type. Leave it on unless you specifically want that.</li>
+  <li>The <em>“Enable MCP server”</em> switch is the master control: with it off, every tool —
+      including plain captures — is refused.</li>
   <li>The server communicates over stdio and opens no network socket at all — nothing is exposed to your network.</li>
   <li>Agent clicking and typing additionally requires the Accessibility permission.</li>
 </ul>

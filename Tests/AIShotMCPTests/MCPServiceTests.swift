@@ -101,3 +101,71 @@ struct MCPServiceTests {
         await host.stop()
     }
 }
+
+/// The two user-facing MCP switches must actually govern the service — before
+/// this, "Enable MCP server" was read by nothing and privileged tools were
+/// unconditionally refused with no way to opt in.
+struct MCPPolicyTests {
+    private func service(
+        enabled: Bool,
+        requiresConfirmation: Bool = true,
+        confirm: @escaping InputConfirmation = { _, _ in false }
+    ) -> ScreenshotMCPService {
+        var settings = AppSettings.default
+        settings.saveDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("aishot-policy-\(UUID().uuidString)", isDirectory: true)
+        settings.postCaptureAction = .saveOnly
+        settings.showNotification = false
+        return ScreenshotMCPService(
+            capture: CaptureService(
+                engine: FakeCapturing(),
+                settingsStore: FakeSettingsStore(settings: settings),
+                history: InMemoryHistoryStore()
+            ),
+            isEnabled: { enabled },
+            requiresInputConfirmation: { requiresConfirmation },
+            confirmInput: confirm
+        )
+    }
+
+    private func text(_ result: CallTool.Result) -> String {
+        result.content.compactMap { if case .text(let t, _, _) = $0 { return t } else { return nil } }
+            .joined(separator: "\n")
+    }
+
+    @Test func toolsAreRefusedWhenTheServerIsDisabled() async {
+        let result = await service(enabled: false).call(name: "list_displays", arguments: nil)
+        #expect(result.isError == true)
+        #expect(text(result).contains("turned off"))
+    }
+
+    @Test func toolsRunWhenTheServerIsEnabled() async {
+        let result = await service(enabled: true).call(name: "list_displays", arguments: nil)
+        #expect(result.isError != true)
+    }
+
+    /// Headless: no confirmation UI, so a privileged tool stays refused — but
+    /// the message must name the switch that changes it.
+    @Test func privilegedToolIsRefusedWhenConfirmationIsRequiredAndCannotBeGiven() async {
+        let result = await service(enabled: true, requiresConfirmation: true)
+            .call(name: "click", arguments: ["x": 10, "y": 10])
+        #expect(result.isError == true)
+        #expect(text(result).contains("Confirm before clicks/typing"))
+    }
+
+    /// Turning the confirmation requirement off is the documented opt-in.
+    @Test func privilegedToolIsAllowedWhenConfirmationIsNotRequired() async {
+        let result = await service(enabled: true, requiresConfirmation: false)
+            .call(name: "switch_app", arguments: ["bundleID": "com.apple.finder"])
+        // It may still fail for environmental reasons, but never as a *denial*.
+        #expect(!text(result).contains("denied"))
+    }
+
+    /// An explicit confirmation also grants access.
+    @Test func privilegedToolIsAllowedWhenConfirmed() async {
+        let result = await service(enabled: true, requiresConfirmation: true,
+                                   confirm: { _, _ in true })
+            .call(name: "switch_app", arguments: ["bundleID": "com.apple.finder"])
+        #expect(!text(result).contains("denied"))
+    }
+}

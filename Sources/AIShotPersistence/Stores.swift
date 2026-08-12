@@ -11,6 +11,14 @@ public struct UserDefaultsSettingsStore: SettingsStore, @unchecked Sendable {
         self.key = key
     }
 
+    /// Reads another process's preference domain — used by the standalone MCP
+    /// helper, which has no bundle of its own and would otherwise get an empty
+    /// domain instead of the app's actual settings.
+    public init(appDomain: String, key: String = "settings.v1") {
+        self.defaults = UserDefaults(suiteName: appDomain) ?? .standard
+        self.key = key
+    }
+
     public func load() throws -> AppSettings {
         guard let data = defaults.data(forKey: key) else { return .default }
         return try JSONDecoder().decode(AppSettings.self, from: data)

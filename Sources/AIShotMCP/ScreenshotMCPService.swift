@@ -12,6 +12,10 @@ import AIShotService
 /// Returns `true` to allow. Default implementations deny for safety.
 public typealias InputConfirmation = @Sendable (MCPTool, String) async -> Bool
 
+/// A live policy check, re-read per call so a switch flipped in the app takes
+/// effect without the agent reconnecting.
+public typealias PolicyCheck = @Sendable () -> Bool
+
 /// Bridges MCP tool invocations onto the capture / annotation / automation
 /// engines. Transport-agnostic (used by `MCPServerHost` over stdio or HTTP) and
 /// unit-testable without a live connection.
@@ -27,6 +31,13 @@ public actor ScreenshotMCPService {
     /// past captures, not just their notes/tags/file names.
     private let textIndexer: TextIndexer?
     private let metadataStore = CaptureMetadataStore()
+    /// Whether the user has the MCP server switched on. Defaults to `true`:
+    /// an embedder that doesn't pass a policy is presumed to have decided
+    /// already. (Deliberately *not* derived from `AppSettings.default`, whose
+    /// `mcpEnabled` is `false` — that would silently disable every host.)
+    private let isEnabled: PolicyCheck
+    /// Whether input-synthesizing tools need per-action confirmation.
+    private let requiresInputConfirmation: PolicyCheck
 
     public init(
         capture: CaptureService,
@@ -36,6 +47,8 @@ public actor ScreenshotMCPService {
         recognizer: TextRecognizer = TextRecognizer(),
         redactor: AutoRedactor = AutoRedactor(),
         textIndexer: TextIndexer? = nil,
+        isEnabled: @escaping PolicyCheck = { true },
+        requiresInputConfirmation: @escaping PolicyCheck = { true },
         confirmInput: @escaping InputConfirmation = { _, _ in false }
     ) {
         self.capture = capture
@@ -45,6 +58,8 @@ public actor ScreenshotMCPService {
         self.recognizer = recognizer
         self.redactor = redactor
         self.textIndexer = textIndexer
+        self.isEnabled = isEnabled
+        self.requiresInputConfirmation = requiresInputConfirmation
         self.confirmInput = confirmInput
     }
 
@@ -103,6 +118,13 @@ public actor ScreenshotMCPService {
     public func call(name: String, arguments: [String: Value]?) async -> CallTool.Result {
         guard let tool = MCPTool(rawValue: name) else {
             return Self.error("unknown tool: \(name)")
+        }
+        // The user's master switch. Checked per call rather than at startup so
+        // turning it on takes effect immediately, without restarting the agent.
+        guard isEnabled() else {
+            return Self.error(
+                "AIShot's MCP server is turned off. Enable it in AIShot → Settings → AI Agents."
+            )
         }
         do {
             switch tool {
@@ -343,8 +365,20 @@ public actor ScreenshotMCPService {
 
     private func runPrivileged(_ tool: MCPTool, _ args: [String: Value]?) async throws -> CallTool.Result {
         let summary = Self.privilegedSummary(tool, args)
-        guard await confirmInput(tool, summary) else {
-            return Self.error("denied: \(tool.rawValue) requires user confirmation (\(summary))")
+        // Two ways to proceed: the user has turned the confirmation requirement
+        // off, or they confirm this specific action. The standalone bridge is
+        // headless and can't ask, so without the opt-out these stay refused —
+        // the error says exactly which switch changes that.
+        if requiresInputConfirmation() {
+            guard await confirmInput(tool, summary) else {
+                return Self.error(
+                    """
+                    denied: \(tool.rawValue) needs confirmation (\(summary)). \
+                    To let agents click and type without asking, turn off \
+                    "Confirm before clicks/typing" in AIShot → Settings → AI Agents.
+                    """
+                )
+            }
         }
         switch tool {
         case .switchApp:
