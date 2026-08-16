@@ -107,6 +107,31 @@ final class AppModel: ObservableObject {
         Task { @MainActor [weak self] in await self?.migrateLegacyMetadataIfNeeded() }
     }
 
+    /// What was frontmost when the current capture started.
+    ///
+    /// Read *before* the selection overlay appears, because activating it makes
+    /// AIShot itself frontmost — ask afterwards and every capture is tagged
+    /// "AIShot".
+    private struct CaptureSource { var appName: String?; var windowTitle: String? }
+    private var pendingSource: CaptureSource?
+
+    /// The app and window in front right now. Titles come from ScreenCaptureKit,
+    /// which already has permission and excludes AIShot's own windows, so this
+    /// needs no extra grant.
+    private func currentSource() async -> CaptureSource {
+        guard let app = NSWorkspace.shared.frontmostApplication else { return CaptureSource() }
+        let title = (try? await captureService.windows())?
+            .first { $0.isOnScreen && $0.bundleID == app.bundleIdentifier && !$0.title.isEmpty }?
+            .title
+        return CaptureSource(appName: app.localizedName, windowTitle: title)
+    }
+
+    /// Tag suggested from whatever was captured, when smart tagging is on.
+    private func smartTagSuggestion() -> String? {
+        guard settings.smartTagging, let source = pendingSource else { return nil }
+        return SmartTag.suggest(appName: source.appName, windowTitle: source.windowTitle)
+    }
+
     // MARK: - Capture actions
 
     func captureRegion() {
@@ -128,6 +153,7 @@ final class AppModel: ObservableObject {
     }
 
     private func liveRegionCapture() async -> CaptureOutcome? {
+        pendingSource = await currentSource()
         guard let selection = await selectRegion(frozen: nil)?.selection else { return nil }
         return await run(CaptureRequest(
             mode: .region, displayID: selection.displayID, rect: selection.rect,
@@ -140,6 +166,7 @@ final class AppModel: ObservableObject {
     /// cancel — nothing is captured if the user cancels).
     private func frozenRegionCapture() async -> CaptureOutcome? {
         dismissEphemeralCaptureUI()
+        pendingSource = await currentSource()
         do {
             let displays = try await captureService.displays()
             var images: [CGDirectDisplayID: NSImage] = [:]
@@ -436,6 +463,9 @@ final class AppModel: ObservableObject {
     @discardableResult
     private func run(_ request: CaptureRequest) async -> CaptureOutcome? {
         dismissEphemeralCaptureUI()
+        // Region flows recorded this before their overlay appeared; the direct
+        // ones (full screen, window, all displays) record it here.
+        if pendingSource == nil { pendingSource = await currentSource() }
         if settings.captureDelay > 0 {
             await countdown.run(seconds: Int(settings.captureDelay))
         }
@@ -478,6 +508,7 @@ final class AppModel: ObservableObject {
     /// After a saved capture, either silently apply the last tag (when
     /// "apply last tag" is on) or present the note/tag prompt.
     private func promptOrApplyMetadata(for outcome: CaptureOutcome) async {
+        defer { pendingSource = nil }
         guard settings.captureMetadataEnabled, let fileURL = outcome.result.fileURL else { return }
         let loc = metadataLocator(for: fileURL)
 
@@ -496,7 +527,7 @@ final class AppModel: ObservableObject {
         tagPrompt.present(
             fileName: fileURL.lastPathComponent,
             thumbnail: thumbnail,
-            suggestedTag: settings.lastTag,
+            suggestedTag: smartTagSuggestion() ?? settings.lastTag,
             knownTags: known,
             applyToNext: settings.applyLastTag
         ) { [weak self] result in

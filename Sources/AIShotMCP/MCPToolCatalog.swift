@@ -12,6 +12,7 @@ public enum MCPTool: String, Sendable, CaseIterable {
     case listApps = "list_apps"
     case getHistory = "get_history"
     case searchCaptures = "search_captures"
+    case listTags = "list_tags"
 
     // ── Capture ──
     case captureRegion = "capture_region"
@@ -38,9 +39,11 @@ public enum MCPTool: String, Sendable, CaseIterable {
         case .listDisplays: "List connected displays with id, frame, and scale."
         case .listWindows: "List on-screen windows with id, title, and owning app."
         case .listApps: "List running applications."
-        case .getHistory: "Return recent captures from history."
+        case .getHistory: "Return recent captures from history, each with its note and project tag. Optionally filter to one tag."
         case .searchCaptures:
-            "Search past captures by the text inside them (OCR), plus note, tag, and file name. Use this to find a screenshot by what it shows — e.g. an error message or a name that appeared on screen."
+            "Search past captures by the text inside them (OCR), plus note, tag, and file name. Optionally filter to one project tag. Returns each match's note and tag. Use this to find a screenshot by what it shows — e.g. an error message or a name that appeared on screen."
+        case .listTags:
+            "List the project tags in use, with how many captures carry each. Use before search_captures to discover valid tag filters."
         case .captureRegion: "Capture a rectangular region of a display; returns the image."
         case .captureWindow: "Capture a single window by id; returns the image."
         case .captureDisplay: "Capture a full display by id; returns the image."

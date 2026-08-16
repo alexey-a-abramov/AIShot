@@ -227,6 +227,9 @@ private struct NotesTagsPage: View {
             Section("After capture") {
                 Toggle("Ask for a note and tag", isOn: $model.settings.captureMetadataEnabled)
                 Toggle("Automatically apply the last tag", isOn: $model.settings.applyLastTag)
+                Toggle("Suggest a tag from the app or website", isOn: $model.settings.smartTagging)
+                Text("Captures are pre-tagged with the app you captured — or the site, when that app is a browser.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
 
             Section("Database") {

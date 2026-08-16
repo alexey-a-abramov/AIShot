@@ -131,7 +131,8 @@ public actor ScreenshotMCPService {
             case .listDisplays: return try await json(capture.displays())
             case .listWindows: return try await json(capture.windows())
             case .listApps: return try await json(automation.runningApps())
-            case .getHistory: return try await json(capture.recentHistory(limit: arguments?["limit"]?.intValue ?? 20))
+            case .getHistory: return try await historyWithMetadata(arguments)
+            case .listTags: return try await listTags()
             case .searchCaptures: return try await searchCaptures(arguments)
             case .captureRegion: return try await runCapture(regionRequest(arguments))
             case .captureWindow: return try await runCapture(windowRequest(arguments))
@@ -265,6 +266,11 @@ public actor ScreenshotMCPService {
         guard !query.isEmpty else { return Self.error("search_captures: 'query' is required") }
         // Bounded so an agent can't inline the whole index into one result.
         let limit = min(100, max(1, args?["limit"]?.intValue ?? 20))
+        let tagFilter = args?["tag"]?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines)
+        func passesTagFilter(_ meta: CaptureMetadata?) -> Bool {
+            guard let tagFilter, !tagFilter.isEmpty else { return true }
+            return meta?.tag?.caseInsensitiveCompare(tagFilter) == .orderedSame
+        }
 
         let entries = (try? await capture.recentHistory(limit: 500)) ?? []
         let textHits = await textIndexer?.search(query) ?? []
@@ -282,6 +288,7 @@ public actor ScreenshotMCPService {
             let matchedNote = meta?.note.localizedCaseInsensitiveContains(query) ?? false
             let matchedTag = meta?.tag?.localizedCaseInsensitiveContains(query) ?? false
             let matchedName = url.lastPathComponent.localizedCaseInsensitiveContains(query)
+            guard passesTagFilter(meta) else { continue }
             guard matchedText != nil || matchedNote || matchedTag || matchedName else { continue }
             guard seen.insert(url).inserted else { continue }
             results.append(SearchResult(
@@ -304,7 +311,8 @@ public actor ScreenshotMCPService {
             for hit in textHits {
                 let url = hit.fileURL.standardizedFileURL
                 guard seen.insert(url).inserted,
-                      FileManager.default.fileExists(atPath: url.path) else { continue }
+                      FileManager.default.fileExists(atPath: url.path),
+                      passesTagFilter(await metadata(for: url)) else { continue }
                 results.append(SearchResult(
                     path: url.path, createdAt: nil, width: 0, height: 0,
                     matchedOn: "text", note: nil, tag: nil, snippet: hit.snippet
@@ -314,6 +322,75 @@ public actor ScreenshotMCPService {
         }
 
         return try json(results)
+    }
+
+    /// Recent captures, each enriched with its note and project tag, and
+    /// optionally filtered to one tag.
+    ///
+    /// Notes and tags live beside the images rather than in history, so an
+    /// agent listing history would otherwise never see them.
+    private func historyWithMetadata(_ args: [String: Value]?) async throws -> CallTool.Result {
+        let limit = min(500, max(1, args?["limit"]?.intValue ?? 20))
+        let tagFilter = args?["tag"]?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Over-fetch when filtering so the limit applies to matches, not to the
+        // window we searched.
+        let entries = (try? await capture.recentHistory(limit: tagFilter == nil ? limit : 500)) ?? []
+
+        var rows: [HistoryRow] = []
+        for entry in entries {
+            var meta: CaptureMetadata?
+            if let url = entry.fileURL { meta = await metadata(for: url) }
+            if let tagFilter, !tagFilter.isEmpty {
+                guard meta?.tag?.caseInsensitiveCompare(tagFilter) == .orderedSame else { continue }
+            }
+            rows.append(HistoryRow(
+                path: entry.fileURL?.path,
+                createdAt: entry.createdAt,
+                mode: entry.mode.rawValue,
+                kind: entry.kind.rawValue,
+                width: entry.pixelWidth,
+                height: entry.pixelHeight,
+                note: meta?.note.isEmpty == false ? meta?.note : nil,
+                tag: meta?.tag
+            ))
+            if rows.count >= limit { break }
+        }
+        return try json(rows)
+    }
+
+    /// Every project tag in use, with counts — so an agent can discover valid
+    /// filters instead of guessing.
+    private func listTags() async throws -> CallTool.Result {
+        let entries = (try? await capture.recentHistory(limit: 500)) ?? []
+        var counts: [String: Int] = [:]
+        for entry in entries {
+            guard let url = entry.fileURL, let tag = await metadata(for: url)?.tag, !tag.isEmpty
+            else { continue }
+            counts[tag, default: 0] += 1
+        }
+        // Most-used first, then alphabetical, so the list is stable.
+        let tags: [TagCount] = counts.map { TagCount(tag: $0.key, captures: $0.value) }
+            .sorted { lhs, rhs in
+                if lhs.captures != rhs.captures { return lhs.captures > rhs.captures }
+                return lhs.tag < rhs.tag
+            }
+        return try json(tags)
+    }
+
+    private struct HistoryRow: Encodable {
+        var path: String?
+        var createdAt: Date
+        var mode: String
+        var kind: String
+        var width: Int
+        var height: Int
+        var note: String?
+        var tag: String?
+    }
+
+    private struct TagCount: Encodable {
+        var tag: String
+        var captures: Int
     }
 
     /// Note/tag for a capture, resolved through the same per-directory index

@@ -16,6 +16,14 @@ struct MenuBarContent: View {
         Button { model.captureTextOCR() } label: { menuLabel("Capture Text (OCR)", .captureText) }
         Button { model.scrollingCapture() } label: { menuLabel("Scrolling Capture", .scrollingCapture) }
 
+        // A bare Picker renders as one submenu with the current choice ticked —
+        // wrapping it in a Menu would nest the same title twice.
+        Picker("After Capture", selection: $model.settings.postCaptureAction) {
+            Text("Copy to clipboard").tag(PostCaptureAction.copyToClipboard)
+            Text("Open editor").tag(PostCaptureAction.openEditor)
+            Text("Save only").tag(PostCaptureAction.saveOnly)
+        }
+
         Picker("Self-Timer", selection: $model.settings.captureDelay) {
             Text("Off").tag(0.0)
             Text("3 seconds").tag(3.0)

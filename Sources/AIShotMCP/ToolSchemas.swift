@@ -9,11 +9,17 @@ enum ToolSchemas {
         case .listWindows:
             return object(["onScreenOnly": prop("boolean", "Only on-screen windows")])
         case .getHistory:
-            return object(["limit": prop("integer", "Maximum number of entries")])
+            return object([
+                "limit": prop("integer", "Maximum number of entries"),
+                "tag": prop("string", "Only captures carrying this project tag"),
+            ])
+        case .listTags:
+            return object([:])
         case .searchCaptures:
             return object(
                 [
                     "query": prop("string", "Text to look for inside captures, or in a note/tag/file name"),
+                    "tag": prop("string", "Restrict results to captures carrying this project tag"),
                     "limit": prop("integer", "Maximum number of results (default 20)"),
                 ],
                 required: ["query"]

@@ -92,6 +92,8 @@ public struct AppSettings: Sendable, Codable, Equatable {
     public var editorSaveOverwritesOriginal: Bool
     /// Show the inline annotation panel after a region selection.
     public var inlineCapturePanel: Bool
+    /// Suggest a project tag from the app or website that was captured.
+    public var smartTagging: Bool
 
     public init(
         saveDirectory: URL,
@@ -119,7 +121,8 @@ public struct AppSettings: Sendable, Codable, Equatable {
         lastSaveAsDirectory: URL? = nil,
         rememberLastSaveAsDirectory: Bool = true,
         editorSaveOverwritesOriginal: Bool = true,
-        inlineCapturePanel: Bool = true
+        inlineCapturePanel: Bool = true,
+        smartTagging: Bool = true
     ) {
         self.saveDirectory = saveDirectory
         self.defaultFormat = defaultFormat
@@ -147,6 +150,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         self.rememberLastSaveAsDirectory = rememberLastSaveAsDirectory
         self.editorSaveOverwritesOriginal = editorSaveOverwritesOriginal
         self.inlineCapturePanel = inlineCapturePanel
+        self.smartTagging = smartTagging
     }
 
     /// Resilient decoding: unknown/missing keys fall back to defaults so adding
@@ -185,6 +189,7 @@ public struct AppSettings: Sendable, Codable, Equatable {
         rememberLastSaveAsDirectory = (try? container.decodeIfPresent(Bool.self, forKey: .rememberLastSaveAsDirectory)) ?? fallback.rememberLastSaveAsDirectory
         editorSaveOverwritesOriginal = (try? container.decodeIfPresent(Bool.self, forKey: .editorSaveOverwritesOriginal)) ?? fallback.editorSaveOverwritesOriginal
         inlineCapturePanel = (try? container.decodeIfPresent(Bool.self, forKey: .inlineCapturePanel)) ?? fallback.inlineCapturePanel
+        smartTagging = (try? container.decodeIfPresent(Bool.self, forKey: .smartTagging)) ?? fallback.smartTagging
     }
 
     /// Sensible defaults: save to `~/Pictures/AIShot`, PNG, copy to clipboard
