@@ -1,4 +1,6 @@
 import Foundation
+import OSLog
+import AIShotShared
 import AIShotCore
 
 /// Expands a filename template into a safe filename.
@@ -54,13 +56,63 @@ public struct FileNameFormatter: Sendable {
 
 /// Writes encoded image bytes to disk, creating the directory if needed and
 /// avoiding clobbering existing files (appends ` (n)` on collision).
+/// Why a capture could not be saved.
+public enum CaptureSaveError: LocalizedError, Equatable {
+    /// The encoded image had no bytes.
+    case emptyImage
+    /// The write reported success but nothing is at the path afterwards.
+    case vanishedAfterWrite(URL)
+
+    public var errorDescription: String? {
+        switch self {
+        case .emptyImage:
+            "The capture contained no image data."
+        case .vanishedAfterWrite(let url):
+            "Saved to " + url.path + ", but the file is not there afterwards. "
+                + "Something outside AIShot may be removing or syncing it."
+        }
+    }
+}
+
 public struct CaptureSaver: Sendable {
     public init() {}
 
     public func save(_ data: Data, fileName: String, to directory: URL) throws -> URL {
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let log = Logger.aishot("saving")
+
+        guard !data.isEmpty else {
+            // A zero-byte capture means the engine produced nothing; writing it
+            // would leave an unopenable file and a history row pointing at it.
+            log.error("refusing to save an empty capture to \(directory.path, privacy: .public)")
+            throw CaptureSaveError.emptyImage
+        }
+
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        } catch {
+            log.error("cannot create \(directory.path, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+
         let url = Self.uniqueURL(in: directory, fileName: fileName)
-        try data.write(to: url, options: .atomic)
+        do {
+            try data.write(to: url, options: .atomic)
+        } catch {
+            log.error("write failed for \(url.path, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+
+        // Verify rather than assume. A write that reports success but leaves
+        // nothing behind - an external cleaner, a synced folder evicting the
+        // file - must not be reported as a save, or history fills with rows
+        // pointing at files that were never there.
+        let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+        guard let written = attributes?[.size] as? Int, written > 0 else {
+            log.error("wrote \(data.count, privacy: .public) bytes to \(url.path, privacy: .public) but nothing is there afterwards")
+            throw CaptureSaveError.vanishedAfterWrite(url)
+        }
+
+        log.info("saved \(written, privacy: .public) bytes to \(url.path, privacy: .public)")
         return url
     }
 
