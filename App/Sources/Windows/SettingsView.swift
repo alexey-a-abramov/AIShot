@@ -141,7 +141,7 @@ private struct GeneralPage: View {
 
     var body: some View {
         Form {
-            Section("Saving") {
+            Section("Auto-save") {
                 LabeledContent("Folder") {
                     HStack {
                         Text(model.settings.saveDirectory.path)
@@ -150,13 +150,59 @@ private struct GeneralPage: View {
                         Button("Change…", action: chooseFolder)
                     }
                 }
+                Picker("Format", selection: $model.settings.defaultFormat) {
+                    ForEach(ImageFormat.allCases, id: \.self) { format in
+                        Text(verbatim: format.fileExtension.uppercased()).tag(format)
+                    }
+                }
                 TextField("Filename", text: $model.settings.fileNameTemplate)
+                Text("Every capture is written here automatically, whatever the After Capture action does.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section("Organize") {
+                Picker("Subfolders", selection: $model.settings.folderOrganization) {
+                    Text("None — one flat folder").tag(FolderOrganization.none)
+                    Text("By date").tag(FolderOrganization.byDate)
+                    Text("By project tag").tag(FolderOrganization.byTag)
+                    Text("By tag, then date").tag(FolderOrganization.byTagThenDate)
+                }
+                if model.settings.folderOrganization != .none {
+                    if model.settings.folderOrganization != .byTag {
+                        Picker("Date folders", selection: $model.settings.dateFolderGranularity) {
+                            Text("Day").tag(DateFolderGranularity.day)
+                            Text("Month").tag(DateFolderGranularity.month)
+                            Text("Year").tag(DateFolderGranularity.year)
+                        }
+                    }
+                    if model.settings.folderOrganization != .byDate {
+                        TextField("Untagged folder", text: $model.settings.untaggedFolderName)
+                        Text("A capture tagged after the fact keeps its tag but stays in this folder — moving the file would break its history and search entries.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    LabeledContent("Example") {
+                        Text(verbatim: examplePath)
+                            .truncationMode(.middle).lineLimit(1)
+                            .foregroundStyle(.secondary).font(.caption.monospaced())
+                    }
+                }
             }
             Section("Startup") {
                 LaunchAtLogin.Toggle("Launch AIShot at login")
             }
         }
         .formStyle(.grouped)
+    }
+
+    /// Where a capture taken right now would land, so the choice above is
+    /// concrete rather than abstract.
+    private var examplePath: String {
+        let resolved = SaveDestinationResolver().resolve(
+            settings: model.settings, tag: model.settings.lastTag, date: Date()
+        )
+        let name = FileNameFormatter(template: model.settings.fileNameTemplate)
+            .fileName(format: model.settings.defaultFormat, date: Date())
+        return resolved.directory.appendingPathComponent(name).path
     }
 
     private func chooseFolder() {

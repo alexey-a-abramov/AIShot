@@ -86,6 +86,23 @@
         }
       }
     },
+    "A capture tagged after the fact keeps its tag but stays in this folder — moving the file would break its history and search entries." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una captura etiquetada después conserva su etiqueta pero permanece en esta carpeta: mover el archivo rompería su historial y su búsqueda."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une capture étiquetée après coup conserve son étiquette mais reste dans ce dossier — déplacer le fichier casserait son historique et sa recherche."
+          }
+        }
+      }
+    },
     "AI Agents" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -424,6 +441,23 @@
         }
       }
     },
+    "Auto-save" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guardado automático"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrement auto"
+          }
+        }
+      }
+    },
     "Automatically apply the last tag" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -534,6 +568,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chemin intégré"
+          }
+        }
+      }
+    },
+    "By date" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por fecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par date"
+          }
+        }
+      }
+    },
+    "By project tag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por etiqueta de proyecto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par étiquette de projet"
+          }
+        }
+      }
+    },
+    "By tag, then date" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por etiqueta y luego fecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par étiquette, puis date"
           }
         }
       }
@@ -1162,6 +1247,40 @@
         }
       }
     },
+    "Date folders" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carpetas de fecha"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dossiers de date"
+          }
+        }
+      }
+    },
+    "Day" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Día"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jour"
+          }
+        }
+      }
+    },
     "Default action" : {
       "localizations" : {
         "es" : {
@@ -1341,6 +1460,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Activez le serveur avec l’option ci-dessus, puis redémarrez votre agent pour qu’il détecte les nouveaux outils."
+          }
+        }
+      }
+    },
+    "Every capture is written here automatically, whatever the After Capture action does." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada captura se guarda aquí automáticamente, sea cual sea la acción posterior."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque capture est enregistrée ici automatiquement, quelle que soit l’action après capture."
+          }
+        }
+      }
+    },
+    "Example" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ejemplo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exemple"
           }
         }
       }
@@ -1813,6 +1966,23 @@
         }
       }
     },
+    "Month" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mois"
+          }
+        }
+      }
+    },
     "Move %lld captures to the Trash?" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1977,6 +2147,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aucun"
+          }
+        }
+      }
+    },
+    "None — one flat folder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ninguna — una sola carpeta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun — un seul dossier"
           }
         }
       }
@@ -2195,6 +2382,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ouverture de l’éditeur…"
+          }
+        }
+      }
+    },
+    "Organize" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organización"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organisation"
           }
         }
       }
@@ -3084,6 +3288,23 @@
         }
       }
     },
+    "Subfolders" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subcarpetas"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sous-dossiers"
+          }
+        }
+      }
+    },
     "Suggest a tag from the app or website" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3433,6 +3654,23 @@
         }
       }
     },
+    "Untagged folder" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carpeta sin etiqueta"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dossier sans étiquette"
+          }
+        }
+      }
+    },
     "Use the actions above the grid to tag, copy, or delete them." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3615,6 +3853,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fenêtre"
+          }
+        }
+      }
+    },
+    "Year" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Año"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Année"
           }
         }
       }
